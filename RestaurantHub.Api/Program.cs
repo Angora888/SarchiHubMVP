@@ -70,5 +70,5 @@ app.UseAuthentication();
 app.UseStaticFiles();
 app.UseAuthorization();
 app.MapControllers();
-
+app.Urls.Add("http://0.0.0.0:" + Environment.GetEnvironmentVariable("PORT"));
 app.Run();
