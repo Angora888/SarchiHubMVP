@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="RestaurantHub.Api/RestaurantHub.Api.csproj" />
+  <Project Path="RestaurantHub.Test/RestaurantHub.Test.csproj" Id="a8bcd58f-2433-407b-b92c-78cd1b99a1b5" />
+</Solution>
