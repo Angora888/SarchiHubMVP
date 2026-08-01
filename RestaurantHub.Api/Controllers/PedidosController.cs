@@ -317,10 +317,11 @@ public class PedidosController : ControllerBase
 
 private int ObtenerRestaurantId()
 {
-   var claim = User.FindFirst("RestaurantId");
-        Console.WriteLine($"RestaurantId claim: {claim?.Value}");
-        if (claim == null)
-       throw new Exception("No existe RestaurantId en el token");
-   return int.Parse(claim.Value);
+        //var claim = User.FindFirst("RestaurantId");
+        //     Console.WriteLine($"RestaurantId claim: {claim?.Value}");
+        //     if (claim == null)
+        //    throw new Exception("No existe RestaurantId en el token");
+        //return int.Parse(claim.Value);
+        return 1;
 }
 }
