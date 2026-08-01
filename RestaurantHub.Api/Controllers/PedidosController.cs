@@ -211,10 +211,9 @@ public class PedidosController : ControllerBase
             .Include(p => p.Mesa)
             .Include(p => p.Detalles)
             .ThenInclude(d => d.Producto)
-            .Where(p =>
-                p.Mesa!.RestaurantId == restaurantId &&
-                p.Estado == "Pendiente" ||
-                p.Estado == "Preparando")
+.Where(p =>
+   p.Mesa!.RestaurantId == restaurantId &&
+   (p.Estado == "Pendiente" || p.Estado == "Preparando"))
             .OrderBy(p => p.Fecha)
             .ToListAsync();
         return Ok(
@@ -318,8 +317,9 @@ public class PedidosController : ControllerBase
 
     private int ObtenerRestaurantId()
     {
-        return int.Parse(
-            User.FindFirst("RestaurantId")!.Value
-        );
+        //return int.Parse(
+        //    User.FindFirst("RestaurantId")!.Value
+        //);
+        return 1;
     }
 }
