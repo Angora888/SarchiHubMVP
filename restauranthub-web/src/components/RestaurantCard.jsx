@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { API_URL } from "../config";
 function RestaurantCard({ restaurant }) {
    return (
 <div className="col">
@@ -11,11 +12,11 @@ function RestaurantCard({ restaurant }) {
                }}
 >
 <img
-                   src={
-                       restaurant.imageUrl
-                           ? `http://localhost:5281/${restaurant.imageUrl}`
-                           : "https://placehold.co/600x350?text=Restaurante"
-                   }
+   src={
+       restaurant.imageUrl
+           ? `${API_URL}/${restaurant.imageUrl}`
+           : "https://placehold.co/600x350?text=Restaurante"
+   }
                    className="card-img-top"
                    alt={restaurant.name}
                    style={{
