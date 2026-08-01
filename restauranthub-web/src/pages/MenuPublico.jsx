@@ -119,27 +119,20 @@ const productosFiltrados = productos.filter(p => {
 <div className="text-center mb-4">
 <h2>{restaurant.name}</h2>
 <h5>Mesa #{mesa.number}</h5>
-<div
-   className="d-flex gap-2 mt-4 mb-4 overflow-auto"
-   style={{ whiteSpace: "nowrap" }}
->
-   {
-       categorias.map(categoria => (
+<div className="d-flex flex-wrap gap-2 justify-content-center mt-4 mb-4">
+   {categorias.map((categoria) => (
 <button
-               key={categoria}
-               className={
-                   categoriaSeleccionada === categoria
-                       ? "btn btn-success"
-                       : "btn btn-outline-success"
-               }
-               onClick={() =>
-                   setCategoriaSeleccionada(categoria)
-               }
+           key={categoria}
+           className={
+               categoriaSeleccionada === categoria
+                   ? "btn btn-success"
+                   : "btn btn-outline-success"
+           }
+           onClick={() => setCategoriaSeleccionada(categoria)}
 >
-               {categoria}
+           {categoria}
 </button>
-       ))
-   }
+   ))}
 </div>
 </div>
 <div className="row">
