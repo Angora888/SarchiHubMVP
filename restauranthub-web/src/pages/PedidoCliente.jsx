@@ -136,6 +136,9 @@ useEffect(() => {
 </h5>
 <hr />
 <div className="text-center mb-4">
+<span
+                           className={`badge bg-${colorEstado(pedido.estado)} fs-5`}
+>
 {
    pedido.estado === "Finalizado" ? (
 <div className="alert alert-success text-center">
@@ -154,6 +157,7 @@ useEffect(() => {
 </span>
    )
 }
+</span>
 </div>
 <h5>
                        Productos
