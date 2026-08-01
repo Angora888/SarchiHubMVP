@@ -73,6 +73,53 @@ const restaurantesFiltrados = restaurantes.filter(r => {
 </div>
 </div>
 </section>
+
+<section className="container py-5">
+<div className="text-center mb-5">
+<h2 className="fw-bold">
+   🍴 Restaurantes afiliados
+</h2>
+<p className="text-muted">
+   Descubre los restaurantes que ya forman parte de Sin Filas.
+</p>
+</div>
+               {loading && (
+<div className="text-center py-5">
+<div className="spinner-border text-success"></div>
+<p className="mt-3">
+                           Cargando restaurantes...
+</p>
+</div>
+               )}
+               {!loading && error && (
+<div className="alert alert-danger text-center">
+<h5>{error}</h5>
+<button
+                           className="btn btn-dark mt-3"
+                           onClick={cargarRestaurantes}
+>
+                           Reintentar
+</button>
+</div>
+               )}
+               {!loading && !error && restaurantesFiltrados.length === 0 && (
+<div className="text-center py-5">
+<h4>
+                           No se encontraron restaurantes.
+</h4>
+</div>
+               )}
+               {!loading && !error && restaurantesFiltrados.length > 0 && (
+<div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                       {restaurantesFiltrados.map(restaurant => (
+<RestaurantCard
+                               key={restaurant.id}
+                               restaurant={restaurant}
+                           />
+                       ))}
+</div>
+               )}
+</section>
 <section className="container py-5">
 <div className="text-center mb-5">
 <h2 className="fw-bold">
@@ -129,52 +176,6 @@ const restaurantesFiltrados = restaurantes.filter(r => {
 </div>
 </div>
 </div>
-</section>
-<section className="container py-5">
-<div className="text-center mb-5">
-<h2 className="fw-bold">
-   🍴 Restaurantes afiliados
-</h2>
-<p className="text-muted">
-   Descubre los restaurantes que ya forman parte de Sin Filas.
-</p>
-</div>
-               {loading && (
-<div className="text-center py-5">
-<div className="spinner-border text-success"></div>
-<p className="mt-3">
-                           Cargando restaurantes...
-</p>
-</div>
-               )}
-               {!loading && error && (
-<div className="alert alert-danger text-center">
-<h5>{error}</h5>
-<button
-                           className="btn btn-dark mt-3"
-                           onClick={cargarRestaurantes}
->
-                           Reintentar
-</button>
-</div>
-               )}
-               {!loading && !error && restaurantesFiltrados.length === 0 && (
-<div className="text-center py-5">
-<h4>
-                           No se encontraron restaurantes.
-</h4>
-</div>
-               )}
-               {!loading && !error && restaurantesFiltrados.length > 0 && (
-<div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                       {restaurantesFiltrados.map(restaurant => (
-<RestaurantCard
-                               key={restaurant.id}
-                               restaurant={restaurant}
-                           />
-                       ))}
-</div>
-               )}
 </section>
 <section className="container py-5">
 <div className="card shadow border-0">
