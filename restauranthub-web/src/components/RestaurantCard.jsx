@@ -4,12 +4,10 @@ function RestaurantCard({ restaurant }) {
    return (
 <div className="col">
 <div
-               className="card shadow h-100 border-0"
-               style={{
-                   transition: "0.3s",
-                   borderRadius: "16px",
-                   overflow: "hidden"
-               }}
+   className="card border-0 shadow-sm h-100 restaurant-card"
+   style={{
+       animationDelay: `${restaurant.id * 0.08}s`
+   }}
 >
 <img
    src={

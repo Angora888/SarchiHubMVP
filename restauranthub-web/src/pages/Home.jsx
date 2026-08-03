@@ -38,51 +38,61 @@ const restaurantesFiltrados = restaurantes.filter(r => {
    return (
 <>
 <NavbarPublic />
-<section
-   className="text-white d-flex align-items-center"
+<div
    style={{
-       minHeight: "75vh",
-       backgroundImage:
-           "linear-gradient(rgba(0,0,0,.65), rgba(0,0,0,.65)), url('https://images.unsplash.com/photo-1552566626-52f8b828add9')",
-       backgroundSize: "cover",
-       backgroundPosition: "center"
+       minHeight: "100vh",
+       background:
+           "linear-gradient(180deg,#f6fff8 0%,#ffffff 40%,#f9f9f9 100%)"
    }}
 >
-<div className="container text-center">
-<h1 className="display-2 fw-bold mb-3">
-           🍽️ Sin Filas
+
+<section className="container py-4">
+<div className="text-center mb-4">
+<div
+           className="mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm"
+           style={{
+               width: "70px",
+               height: "70px",
+               background: "#198754",
+               borderRadius: "20px",
+               color: "white",
+               fontSize: "32px"
+           }}
+>
+           🍽️
+</div>
+<h1 className="fw-bold mb-2">
+           Sin Filas
 </h1>
-<p className="lead fs-4">
-           Pide desde tu mesa,
-<br />
-<strong>sin esperas.</strong>
-</p>
-<p className="mb-5">
-           Encuentra restaurantes afiliados y realiza tu pedido
-           de forma rápida y sencilla.
+<p className="text-muted mb-4">
+           Pide desde tu mesa sin esperas.
 </p>
 <div className="row justify-content-center">
 <div className="col-lg-6">
 <input
-                   className="form-control form-control-lg shadow"
-                   placeholder="🔍 Buscar restaurante o ubicación..."
+                   className="form-control form-control-lg rounded-pill shadow-sm"
+                   placeholder="🔍 Buscar restaurante..."
                    value={busqueda}
-                   onChange={(e) => setBusqueda(e.target.value)}
+                   onChange={(e)=>setBusqueda(e.target.value)}
                />
 </div>
 </div>
 </div>
-</section>
-
-<section className="container py-5">
-<div className="text-center mb-5">
-<h2 className="fw-bold">
-   🍴 Restaurantes afiliados
-</h2>
-<p className="text-muted">
-   Descubre los restaurantes que ya forman parte de Sin Filas.
-</p>
+<div
+       className="d-flex justify-content-between align-items-center px-2"
+>
+<div>
+<h4 className="fw-bold mb-0">
+               🍴 Restaurantes afiliados
+</h4>
+<small className="text-muted">
+               {restaurantes.length} disponibles
+</small>
 </div>
+</div>
+</section>
+<section className="container py-5">
+
                {loading && (
 <div className="text-center py-5">
 <div className="spinner-border text-success"></div>
@@ -110,7 +120,7 @@ const restaurantesFiltrados = restaurantes.filter(r => {
 </div>
                )}
                {!loading && !error && restaurantesFiltrados.length > 0 && (
-<div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+<div className="row g-4 row-cols-1 row-cols-sm-2 row-cols-xl-3">
                        {restaurantesFiltrados.map(restaurant => (
 <RestaurantCard
                                key={restaurant.id}
@@ -201,6 +211,7 @@ const restaurantesFiltrados = restaurantes.filter(r => {
 </div>
 </div>
 </section>
+</div>
 <Footer />
 </>
    );
