@@ -315,13 +315,16 @@ public class PedidosController : ControllerBase
         return Ok(pedidos);
     }
 
-private int ObtenerRestaurantId()
-{
-        //var claim = User.FindFirst("RestaurantId");
-        //     Console.WriteLine($"RestaurantId claim: {claim?.Value}");
-        //     if (claim == null)
-        //    throw new Exception("No existe RestaurantId en el token");
-        //return int.Parse(claim.Value);
-        return 1;
-}
+    private int ObtenerRestaurantId()
+    {
+        foreach (var claim in User.Claims)
+        {
+            Console.WriteLine($"{claim.Type} = {claim.Value}");
+        }
+        var claimRestaurant = User.FindFirst("RestaurantId");
+        Console.WriteLine($"RestaurantId encontrado: {claimRestaurant?.Value}");
+        if (claimRestaurant == null)
+            throw new Exception("No existe RestaurantId en el token");
+        return int.Parse(claimRestaurant.Value);
+    }
 }

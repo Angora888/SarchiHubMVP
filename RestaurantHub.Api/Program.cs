@@ -27,20 +27,33 @@ builder.Services.AddSwaggerGen();
 // Configure JWT authentication
 var jwt = builder.Configuration.GetSection("Jwt");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-   .AddJwtBearer(options =>
+.AddJwtBearer(options =>
+{
+   options.TokenValidationParameters = new TokenValidationParameters
    {
-       options.TokenValidationParameters = new TokenValidationParameters
+       ValidateIssuer = true,
+       ValidateAudience = true,
+       ValidateLifetime = true,
+       ValidateIssuerSigningKey = true,
+       ValidIssuer = jwt["Issuer"],
+       ValidAudience = jwt["Audience"],
+       IssuerSigningKey = new SymmetricSecurityKey(
+           Encoding.UTF8.GetBytes(jwt["Key"]!))
+   };
+   options.Events = new JwtBearerEvents
+   {
+       OnTokenValidated = context =>
        {
-           ValidateIssuer = true,
-           ValidateAudience = true,
-           ValidateLifetime = true,
-           ValidateIssuerSigningKey = true,
-           ValidIssuer = jwt["Issuer"],
-           ValidAudience = jwt["Audience"],
-           IssuerSigningKey = new SymmetricSecurityKey(
-               Encoding.UTF8.GetBytes(jwt["Key"]!))
-       };
-   });
+           Console.WriteLine("=== CLAIMS ===");
+           foreach (var claim in context.Principal!.Claims)
+           {
+               Console.WriteLine($"{claim.Type} = {claim.Value}");
+           }
+           Console.WriteLine("==============");
+           return Task.CompletedTask;
+       }
+   };
+});
 builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
