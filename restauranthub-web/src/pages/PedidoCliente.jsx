@@ -32,7 +32,7 @@ useEffect(() => {
                return "primary";
            case "Listo":
                return "success";
-           case "Finalizado":
+           case "Terminado":
                return "secondary";
            default:
                return "dark";
@@ -67,7 +67,7 @@ useEffect(() => {
 </h5>
 <hr />
 <div className="text-center mb-4">
-   {pedido.estado === "Finalizado" ? (
+   {pedido.estado === "Terminado" ? (
 <div className="alert alert-success">
 <h4>🎉 ¡Gracias por tu compra!</h4>
 <p className="mb-0">
