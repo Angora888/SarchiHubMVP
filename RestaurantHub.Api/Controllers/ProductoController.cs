@@ -2,7 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using RestaurantHub.Api.Data;
 using RestaurantHub.Api.Models;
+using RestaurantHub.Api.DTOs;
 namespace RestaurantHub.Api.Controllers;
+
 
 using RestaurantHub.Core.Entities;
 using System.Security.Claims;
@@ -42,24 +44,24 @@ public class ProductosController : ControllerBase
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetProducto), new { id = producto.Id }, producto);
     }
-    [HttpPut("{id}")]
-    public async Task<IActionResult> ActualizarProducto(int id, Producto producto)
-    {
-        if (id != producto.Id)
-            return BadRequest();
-        _context.Entry(producto).State = EntityState.Modified;
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!_context.Producto.Any(p => p.Id == id))
-                return NotFound();
-            throw;
-        }
-        return NoContent();
-    }
+    //[HttpPut("{id}")]
+    //public async Task<IActionResult> ActualizarProducto(int id, Producto producto)
+    //{
+    //    if (id != producto.Id)
+    //        return BadRequest();
+    //    _context.Entry(producto).State = EntityState.Modified;
+    //    try
+    //    {
+    //        await _context.SaveChangesAsync();
+    //    }
+    //    catch (DbUpdateConcurrencyException)
+    //    {
+    //        if (!_context.Producto.Any(p => p.Id == id))
+    //            return NotFound();
+    //        throw;
+    //    }
+    //    return NoContent();
+    //}
     [HttpDelete("{id}")]
     public async Task<IActionResult> EliminarProducto(int id)
     {
@@ -90,5 +92,41 @@ public class ProductosController : ControllerBase
         return int.Parse(
             User.FindFirst("RestaurantId")!.Value
         );
+        //return 1; // Hardcoded for testing purposes
+    }
+
+    [HttpGet("admin")]
+    public async Task<IActionResult> ObtenerProductosAdmin()
+    {
+        var restaurantId = ObtenerRestaurantId();
+        var productos = await _context.Producto
+            .Where(p => p.RestaurantId == restaurantId)
+            .OrderBy(p => p.Nombre)
+            .Select(p => new
+            {
+                p.Id,
+                p.Nombre,
+                p.Descripcion,
+                p.Precio,
+                p.Disponible
+            })
+            .ToListAsync();
+        return Ok(productos);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> ActualizarProducto(int id, ProductoUpdateDto dto)
+    {
+        var restaurantId = ObtenerRestaurantId();
+        var producto = await _context.Producto
+            .FirstOrDefaultAsync(p => p.Id == id && p.RestaurantId == restaurantId);
+        if (producto == null)
+            return NotFound();
+        producto.Nombre = dto.Nombre;
+        producto.Descripcion = dto.Descripcion;
+        producto.Precio = dto.Precio;
+        producto.Disponible = dto.Disponible;
+        await _context.SaveChangesAsync();
+        return Ok();
     }
 }

@@ -4,6 +4,7 @@ using RestaurantHub.Api.Data;
 using RestaurantHub.Api.DTOs;
 using RestaurantHub.Api.Models;
 using System.Security.Claims;
+using static RestaurantHub.Api.Controllers.DashboardController;
 namespace RestaurantHub.Api.Controllers;
 
 [ApiController]
@@ -178,26 +179,28 @@ public class PedidosController : ControllerBase
 
     {
         var restaurantId = ObtenerRestaurantId();
+        //var pedidos = await _context.Pedidos
+
+        var (inicio, fin) = FechaHelper.ObtenerRangoHoyCostaRica();
+        //var fin = inicio.AddDays(1);
         var pedidos = await _context.Pedidos
-
-            .Include(p => p.Mesa)
-            .Include(p => p.Detalles)
-            .Where(p => p.Mesa!.RestaurantId == restaurantId)
-            .OrderByDescending(p => p.Fecha)
-            .Select(p => new
-
-            {
-
-                id = p.Id,
-                mesa = p.Mesa.Number,
-                estado = p.Estado,
-                total = p.Total,
-                fecha = p.Fecha,
-                cantidadProductos = p.Detalles.Sum(d => d.Cantidad)
-
-            })
-
-            .ToListAsync();
+           .Include(p => p.Mesa)
+           .Include(p => p.Detalles)
+           .Where(p =>
+               p.Mesa!.RestaurantId == restaurantId &&
+               p.Fecha >= inicio &&
+               p.Fecha < fin)
+           .OrderByDescending(p => p.Fecha)
+           .Select(p => new
+           {
+               id = p.Id,
+               mesa = p.Mesa.Number,
+               estado = p.Estado,
+               total = p.Total,
+               fecha = p.Fecha,
+               cantidadProductos = p.Detalles.Sum(d => d.Cantidad)
+           })
+           .ToListAsync();
 
         return Ok(pedidos);
 

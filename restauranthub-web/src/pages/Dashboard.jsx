@@ -28,6 +28,16 @@ const cargarDashboard = async () => {
    }
 };
 
+const colorCocina = (cantidad) => {
+   if (cantidad === 0)
+       return "bg-success text-white";
+   if (cantidad <= 3)
+       return "bg-warning";
+   if (cantidad <= 6)
+       return "bg-orange text-white";
+   return "bg-danger text-white";
+};
+
    return (
    
    <>
@@ -49,9 +59,9 @@ const cargarDashboard = async () => {
 <StatCard
 
     titulo="Cocina"
-    valor="→"
+    valor={datos.cocina}
     icono="bi bi-fire"
-   color="bg-danger text-white"
+   color={colorCocina(datos.cocina)}
     ruta="/cocina"
 
 />
@@ -59,7 +69,7 @@ const cargarDashboard = async () => {
 <StatCard
 
     titulo="Caja"
-    valor="→"
+    valor={datos.caja}
     icono="bi bi-cash-stack"
     color="bg-secondary text-white"
     ruta="/caja"
