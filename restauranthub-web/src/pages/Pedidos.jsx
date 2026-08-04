@@ -110,7 +110,7 @@ return (
 <div className="container">
 <h2 className="fw-bold mb-4">
 
-            📦 Pedidos
+            📦 Pedidos diarios
 </h2>
 
         {

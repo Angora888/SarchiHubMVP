@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 function Productos() {
    const [productos, setProductos] = useState([]);
-   const [productosEditables, setProductosEditables] = useState([]);
       const navigate = useNavigate();
    useEffect(() => {
        cargarProductos();
@@ -17,8 +16,8 @@ function Productos() {
            console.error(error);
        }
    };
-   const cambiarValor = (id, campo, valor) => {
-   setProductosEditables(prev =>
+const cambiarValor = (id, campo, valor) => {
+   setProductos(prev =>
        prev.map(producto =>
 producto.id === id
                ? { ...producto, [campo]: valor }
@@ -29,6 +28,7 @@ producto.id === id
 const guardarProducto = async (producto) => {
    try {
        await api.put(`/Productos/${producto.id}`, producto);
+       console.log("Producto guardado");
    } catch (error) {
        console.error(error);
    }
