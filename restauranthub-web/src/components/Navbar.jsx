@@ -12,7 +12,7 @@ function Navbar() {
 <nav className="navbar bg-white shadow-sm mb-4">
 <div className="container-fluid">
 <h4 className="mb-0 fw-bold">
-                   🍽 RestaurantHub
+                   🍽 Sin Filas
 </h4>
 <div className="d-flex align-items-center gap-3">
 <span>

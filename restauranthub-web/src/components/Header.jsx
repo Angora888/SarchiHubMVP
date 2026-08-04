@@ -11,15 +11,9 @@ function Header() {
 <div className="d-flex justify-content-between align-items-center py-3">
 <div>
 <h3 className="m-0 fw-bold">
-                           🏡 Sarchi Hub Directorio
+                           🏡 Directorio
 </h3>
 </div>
-<button
-                       className="btn btn-outline-danger"
-                       onClick={cerrarSesion}
->
-                       🚪 Salir
-</button>
 </div>
 </div>
 </header>

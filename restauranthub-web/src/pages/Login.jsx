@@ -9,7 +9,7 @@ function Login() {
 
 
 const location = useLocation();
-const from = location.state?.from?.pathname || "/";
+const from = location.state?.from?.pathname || "/dashboard";
    const iniciarSesion = async () => {
        try {
            const respuesta = await api.post("/Auth/login", {

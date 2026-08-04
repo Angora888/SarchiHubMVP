@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import StatCard from "../components/StatCard";
-import Navbar from "../components/Navbar";
+
 import "../styles/dashboard.css";
 
 
@@ -31,7 +31,7 @@ const cargarDashboard = async () => {
    return (
    
    <>
-<Navbar />
+
 <div className="container">
        {
 		   <div>
@@ -40,29 +40,62 @@ const cargarDashboard = async () => {
 </h2>
 <div className="row">
 <StatCard
-       titulo="Mesas"
-       valor={datos.mesas}
-       icono="bi bi-grid-3x3-gap-fill"
-       color="bg-primary text-white"
-   />
+
+    titulo="Cocina"
+    valor="→"
+    icono="bi bi-fire"
+   color="bg-danger text-white"
+    ruta="/cocina"
+
+/>
+ 
 <StatCard
-       titulo="Productos"
-       valor={datos.productos}
-       icono="bi bi-basket-fill"
-       color="bg-success text-white"
-   />
+
+    titulo="Caja"
+    valor="→"
+    icono="bi bi-cash-stack"
+    color="bg-secondary text-white"
+    ruta="/caja"
+
+/>
+ 
 <StatCard
-       titulo="Pedidos"
-       valor={datos.pedidos}
-       icono="bi bi-receipt"
-       color="bg-warning"
-   />
+   titulo="Mesas"
+   valor={datos.mesas}
+   icono="bi bi-grid-3x3-gap-fill"
+   color="bg-primary text-white"
+   ruta="/mesas"
+/>
 <StatCard
-       titulo="Usuarios"
-       valor={datos.usuarios}
-       icono="bi bi-people-fill"
-       color="bg-danger text-white"
-   />
+   titulo="Productos"
+   valor={datos.productos}
+   icono="bi bi-basket-fill"
+   color="bg-success text-white"
+   ruta="/productos"
+/>
+<StatCard
+   titulo="Pedidos"
+   valor={datos.pedidos}
+   icono="bi bi-receipt"
+   color="bg-warning"
+   ruta="/pedidos"
+/>
+<StatCard
+
+    titulo="Directorio"
+    valor="→"
+    icono="bi bi-building"
+    color="bg-info text-white"
+    ruta="/clientes"
+/>
+ 
+<StatCard
+   titulo="Usuarios"
+   valor={datos.usuarios}
+   icono="bi bi-people-fill"
+   color="bg-danger text-white"
+   ruta="/usuarios"
+/>
 </div>
 </div>
 	   }
