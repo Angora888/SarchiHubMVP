@@ -1,6 +1,226 @@
+import { useEffect, useState } from "react";
+
+import api from "../services/api";
+
 function Pedidos() {
-   return (
-<h1>Pedidos</h1>
-   );
+
+    const [pedidos, setPedidos] = useState([]);
+
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+
+        cargarPedidos();
+
+    }, []);
+
+    const cargarPedidos = async () => {
+
+        try {
+
+            const respuesta = await api.get("/Pedidos");
+
+            setPedidos(respuesta.data);
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
+
+        finally {
+
+            setLoading(false);
+
+        }
+
+    };
+	
+	
+	const colorPrioridad = (fecha) => {
+   const minutos =
+       Math.floor((new Date() - new Date(fecha)) / 60000);
+   if (minutos >= 20)
+       return "danger";
+   if (minutos >= 10)
+       return "warning";
+   return "success";
+};
+	
+	const tiempoTranscurrido = (fecha) => {
+
+    const ahora = new Date();
+
+    const pedido = new Date(fecha);
+
+    const minutos = Math.floor((ahora - pedido) / 60000);
+
+    if (minutos < 1)
+
+        return "Hace unos segundos";
+
+    if (minutos < 60)
+
+        return `Hace ${minutos} min`;
+
+    const horas = Math.floor(minutos / 60);
+
+    if (horas < 24)
+
+        return `Hace ${horas} h`;
+
+    const dias = Math.floor(horas / 24);
+
+    return `Hace ${dias} día(s)`;
+
+};
+ 
+
+    const colorEstado = (estado) => {
+
+        switch (estado) {
+
+            case "Pendiente":
+
+                return "warning";
+
+            case "Preparando":
+
+                return "primary";
+
+            case "Listo":
+
+                return "success";
+
+            case "Finalizado":
+
+                return "secondary";
+
+            default:
+
+                return "dark";
+
+        }
+
+    };
+
+return (
+<div className="container">
+<h2 className="fw-bold mb-4">
+
+            📦 Pedidos
+</h2>
+
+        {
+
+            loading ?
+<div className="text-center">
+<div className="spinner-border text-success"></div>
+</div>
+
+                :
+
+                pedidos.map(pedido => (
+<div
+
+                        key={pedido.id}
+
+                        className={`card shadow-sm border-0 mb-3 border-start border-5 border-${colorPrioridad(pedido.fecha)}`}
+
+                        role="button"
+
+                        onClick={() => navigate(`/pedido/${pedido.id}`)}
+
+                        style={{
+
+                            cursor: "pointer",
+
+                            transition: "all .25s ease"
+
+                        }}
+>
+<div className="card-body">
+<div className="d-flex justify-content-between align-items-start">
+<div>
+<h5 className="fw-bold mb-1">
+
+                                        📦 Pedido #{pedido.id}
+</h5>
+<div className="text-muted">
+
+                                        🍽 Mesa {pedido.mesa}
+</div>
+<div className="text-muted">
+
+                                        🥗 {pedido.cantidadProductos} productos
+</div>
+<div className="small text-secondary">
+
+                                        🕒 {tiempoTranscurrido(pedido.fecha)}
+</div>
+</div>
+<span className={`badge bg-${colorEstado(pedido.estado)} fs-6`}>
+
+                                    {pedido.estado}
+</span>
+</div>
+<div
+
+                                className="progress mt-3"
+
+                                style={{ height: "8px" }}
+>
+<div
+
+                                    className={`progress-bar bg-${colorEstado(pedido.estado)}`}
+
+                                    style={{
+
+                                        width:
+
+                                            pedido.estado === "Pendiente"
+
+                                                ? "25%"
+
+                                                : pedido.estado === "Preparando"
+
+                                                ? "60%"
+
+                                                : pedido.estado === "Listo"
+
+                                                ? "100%"
+
+                                                : "100%"
+
+                                    }}
+
+                                />
+</div>
+<hr />
+<div className="d-flex justify-content-between align-items-center">
+<strong className="fs-5">
+
+                                    ₡ {pedido.total}
+</strong>
+<span className="text-success fw-semibold">
+
+                                    Tocar para ver →
+</span>
+</div>
+</div>
+</div>
+
+                ))
+
+        }
+</div>
+
+);
+ 
+
 }
+
 export default Pedidos;
+ 

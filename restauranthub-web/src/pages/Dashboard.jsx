@@ -40,6 +40,13 @@ const cargarDashboard = async () => {
 </h2>
 <div className="row">
 <StatCard
+   titulo="Pedidos"
+   valor={datos.pedidos}
+   icono="bi bi-receipt"
+   color="bg-warning"
+   ruta="/pedidos"
+/>
+<StatCard
 
     titulo="Cocina"
     valor="→"
@@ -72,13 +79,6 @@ const cargarDashboard = async () => {
    icono="bi bi-basket-fill"
    color="bg-success text-white"
    ruta="/productos"
-/>
-<StatCard
-   titulo="Pedidos"
-   valor={datos.pedidos}
-   icono="bi bi-receipt"
-   color="bg-warning"
-   ruta="/pedidos"
 />
 <StatCard
 

@@ -25,14 +25,8 @@ function AppRouter() {
                {/* Públicas */}
 <Route path="/" element={<Home />} />
 <Route path="/login" element={<Login />} />
-<Route
-   path="/menu/:codigoQr"
-   element={<MenuPublico />}
-/>
-<Route
-   path="/pedido/:id"
-   element={<PedidoCliente />}
-/>
+<Route path="/menu/:codigoQr" element={<MenuPublico />}/>
+<Route path="/pedido/:id" element={<PedidoCliente />}/>
 
                {/* Protegidas */}
 <Route element={<ProtectedRoute />}>
@@ -44,24 +38,11 @@ function AppRouter() {
 <Route path="/pedidos" element={<Pedidos />} />
 <Route path="/usuarios" element={<Usuarios />} />
 <Route path="/clientes" element={<Cliente />} />
-<Route path="/restaurantes/nuevo" element={<RestaurantForm />}
-/>
-<Route
-   path="/restaurantes"
-   element={<Restaurants />}
-/>
-<Route
-   path="/productos/importar"
-   element={<ImportarProductos />}
-/>
-<Route
-   path="/cocina"
-   element={<Cocina />}
-/>
-<Route
-   path="/caja"
-   element={<Caja />}
-/>
+<Route path="/restaurantes/nuevo" element={<RestaurantForm />}/>
+<Route path="/restaurantes" element={<Restaurants />}/>
+<Route path="/productos/importar" element={<ImportarProductos />}/>
+<Route path="/cocina" element={<Cocina />}/>
+<Route path="/caja" element={<Caja />}/>
 
 </Route>
 </Route>

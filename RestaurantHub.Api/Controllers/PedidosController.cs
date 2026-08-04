@@ -172,6 +172,38 @@ public class PedidosController : ControllerBase
         }
     }
 
+    [HttpGet]
+
+    public async Task<IActionResult> ObtenerPedidos()
+
+    {
+        var restaurantId = ObtenerRestaurantId();
+        var pedidos = await _context.Pedidos
+
+            .Include(p => p.Mesa)
+            .Include(p => p.Detalles)
+            .Where(p => p.Mesa!.RestaurantId == restaurantId)
+            .OrderByDescending(p => p.Fecha)
+            .Select(p => new
+
+            {
+
+                id = p.Id,
+                mesa = p.Mesa.Number,
+                estado = p.Estado,
+                total = p.Total,
+                fecha = p.Fecha,
+                cantidadProductos = p.Detalles.Sum(d => d.Cantidad)
+
+            })
+
+            .ToListAsync();
+
+        return Ok(pedidos);
+
+    }
+
+
     [HttpGet("{id}")]
     public async Task<IActionResult> ObtenerPedido(int id)
     {
@@ -326,5 +358,6 @@ public class PedidosController : ControllerBase
         if (claimRestaurant == null)
             throw new Exception("No existe RestaurantId en el token");
         return int.Parse(claimRestaurant.Value);
+        //return 1; // Hardcoded for testing purposes
     }
 }
