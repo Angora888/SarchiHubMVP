@@ -8,6 +8,8 @@ import "../styles/dashboard.css";
 
 function Dashboard() {
 	
+	const rol = localStorage.getItem("rol");
+	console.log(rol);
 	const [datos, setDatos] = useState({
    restaurantes: 0,
    mesas: 0,
@@ -75,13 +77,12 @@ const colorCocina = (cantidad) => {
     ruta="/caja"
 
 />
- 
 <StatCard
-   titulo="Mesas"
-   valor={datos.mesas}
-   icono="bi bi-grid-3x3-gap-fill"
-   color="bg-primary text-white"
-   ruta="/mesas"
+   titulo="Categorías"
+   valor={datos.categorias}
+   icono="bi bi-people-fill"
+   color="bg-danger text-white"
+   ruta="/categorias"
 />
 <StatCard
    titulo="Productos"
@@ -98,14 +99,33 @@ const colorCocina = (cantidad) => {
     color="bg-info text-white"
     ruta="/clientes"
 />
- 
-<StatCard
+{rol === "Admin" && (
+<>
+       { <StatCard
+   titulo="Mesas"
+   valor={datos.mesas}
+   icono="bi bi-grid-3x3-gap-fill"
+   color="bg-primary text-white"
+   ruta="/mesas"
+/>}
+       {<StatCard
    titulo="Usuarios"
    valor={datos.usuarios}
    icono="bi bi-people-fill"
    color="bg-danger text-white"
    ruta="/usuarios"
-/>
+/>}
+       {<StatCard
+   titulo="Restaurantes"
+   valor={datos.restaurantes}
+   icono="bi bi-people-fill"
+   color="bg-danger text-white"
+   ruta="/restaurantes"
+/>}
+</>
+)}
+
+
 </div>
 </div>
 	   }

@@ -1,8 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 function Login() {
+   const navigate = useNavigate();
    const [correo, setCorreo] = useState("");
    const [password, setPassword] = useState("");
+   const [mensaje, setMensaje] = useState("");
+   useEffect(() => {
+       const mensajeGuardado = sessionStorage.getItem("mensajeSesion");
+       if (mensajeGuardado) {
+           setMensaje(mensajeGuardado);
+           sessionStorage.removeItem("mensajeSesion");
+       }
+   }, []);
    const iniciarSesion = async () => {
        try {
            const respuesta = await api.post("/Auth/login", {
@@ -10,11 +20,13 @@ function Login() {
                password
            });
            localStorage.setItem("token", respuesta.data.token);
-           alert("Bienvenido " + respuesta.data.usuario);
-           console.log(respuesta.data);
+           localStorage.setItem("usuario", respuesta.data.usuario);
+           localStorage.setItem("rol", respuesta.data.rol);
+           // Ir directamente al Dashboard
+           navigate("/dashboard");
        }
        catch (error) {
-           alert("Correo o contraseña incorrectos.");
+            setMensaje("❌ Correo o contraseña incorrectos.");
            console.error(error);
        }
    };
@@ -27,6 +39,11 @@ function Login() {
 <h2 className="mb-4 text-center">
                                RestaurantHub
 </h2>
+{mensaje &&
+<div className="alert alert-danger">
+       {mensaje}
+</div>
+}
 <input
                                className="form-control mb-3"
                                placeholder="Correo"
@@ -40,12 +57,20 @@ function Login() {
                                value={password}
                                onChange={(e) => setPassword(e.target.value)}
                            />
+<div className="d-flex gap-2">
 <button
-                               className="btn btn-primary w-100"
-                               onClick={iniciarSesion}
+       className="btn btn-outline-secondary w-50"
+       onClick={() => navigate("/")}
 >
-                               Iniciar sesión
+       Cancelar
 </button>
+<button
+       className="btn btn-primary w-50"
+       onClick={iniciarSesion}
+>
+       Iniciar sesión
+</button>
+</div>
 </div>
 </div>
 </div>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 function Productos() {
    const [productos, setProductos] = useState([]);
+   const [busqueda, setBusqueda] = useState("");
       const navigate = useNavigate();
    useEffect(() => {
        cargarProductos();
@@ -11,7 +12,6 @@ function Productos() {
        try {
 		const respuesta = await api.get("/Productos/admin");
 		setProductos(respuesta.data);
-		setProductosEditables(respuesta.data);
        } catch (error) {
            console.error(error);
        }
@@ -33,6 +33,15 @@ const guardarProducto = async (producto) => {
        console.error(error);
    }
 };
+const productosFiltrados = productos.filter(producto => {
+   const texto = busqueda.toLowerCase();
+   return (
+       producto.nombre.toLowerCase().includes(texto) ||
+       (producto.descripcion ?? "")
+           .toLowerCase()
+           .includes(texto)
+   );
+});
 return (
 <div className="container">
 <div className="d-flex justify-content-between align-items-center mb-4">
@@ -60,12 +69,11 @@ return (
 <div className="card shadow border-0 rounded-4">
 <div className="card-body">
 <input
-
-                    className="form-control mb-4"
-
-                    placeholder="🔍 Buscar producto..."
-
-                />
+   className="form-control mb-4"
+   placeholder="🔍 Buscar producto..."
+   value={busqueda}
+   onChange={(e) => setBusqueda(e.target.value)}
+/> 
 				<table className="table align-middle table-hover">
 <thead>
 <tr>
@@ -77,7 +85,7 @@ return (
 </tr>
 </thead>
 <tbody>
-       {productos.map(producto => (
+       {productosFiltrados.map(producto => (
 <tr
    key={producto.id}
    style={{

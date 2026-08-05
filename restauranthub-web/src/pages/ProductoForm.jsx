@@ -4,141 +4,153 @@ import api from "../services/api";
 function ProductoForm() {
    const navigate = useNavigate();
    const [producto, setProducto] = useState({
-       name: "",
-       description: "",
-       price: 0,
-       categoryId: "",
-       restaurantId: "",
-       active: true
+       nombre: "",
+       descripcion: "",
+       precio: 0,
+       categoriaId: "",
+       disponible: true,
+       imagenUrl: ""
    });
    const [categorias, setCategorias] = useState([]);
-   const [restaurantes, setRestaurantes] = useState([]);
    useEffect(() => {
        cargarCategorias();
-       cargarRestaurantes();
    }, []);
    const cargarCategorias = async () => {
-       const respuesta = await api.get("/Category");
-       setCategorias(respuesta.data);
-   };
-   const cargarRestaurantes = async () => {
-       const respuesta = await api.get("/Restaurant");
-       setRestaurantes(respuesta.data);
+       try {
+           // Cambia la ruta si tu controlador es Categoria y no Categorias
+           const respuesta = await api.get("/Categoria");
+           setCategorias(respuesta.data);
+       }
+       catch (error) {
+           console.error(error);
+       }
    };
    const handleChange = (e) => {
        const { name, value, type, checked } = e.target;
        setProducto({
            ...producto,
-           [name]: type === "checkbox" ? checked : value
+           [name]: type === "checkbox"
+               ? checked
+               : value
        });
    };
    const guardar = async (e) => {
        e.preventDefault();
-       await api.post("/Product", producto);
-       navigate("/productos");
+       try {
+           await api.post("/Productos", producto);
+           navigate("/productos");
+       }
+       catch (error) {
+           console.error(error);
+           alert("Error al guardar el producto.");
+       }
    };
    return (
 <div className="container">
-<h2 className="mb-4">
-               Nuevo Producto
+<h2 className="fw-bold mb-4">
+               📦 Nuevo Producto
 </h2>
-           {
-			   <form onSubmit={guardar}>
+<div className="card shadow border-0 rounded-4">
+<div className="card-body">
+<form onSubmit={guardar}>
 <div className="mb-3">
-<label>Nombre</label>
+<label className="form-label">
+                               Nombre
+</label>
 <input
-           className="form-control"
-           name="name"
-           value={producto.name}
-           onChange={handleChange}
-       />
+                               className="form-control"
+                               name="nombre"
+                               value={producto.nombre}
+                               onChange={handleChange}
+                               required
+                           />
 </div>
 <div className="mb-3">
-<label>Descripción</label>
+<label className="form-label">
+                               Descripción
+</label>
 <textarea
-           className="form-control"
-           name="description"
-           value={producto.description}
-           onChange={handleChange}
-       />
+                               rows="3"
+                               className="form-control"
+                               name="descripcion"
+                               value={producto.descripcion}
+                               onChange={handleChange}
+                           />
 </div>
-<div className="mb-3">
-<label>Precio</label>
+<div className="row">
+<div className="col-md-6 mb-3">
+<label className="form-label">
+                                   Precio
+</label>
 <input
-           type="number"
-           step="0.01"
-           className="form-control"
-           name="price"
-           value={producto.price}
-           onChange={handleChange}
-       />
+                                   type="number"
+                                   step="0.01"
+                                   min="0"
+                                   className="form-control"
+                                   name="precio"
+                                   value={producto.precio}
+                                   onChange={handleChange}
+                                   required
+                               />
 </div>
-<div className="mb-3">
-<label>Categoría</label>
+<div className="col-md-6 mb-3">
+<label className="form-label">
+                                   Categoría
+</label>
 <select
-           className="form-select"
-           name="categoryId"
-           value={producto.categoryId}
-           onChange={handleChange}
+                                   className="form-select"
+                                   name="categoriaId"
+                                   value={producto.categoriaId}
+                                   onChange={handleChange}
+                                   required
 >
 <option value="">
-               Seleccione...
+                                       Seleccione...
 </option>
-           {categorias.map(c => (
+                                   {
+                                       categorias.map(c => (
 <option
-                   key={c.id}
-                   value={c.id}
+                                               key={c.id}
+                                               value={c.id}
 >
-                   {c.name}
+                                               {c.name}
 </option>
-           ))}
+                                       ))
+                                   }
 </select>
 </div>
+</div>
 <div className="mb-3">
-<label>Restaurante</label>
-<select
-           className="form-select"
-           name="restaurantId"
-           value={producto.restaurantId}
-           onChange={handleChange}
->
-<option value="">
-               Seleccione...
-</option>
-           {restaurantes.map(r => (
-<option
-                   key={r.id}
-                   value={r.id}
->
-                   {r.name}
-</option>
-           ))}
-</select>
 </div>
 <div className="form-check mb-4">
 <input
-           className="form-check-input"
-           type="checkbox"
-           name="active"
-           checked={producto.active}
-           onChange={handleChange}
-       />
+                               className="form-check-input"
+                               type="checkbox"
+                               name="disponible"
+                               checked={producto.disponible}
+                               onChange={handleChange}
+                           />
 <label className="form-check-label">
-           Activo
+                               Producto disponible
 </label>
 </div>
-<button className="btn btn-success me-2">
-       Guardar
+<button
+                           className="btn btn-success me-2"
+>
+<i className="bi bi-check-circle me-2"></i>
+                           Guardar
 </button>
 <button
-       type="button"
-       className="btn btn-secondary"
-       onClick={() => navigate("/productos")}
+                           type="button"
+                           className="btn btn-secondary"
+                           onClick={() => navigate("/productos")}
 >
-       Cancelar
+<i className="bi bi-x-circle me-2"></i>
+                           Cancelar
 </button>
 </form>
-		   }
+</div>
+</div>
 </div>
    );
 }

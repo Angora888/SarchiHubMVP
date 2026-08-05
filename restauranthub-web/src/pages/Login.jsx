@@ -18,6 +18,7 @@ const from = location.state?.from?.pathname || "/dashboard";
            });
            localStorage.setItem("token", respuesta.data.token);
 		   localStorage.setItem("usuario", respuesta.data.usuario);
+		   		   localStorage.setItem("rol", respuesta.data.rol);
            //alert("Bienvenido " + respuesta.data.usuario);
 		   navigate(from, { replace: true });
            console.log(respuesta.data);
@@ -34,7 +35,7 @@ const from = location.state?.from?.pathname || "/dashboard";
 <div className="card shadow">
 <div className="card-body">
 <h2 className="mb-4 text-center">
-                               Sarchi Hub
+                               Sin Filas Admin
 </h2>
 <input
                                className="form-control mb-3"
@@ -49,12 +50,20 @@ const from = location.state?.from?.pathname || "/dashboard";
                                value={password}
                                onChange={(e) => setPassword(e.target.value)}
                            />
+<div className="d-flex gap-2">
 <button
-                               className="btn btn-primary w-100"
-                               onClick={iniciarSesion}
+       className="btn btn-outline-secondary w-50"
+       onClick={() => navigate("/")}
 >
-                               Iniciar sesión
+       Cancelar
 </button>
+<button
+       className="btn btn-primary w-50"
+       onClick={iniciarSesion}
+>
+       Iniciar sesión
+</button>
+</div>
 </div>
 </div>
 </div>
