@@ -22,13 +22,17 @@ public class ProductosController : ControllerBase
     public async Task<ActionResult<IEnumerable<Producto>>> GetProductos()
     {
         var restaurantId = ObtenerRestaurantId();
-        return await _context.Producto.Where(p => p.RestaurantId == restaurantId).ToListAsync();
+        return await _context.Producto
+            .Where(p => p.RestaurantId == restaurantId)
+            .OrderBy(p => p.Id)
+            .ToListAsync();
     }
     [HttpGet("{id}")]
     public async Task<ActionResult<Producto>> GetProducto(int id)
     {
         var restaurantId = ObtenerRestaurantId();
         var producto = await _context.Producto
+           .OrderBy(p => p.Id)
            .FirstOrDefaultAsync(p =>
                p.Id == id &&
                p.RestaurantId == restaurantId);
@@ -92,7 +96,7 @@ public class ProductosController : ControllerBase
         return int.Parse(
             User.FindFirst("RestaurantId")!.Value
         );
-        //return 1; // Hardcoded for testing purposes
+/*        return 1; // Hardcoded for testing purpose*/
     }
 
     [HttpGet("admin")]

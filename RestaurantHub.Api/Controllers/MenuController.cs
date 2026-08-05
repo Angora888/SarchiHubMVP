@@ -45,6 +45,7 @@ public class MenuController : ControllerBase
            .Where(p =>
                p.RestaurantId == mesa.RestaurantId &&
                p.Disponible)
+           .OrderBy(p => p.Id)
            .Select(p => new
            {
                p.Id,
