@@ -18,4 +18,6 @@ public class Restaurant
     public List<Mesa> Mesas { get; set; } = new();
 
     public List<Usuario> Usuarios { get; set; } = new();
+
+    public List<Categoria> Categorias { get; set; } = new();
 }

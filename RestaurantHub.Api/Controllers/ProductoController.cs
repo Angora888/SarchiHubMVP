@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantHub.Api.Data;
 using RestaurantHub.Api.Models;
 using RestaurantHub.Api.DTOs;
+using Microsoft.AspNetCore.Authorization;
 namespace RestaurantHub.Api.Controllers;
+
 
 
 using RestaurantHub.Core.Entities;
@@ -11,6 +13,7 @@ using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ProductosController : ControllerBase
 {
     private readonly RestaurantHubContext _context;
@@ -93,10 +96,28 @@ public class ProductosController : ControllerBase
 
     private int ObtenerRestaurantId()
     {
-        //return int.Parse(
-        //    User.FindFirst("RestaurantId")!.Value
-        //);
-        return 1; // Hardcoded for testing purpose
+        Console.WriteLine("===== CLAIMS DEL USUARIO =====");
+        foreach (var claim in User.Claims)
+        {
+            Console.WriteLine($"{claim.Type} = {claim.Value}");
+        }
+        Console.WriteLine("==============================");
+        if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            throw new UnauthorizedAccessException("El usuario no está autenticado.");
+        }
+        var claimRestaurant = User.FindFirst("RestaurantId");
+        if (claimRestaurant == null)
+        {
+            throw new UnauthorizedAccessException(
+                "El token no contiene el claim RestaurantId.");
+        }
+        if (!int.TryParse(claimRestaurant.Value, out var restaurantId))
+        {
+            throw new Exception(
+                $"RestaurantId inválido: {claimRestaurant.Value}");
+        }
+        return restaurantId;
     }
 
     [HttpGet("admin")]

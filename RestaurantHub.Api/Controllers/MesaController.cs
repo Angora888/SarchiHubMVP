@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantHub.Api.Data;
+using RestaurantHub.Api.DTOs;
 using RestaurantHub.Api.Models;
 namespace RestaurantHub.Api.Controllers;
 
@@ -37,15 +39,15 @@ public class MesasController : ControllerBase
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetMesa), new { id = mesa.Id }, mesa);
     }
-    [HttpPut("{id}")]
-    public async Task<IActionResult> ActualizarMesa(int id, Mesa mesa)
-    {
-        if (id != mesa.Id)
-            return BadRequest();
-        _context.Entry(mesa).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-        return NoContent();
-    }
+    //[HttpPut("{id}")]
+    //public async Task<IActionResult> ActualizarMesa(int id, Mesa mesa)
+    //{
+    //    if (id != mesa.Id)
+    //        return BadRequest();
+    //    _context.Entry(mesa).State = EntityState.Modified;
+    //    await _context.SaveChangesAsync();
+    //    return NoContent();
+    //}
     [HttpDelete("{id}")]
     public async Task<IActionResult> EliminarMesa(int id)
     {
@@ -71,5 +73,42 @@ public class MesasController : ControllerBase
             mesa.Number,
             Restaurante = mesa.Restaurant?.Name
         });
+    }
+
+    [HttpGet("admin")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ObtenerMesasAdmin()
+    {
+        var mesas = await _context.Mesa
+            .Include(m => m.Restaurant)
+            .OrderBy(m => m.Number)
+            .Select(m => new
+            {
+                m.Id,
+                m.Number,
+                m.CodigoQR,
+                m.RestaurantId,
+                Restaurante = m.Restaurant.Name,
+                m.Status
+            })
+            .ToListAsync();
+        return Ok(mesas);
+    }
+
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ActualizarMesa(
+   int id,
+   MesaUpdateDto dto)
+    {
+        var mesa = await _context.Mesa
+            .FirstOrDefaultAsync(m => m.Id == id);
+        if (mesa == null)
+            return NotFound();
+        mesa.Number = dto.Number;
+        mesa.RestaurantId = dto.RestaurantId;
+        mesa.Status = dto.Status;
+        await _context.SaveChangesAsync();
+        return Ok();
     }
 }

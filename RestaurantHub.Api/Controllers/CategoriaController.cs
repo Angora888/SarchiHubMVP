@@ -2,10 +2,13 @@
 using Microsoft.EntityFrameworkCore;
 using RestaurantHub.Api.Data;
 using RestaurantHub.Core.Entities;
+using Microsoft.AspNetCore.Authorization;
 namespace RestaurantHub.Api.Controllers;
+using RestaurantHub.Api.DTOs;
 
 [ApiController]
 [Route("api/[controller]")]
+
 public class CategoriaController : ControllerBase
 {
     private readonly RestaurantHubContext _context;
@@ -20,14 +23,21 @@ public class CategoriaController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Categoria>> CreateCategoria(Categoria categoria)
+    [Authorize]
+    public async Task<ActionResult<Categoria>> CreateCategoria(CategoriaUpdateDto dto)
     {
+        var categoria = new Categoria
+        {
+            Name = dto.Name,
+            RestaurantId = ObtenerRestaurantId()
+        };
         _context.Categoria.Add(categoria);
         await _context.SaveChangesAsync();
         return CreatedAtAction(
             nameof(GetCategoriaById),
             new { id = categoria.Id },
-            categoria);
+            categoria
+        );
     }
 
     [HttpGet("{id}")]
@@ -41,25 +51,44 @@ public class CategoriaController : ControllerBase
         return categoria;
     }
 
+    //[HttpPut("{id}")]
+    //[Authorize]
+    //public async Task<IActionResult> UpdateCategoria(int id, Categoria categoria)
+    //{
+    //    if (id != categoria.Id)
+    //    {
+    //        return BadRequest();
+    //    }
+    //    _context.Entry(categoria).State = EntityState.Modified;
+    //    try
+    //    {
+    //        await _context.SaveChangesAsync();
+    //    }
+    //    catch (DbUpdateConcurrencyException)
+    //    {
+    //        if (!CategoriaExists(id))
+    //            return NotFound();
+    //        throw;
+    //    }
+    //    return NoContent();
+    //}
+
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCategoria(int id, Categoria categoria)
+    [Authorize ]
+    public async Task<IActionResult> UpdateCategoria(
+   int id,
+   CategoriaUpdateDto dto)
     {
-        if (id != categoria.Id)
-        {
-            return BadRequest();
-        }
-        _context.Entry(categoria).State = EntityState.Modified;
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!CategoriaExists(id))
-                return NotFound();
-            throw;
-        }
-        return NoContent();
+        var restaurantId = ObtenerRestaurantId();
+        var categoria = await _context.Categoria
+            .FirstOrDefaultAsync(c =>
+                c.Id == id &&
+                c.RestaurantId == restaurantId);
+        if (categoria == null)
+            return NotFound();
+        categoria.Name = dto.Name;
+        await _context.SaveChangesAsync();
+        return Ok();
     }
 
     private bool CategoriaExists(int id)
@@ -68,6 +97,7 @@ public class CategoriaController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteCategoria(int id)
     {
         var categoria = await _context.Categoria.FindAsync(id);
@@ -76,5 +106,49 @@ public class CategoriaController : ControllerBase
         _context.Categoria.Remove(categoria);
         await _context.SaveChangesAsync();
         return NoContent();
+    }
+
+    [HttpGet("admin")]
+    [Authorize]
+    public async Task<IActionResult> ObtenerCategoriasAdmin()
+    {
+        var restaurantId = ObtenerRestaurantId();
+        var categorias = await _context.Categoria
+            .Where(c => c.RestaurantId == restaurantId)
+            .Select(c => new
+            {
+                c.Id,
+                c.Name,
+                CantidadProductos = c.Productos.Count
+            })
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+        return Ok(categorias);
+    }
+
+    private int ObtenerRestaurantId()
+    {
+        Console.WriteLine("===== CLAIMS DEL USUARIO =====");
+        foreach (var claim in User.Claims)
+        {
+            Console.WriteLine($"{claim.Type} = {claim.Value}");
+        }
+        Console.WriteLine("==============================");
+        if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            throw new UnauthorizedAccessException("El usuario no está autenticado.");
+        }
+        var claimRestaurant = User.FindFirst("RestaurantId");
+        if (claimRestaurant == null)
+        {
+            throw new UnauthorizedAccessException(
+                "El token no contiene el claim RestaurantId.");
+        }
+        if (!int.TryParse(claimRestaurant.Value, out var restaurantId))
+        {
+            throw new Exception(
+                $"RestaurantId inválido: {claimRestaurant.Value}");
+        }
+        return restaurantId;
     }
 }

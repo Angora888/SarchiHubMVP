@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantHub.Api.Data;
 using RestaurantHub.Api.DTOs;
 using RestaurantHub.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using static RestaurantHub.Api.Controllers.DashboardController;
 namespace RestaurantHub.Api.Controllers;
@@ -88,6 +89,7 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPost("{id}/cerrar")]
+    [Authorize]
     public async Task<IActionResult> CerrarPedido(int id)
     {
         var pedido = await _context.Pedidos.FindAsync(id);
@@ -239,6 +241,7 @@ public class PedidosController : ControllerBase
     }
 
     [HttpGet("cocina")]
+    [Authorize]
     public async Task<IActionResult> ObtenerPedidosCocina()
     {
         var restaurantId = ObtenerRestaurantId();
@@ -270,6 +273,7 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPut("{id}/preparando")]
+    [Authorize]
     public async Task<IActionResult> MarcarPreparando(int id)
     {
         var pedido = await _context.Pedidos.FindAsync(id);
@@ -287,6 +291,7 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPut("{id}/listo")]
+    [Authorize]
     public async Task<IActionResult> MarcarListo(int id)
     {
         var pedido = await _context.Pedidos.FindAsync(id);
@@ -304,6 +309,7 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPut("{id}/terminar")]
+    [Authorize]
     public async Task<IActionResult> TerminarPedido(int id)
     {
         var pedido = await _context.Pedidos.FindAsync(id);
@@ -324,6 +330,7 @@ public class PedidosController : ControllerBase
     }
 
     [HttpGet("caja")]
+    [Authorize]
     public async Task<IActionResult> ObtenerPedidosCaja()
     {
         var restaurantId = ObtenerRestaurantId();
@@ -352,15 +359,27 @@ public class PedidosController : ControllerBase
 
     private int ObtenerRestaurantId()
     {
-        //foreach (var claim in User.Claims)
-        //{
-        //    Console.WriteLine($"{claim.Type} = {claim.Value}");
-        //}
-        //var claimRestaurant = User.FindFirst("RestaurantId");
-        //Console.WriteLine($"RestaurantId encontrado: {claimRestaurant?.Value}");
-        //if (claimRestaurant == null)
-        //    throw new Exception("No existe RestaurantId en el token");
-        //return int.Parse(claimRestaurant.Value);
-        return 1; // Hardcoded for testing purposes
+        Console.WriteLine("===== CLAIMS DEL USUARIO =====");
+        foreach (var claim in User.Claims)
+        {
+            Console.WriteLine($"{claim.Type} = {claim.Value}");
+        }
+        Console.WriteLine("==============================");
+        if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            throw new UnauthorizedAccessException("El usuario no está autenticado.");
+        }
+        var claimRestaurant = User.FindFirst("RestaurantId");
+        if (claimRestaurant == null)
+        {
+            throw new UnauthorizedAccessException(
+                "El token no contiene el claim RestaurantId.");
+        }
+        if (!int.TryParse(claimRestaurant.Value, out var restaurantId))
+        {
+            throw new Exception(
+                $"RestaurantId inválido: {claimRestaurant.Value}");
+        }
+        return restaurantId;
     }
 }

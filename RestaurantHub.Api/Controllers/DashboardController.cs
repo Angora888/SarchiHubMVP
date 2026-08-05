@@ -19,6 +19,7 @@ public class DashboardController : ControllerBase
         var dashboard = new DashboardDto
         {
             Restaurantes = await _context.Restaurants.CountAsync(),
+            Categorias = await _context.Categoria.CountAsync(),
             Mesas = await _context.Mesa.CountAsync(),
             Productos = await _context.Producto.CountAsync(),
             Pedidos = await _context.Pedidos
