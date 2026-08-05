@@ -78,10 +78,16 @@ return (
 </thead>
 <tbody>
        {productos.map(producto => (
-<tr key={producto.id}>
+<tr
+   key={producto.id}
+   style={{
+       transition: "all .25s ease",
+       opacity: producto.disponible ? 1 : .55
+   }}
+>
 <td>
 <input
-   className="form-control border-0 bg-transparent"
+   className="form-control form-control-sm"
    value={producto.nombre}
    onChange={(e)=>
        cambiarValor(producto.id,"nombre",e.target.value)
@@ -91,7 +97,7 @@ return (
 </td>
 <td>
 <input
-   className="form-control border-0 bg-transparent"
+   className="form-control form-control-sm"
    value={producto.descripcion}
    onChange={(e)=>
        cambiarValor(producto.id,"descripcion",e.target.value)
@@ -102,7 +108,7 @@ return (
 <td style={{width:"140px"}}>
 <input
    type="number"
-   className="form-control"
+   className="form-control form-control-sm"
    value={producto.precio}
    onChange={(e)=>
        cambiarValor(producto.id,"precio",Number(e.target.value))
@@ -111,20 +117,26 @@ return (
 />
 </td>
 <td>
-                   {producto.disponible ?
-<span className="badge bg-success">
-                           Disponible
-</span>
-                       :
-<span className="badge bg-secondary">
-                           Agotado
-</span>
-                   }
+<div className="form-check form-switch">
+<input
+           className="form-check-input"
+           type="checkbox"
+           checked={producto.disponible}
+           onChange={(e) => {
+               cambiarValor(
+producto.id,
+                   "disponible",
+                   e.target.checked
+               );
+               guardarProducto({
+                   ...producto,
+                   disponible: e.target.checked
+               });
+           }}
+       />
+</div>
 </td>
 <td>
-<button className="btn btn-outline-danger btn-sm">
-<i className="bi bi-trash"></i>
-</button>
 </td>
 </tr>
        ))}
