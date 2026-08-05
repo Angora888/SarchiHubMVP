@@ -93,10 +93,10 @@ public class ProductosController : ControllerBase
 
     private int ObtenerRestaurantId()
     {
-        return int.Parse(
-            User.FindFirst("RestaurantId")!.Value
-        );
-/*        return 1; // Hardcoded for testing purpose*/
+        //return int.Parse(
+        //    User.FindFirst("RestaurantId")!.Value
+        //);
+        return 1; // Hardcoded for testing purpose
     }
 
     [HttpGet("admin")]
