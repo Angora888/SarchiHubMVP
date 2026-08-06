@@ -1,12 +1,19 @@
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { useParams } from "react-router-dom"
 import api from "../services/api";
+import { API_URL } from "../config";
 
 function RestaurantForm() {
 
     const navigate = useNavigate();
+	const { id } = useParams();
+	
+	useEffect(() => {
+   if(id){
+       cargarRestaurante();
+   }
+}, [id]);
 
     const [restaurant, setRestaurant] = useState({
 
@@ -58,71 +65,45 @@ function RestaurantForm() {
 
     };
 
-    const guardar = async (e) => {
-
-        e.preventDefault();
-
-        try {
-
-            setGuardando(true);
-
-            const respuesta = await api.post(
-
-                "/Restaurants",
-
-                restaurant
-
-            );
-
-            const id = respuesta.data.id;
-
-            if (imagen) {
-
-                const formData = new FormData();
-
-                formData.append("file", imagen);
-
-                await api.post(
-
-                    `/Restaurants/${id}/image`,
-
-                    formData,
-
-                    {
-
-                        headers: {
-
-                            "Content-Type": "multipart/form-data"
-
-                        }
-
-                    }
-
-                );
-
-            }
-
-            alert("Restaurante guardado correctamente.");
-
-            navigate("/restaurantes");
-
-        }
-
-        catch (error) {
-
-            console.error(error);
-
-            alert("Ocurrió un error al guardar.");
-
-        }
-
-        finally {
-
-            setGuardando(false);
-
-        }
-
-    };
+const guardar = async (e) => {
+   e.preventDefault();
+   try {
+       setGuardando(true);
+       let restaurantId = id;
+       if (id) {
+           await api.put(`/Restaurants/${id}`, restaurant);
+       } else {
+           const respuesta =
+               await api.post("/Restaurants", restaurant);
+           restaurantId = respuesta.data.id;
+       }
+       if (imagen) {
+           const formData = new FormData();
+           formData.append("file", imagen);
+           await api.post(
+               `/Restaurants/${restaurantId}/image`,
+               formData
+           );
+       }
+       alert("Restaurante guardado correctamente.");
+       navigate("/restaurantes");
+   }
+   catch (error) {
+       console.error(error);
+       alert("Ocurrió un error al guardar.");
+   }
+   finally {
+       setGuardando(false);
+   }
+};
+	
+	const cargarRestaurante = async () => {
+   const respuesta = await api.get(`/Restaurants/${id}`);
+   setRestaurant(respuesta.data);
+   if(respuesta.data.imageUrl){
+       setPreview(`${API_URL}/${respuesta.data.imageUrl}`);
+   }
+}
 
     return (
 <div className="container py-4">
@@ -131,8 +112,9 @@ function RestaurantForm() {
 <div className="card shadow">
 <div className="card-header bg-success text-white">
 <h3 className="mb-0">
-
-                                Nuevo Restaurante
+   {id
+       ? "Editar Restaurante"
+       : "Nuevo Restaurante"}
 </h3>
 </div>
 <div className="card-body">
@@ -277,6 +259,13 @@ function RestaurantForm() {
                                                ? "Guardando..."
                                                : "Guardar Restaurante"
                                        }
+</button>
+<button
+                           type="button"
+                           className="btn btn-secondary"
+                           onClick={() => navigate("/restaurantes")}
+>
+                           Cancelar
 </button>
 </div>
 </form>

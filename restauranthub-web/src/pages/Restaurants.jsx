@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { API_URL } from "../config";
 import api from "../services/api";
 function Restaurants() {
    const [restaurants, setRestaurants] = useState([]);
@@ -65,7 +66,7 @@ function Restaurants() {
 <img
                                    src={
                                        r.imageUrl
-                                       ? `http://localhost:5281/${r.imageUrl}`
+                                       ? `${API_URL}/${r.imageUrl}`
                                        : "https://placehold.co/600x350?text=Restaurante"
                                    }
                                    className="card-img-top"

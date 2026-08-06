@@ -55,7 +55,7 @@ const colorCocina = (cantidad) => {
    titulo="Pedidos"
    valor={datos.pedidos}
    icono="bi bi-receipt"
-   color="bg-warning"
+   color="bg-orange"
    ruta="/pedidos"
 />
 <StatCard
@@ -81,7 +81,7 @@ const colorCocina = (cantidad) => {
    titulo="Categorías"
    valor={datos.categorias}
    icono="bi bi-people-fill"
-   color="bg-danger text-white"
+   color="bg-soft-green text-white"
    ruta="/categorias"
 />
 <StatCard
@@ -99,15 +99,16 @@ const colorCocina = (cantidad) => {
     color="bg-info text-white"
     ruta="/clientes"
 />
-{rol === "Admin" && (
-<>
-       { <StatCard
+
+<StatCard
    titulo="Mesas"
    valor={datos.mesas}
    icono="bi bi-grid-3x3-gap-fill"
    color="bg-primary text-white"
    ruta="/mesas"
-/>}
+/>
+{rol === "Admin" && (
+<>
        {<StatCard
    titulo="Usuarios"
    valor={datos.usuarios}

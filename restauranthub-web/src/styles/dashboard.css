@@ -6,5 +6,23 @@
    box-shadow:0 .8rem 2rem rgba(0,0,0,.18)!important;
 }
 .bg-orange{
-   background:#fd7e14;
+   background: #fd7e14 !important;
+color: white !important
+}
+
+.bg-soft-green{
+   background:#198754 !important;
+   color:#fff;
+}
+.bg-soft-green{
+   background:#4CAF50 !important;
+   color:white !important;
+}
+.bg-soft-gray{
+   background:#6b7280 !important;
+   color:#fff;
+}
+.bg-soft-cyan{
+   background:#06b6d4 !important;
+   color:#fff;
 }

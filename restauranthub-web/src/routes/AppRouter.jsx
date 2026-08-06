@@ -19,6 +19,7 @@ import Cocina from "../pages/Cocina";
 import Caja from "../pages/Caja";
 import Categorias from "../pages/Categorias";
 import UsuarioForm from "../pages/UsuarioForm";
+import MesaForm from "../pages/MesaForm";
 
 function AppRouter() {
    return (
@@ -41,12 +42,14 @@ function AppRouter() {
 <Route path="/usuarios" element={<Usuarios />} />
 <Route path="/clientes" element={<Cliente />} />
 <Route path="/restaurantes/nuevo" element={<RestaurantForm />}/>
+<Route path="/restaurantes/editar/:id" element={<RestaurantForm />}/>
 <Route path="/restaurantes" element={<Restaurants />}/>
 <Route path="/productos/importar" element={<ImportarProductos />}/>
 <Route path="/cocina" element={<Cocina />}/>
 <Route path="/caja" element={<Caja />}/>
 <Route path="/categorias" element={<Categorias />}/>
 <Route path="/usuarios/nuevo" element={<UsuarioForm />}/>
+<Route path="/mesas/nuevo" element={<MesaForm />}/>
 
 </Route>
 </Route>
