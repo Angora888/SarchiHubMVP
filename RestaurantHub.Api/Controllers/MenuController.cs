@@ -96,7 +96,7 @@ public class MenuController : ControllerBase
     public async Task<IActionResult> ObtenerMenuPublico(int restaurantId)
     {
         var restaurant = await _context.Restaurants
-            //api controller para obtener el menu de un restaurante por su id
+            //api controller 
             .FirstOrDefaultAsync(r => r.Id == restaurantId);
         if (restaurant == null)
             return NotFound();
