@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import QRCode from "react-qr-code";
 import api from "../services/api";
 function Mesas() {
 	const [mesas, setMesas] = useState([]);
 	const [restaurantes, setRestaurantes] = useState([]);
 	const [busqueda, setBusqueda] = useState("");
+	const [mesaSeleccionada, setMesaSeleccionada] = useState(null);
+const [mostrarQR, setMostrarQR] = useState(false);
 		      const navigate = useNavigate();
 	   useEffect(() => {
        cargarMesas();
@@ -46,6 +49,48 @@ mesa.id===id
            : mesa
        )
    );
+}
+
+const imprimirQR = () => {
+const contenido =
+   document.getElementById("tarjetaQR").innerHTML;
+const ventana = window.open(
+   "",
+   "",
+   "width=500,height=700"
+);
+ventana.document.write(`
+<html>
+<head>
+<title>QR Mesa</title>
+<style>
+       body{
+           display:flex;
+           justify-content:center;
+           align-items:center;
+           height:100vh;
+           font-family:Arial;
+           text-align:center;
+       }
+       QRCode{
+           width:250px;
+       }
+</style>
+</head>
+<body>
+<div>
+       ${contenido}
+</div>
+</body>
+</html>
+`);
+ventana.document.close();
+const img = ventana.document.querySelector("QRCode");
+img.onload = () => {
+   ventana.focus();
+   ventana.print();
+   ventana.close();
+};
 }
 	
 return (
@@ -139,10 +184,10 @@ mesa.id,
 <td>
 <button
                                        className="btn btn-outline-primary btn-sm"
-                                       onClick={() => {
-                                           // Lo usaremos para abrir el modal del QR
-                                           console.log(mesa.codigoQR);
-                                       }}
+onClick={() => {
+   setMesaSeleccionada(mesa);
+   setMostrarQR(true);
+}}
 >
 <i className="bi bi-qr-code me-1"></i>
                                        Ver
@@ -172,6 +217,72 @@ mesa.id,
                        ))}
 </tbody>
 </table>
+</div>
+</div>
+<div
+   className={`modal fade ${mostrarQR ? "show d-block" : ""}`}
+   tabIndex="-1"
+   style={{
+       backgroundColor: "rgba(0,0,0,.5)"
+   }}
+>
+<div className="modal-dialog modal-dialog-centered">
+<div className="modal-content">
+<div className="modal-header">
+<h5 className="modal-title">
+                   🍽️ Mesa #{mesaSeleccionada?.number}
+</h5>
+<button
+                   className="btn-close"
+                   onClick={() => setMostrarQR(false)}
+               />
+</div>
+<div    id="tarjetaQR" className="modal-body text-center">
+<div
+
+   className="border rounded-4 p-4 bg-white"
+>
+<h3 className="fw-bold">
+       {mesaSeleccionada?.restaurante}
+</h3>
+<h5 className="text-muted">
+       Mesa #{mesaSeleccionada?.number}
+</h5>
+<QRCode
+   value={`https://sarchi-hub-mvp.vercel.app/menu/${mesaSeleccionada?.codigoQR}`}
+   size={250}
+/>
+<p className="mb-0">
+       Escanee el código para realizar su pedido.
+</p>
+
+</div>
+<small className="text-muted d-block">
+   ¿Le gustaría tener un menú digital como este?
+</small>
+<small className="text-muted d-block">
+   Contáctenos y modernice su negocio.
+</small>
+<small className="fw-semibold">
+   📞 6066-2375
+</small>
+</div>
+<div className="modal-footer">
+<button
+                   className="btn btn-secondary"
+                   onClick={() => setMostrarQR(false)}
+>
+                   Cerrar
+</button>
+<button
+   className="btn btn-primary"
+   onClick={imprimirQR}
+>
+<i className="bi bi-printer me-2"></i>
+   Imprimir
+</button>
+</div>
+</div>
 </div>
 </div>
 </div>
