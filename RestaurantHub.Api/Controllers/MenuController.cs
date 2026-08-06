@@ -92,5 +92,45 @@ public class MenuController : ControllerBase
 
     }
 
+    [HttpGet("restaurant/{restaurantId}")]
+    public async Task<IActionResult> ObtenerMenuPublico(int restaurantId)
+    {
+        var restaurant = await _context.Restaurants
+            .FirstOrDefaultAsync(r => r.Id == restaurantId);
+        if (restaurant == null)
+            return NotFound();
+        var categorias = await _context.Categoria
+            .Where(c => c.RestaurantId == restaurantId)
+            .OrderBy(c => c.Name)
+            .Select(c => new
+            {
+                c.Id,
+                c.Name,
+                Productos = c.Productos
+                    .Where(p => p.Disponible)
+                    .OrderBy(p => p.Nombre)
+                    .Select(p => new
+                    {
+                        p.Id,
+                        p.Nombre,
+                        p.Descripcion,
+                        p.Precio,
+                        p.ImagenUrl
+                    })
+            })
+            .ToListAsync();
+        return Ok(new
+        {
+            restaurant = new
+            {
+                restaurant.Id,
+                restaurant.Name,
+                restaurant.Description,
+                restaurant.ImageUrl
+            },
+            categorias
+        });
+    }
+
 
 }
