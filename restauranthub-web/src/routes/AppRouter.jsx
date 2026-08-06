@@ -20,6 +20,7 @@ import Caja from "../pages/Caja";
 import Categorias from "../pages/Categorias";
 import UsuarioForm from "../pages/UsuarioForm";
 import MesaForm from "../pages/MesaForm";
+import MenuRestaurant from "../pages/RestaurantMenu";
 
 function AppRouter() {
    return (
@@ -29,6 +30,7 @@ function AppRouter() {
 <Route path="/" element={<Home />} />
 <Route path="/login" element={<Login />} />
 <Route path="/menu/:codigoQr" element={<MenuPublico />}/>
+<Route path="/menu/restaurant/:id" element={<MenuRestaurant />}/>
 <Route path="/pedido/:id" element={<PedidoCliente />}/>
 
                {/* Protegidas */}
