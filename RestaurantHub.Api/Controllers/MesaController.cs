@@ -76,7 +76,7 @@ public class MesasController : ControllerBase
     }
 
     [HttpGet("admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     public async Task<IActionResult> ObtenerMesasAdmin()
     {
         var mesas = await _context.Mesa
@@ -96,7 +96,7 @@ public class MesasController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     public async Task<IActionResult> ActualizarMesa(
    int id,
    MesaUpdateDto dto)

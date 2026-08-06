@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantHub.Api.Data;
+using Microsoft.AspNetCore.Authorization;
 namespace RestaurantHub.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize ]
 public class DashboardController : ControllerBase
 {
     private readonly RestaurantHubContext _context;
