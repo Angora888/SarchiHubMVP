@@ -148,7 +148,7 @@ return (
 
                         role="button"
 
-                        onClick={() => navigate(`/pedido/${pedido.id}`)}
+                        onClick={() => navigate(`/pedido/${pedido.codigoQR}`)}
 
                         style={{
 

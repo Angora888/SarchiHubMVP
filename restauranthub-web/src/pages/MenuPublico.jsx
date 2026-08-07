@@ -73,7 +73,8 @@ function MenuPublico() {
        console.log(JSON.stringify(pedido, null, 2));
        try {
 			const respuesta = await api.post("/Pedidos", pedido);
-			navigate(`/pedido/${respuesta.data.pedidoId}`);
+			console.log(respuesta.data);
+			navigate(`/pedido/${respuesta.data.pedidoQR}`);
            setProductos(productos.map(p => ({
                ...p,
                cantidad: 0,
