@@ -11,6 +11,10 @@ function Pedidos() {
     useEffect(() => {
 
         cargarPedidos();
+		   const intervalo = setInterval(() => {
+       cargarPedidos();
+   }, 3000);
+   return () => clearInterval(intervalo);
 
     }, []);
 
@@ -37,6 +41,21 @@ function Pedidos() {
         }
 
     };
+	
+const eliminarPedido = async (id) => {
+   if (!window.confirm("¿Desea eliminar este pedido?"))
+       return;
+   try {
+       await api.delete(`/Pedidos/${id}`);
+       alert("Pedido eliminado correctamente.");
+       //cargarPedidos();
+	   navigate("/pedidos")
+   }
+   catch (error) {
+       console.error(error);
+       alert("No fue posible eliminar el pedido.");
+   }
+};
 	
 	
 	const colorPrioridad = (fecha) => {
@@ -76,8 +95,6 @@ function Pedidos() {
     return `Hace ${dias} día(s)`;
 
 };
- 
-
     const colorEstado = (estado) => {
 
         switch (estado) {
@@ -146,7 +163,7 @@ return (
 <div>
 <h5 className="fw-bold mb-1">
 
-                                        📦 Pedido #{pedido.id}
+                                        📦 Pedido #{pedido.numeroPedido.toString().padStart(3, "0")}
 </h5>
 <div className="text-muted">
 
@@ -204,10 +221,19 @@ return (
 
                                     ₡ {pedido.total}
 </strong>
+{!["Listo", "Terminado","Preparando"].includes(pedido.estado) && (
+<button
+       className="btn btn-outline-danger btn-sm"
+       onClick={() => eliminarPedido(pedido.id)}
+>
+       🗑️
+</button>
+)}
 <span className="text-success fw-semibold">
 
                                     Tocar para ver →
 </span>
+
 </div>
 </div>
 </div>

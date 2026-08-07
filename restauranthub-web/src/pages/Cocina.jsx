@@ -108,6 +108,9 @@ const colorTiempo = (fecha) => {
 <h4 className="mb-0">
                                        Mesa #{pedido.mesa}
 </h4>
+<h4 className="mb-1">
+                                       Pedido #{pedido.numeroPedido.toString().padStart(3, "0")}
+</h4>
 <span
                                        className={`badge bg-${colores.badge}`}>
                                        ⏱ {tiempoTranscurrido(pedido.fecha)} min
@@ -171,6 +174,9 @@ const colorTiempo = (fecha) => {
 <div className="card-header d-flex justify-content-between align-items-center">
 <h4 className="mb-0">
                                        Mesa #{pedido.mesa}
+</h4>
+<h4 className="mb-1">
+                                       Pedido #{pedido.numeroPedido.toString().padStart(3, "0")}
 </h4>
 <span
                                        className={`badge bg-${colores.badge}`}>

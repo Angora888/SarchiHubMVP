@@ -18,7 +18,7 @@ function ProductoForm() {
    const cargarCategorias = async () => {
        try {
            // Cambia la ruta si tu controlador es Categoria y no Categorias
-           const respuesta = await api.get("/Categoria");
+           const respuesta = await api.get("/Categoria/admin");
            setCategorias(respuesta.data);
        }
        catch (error) {

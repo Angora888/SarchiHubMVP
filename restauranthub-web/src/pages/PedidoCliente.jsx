@@ -65,6 +65,9 @@ useEffect(() => {
 <h5 className="text-center text-muted">
                        Mesa #{pedido.mesa}
 </h5>
+<h5 className="text-center text-muted">
+                       Pedido #{pedido.numeroPedido.toString().padStart(3, "0")}
+</h5>
 <hr />
 <div className="text-center mb-4">
    {pedido.estado === "Terminado" ? (

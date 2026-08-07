@@ -19,6 +19,10 @@ function Dashboard() {
 });
 useEffect(() => {
    cargarDashboard();
+      const intervalo = setInterval(() => {
+       cargarDashboard();
+   }, 5000);
+   return () => clearInterval(intervalo);
 }, []);
 const cargarDashboard = async () => {
    try {

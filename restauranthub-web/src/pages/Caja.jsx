@@ -116,6 +116,9 @@ function Caja() {
 
                                         Mesa #{pedido.mesa}
 </h4>
+<h4 className="mb-1">
+                                       Pedido #{pedido.numeroPedido.toString().padStart(3, "0")}
+</h4>
 <span className="badge bg-success">
 
                                         LISTO
