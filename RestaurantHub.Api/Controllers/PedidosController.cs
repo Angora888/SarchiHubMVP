@@ -27,6 +27,7 @@ public class PedidosController : ControllerBase
         try {
 
             // 1. Verificar que la mesa exista
+
             var mesa = await _context.Mesa.FindAsync(dto.MesaId);
             if (mesa == null)
                 return BadRequest("La mesa no existe.");
@@ -46,6 +47,7 @@ public class PedidosController : ControllerBase
                .Where(p => p.Mesa!.RestaurantId == restaurantId)
                .MaxAsync(p => (int?)p.NumeroPedido) ?? 0;
             pedido.NumeroPedido = ultimoNumero + 1;
+            pedido.CodigoQRPedido = Guid.NewGuid().ToString();
 
             _context.Pedidos.Add(pedido);
             decimal total = 0;
@@ -79,8 +81,9 @@ public class PedidosController : ControllerBase
             await transaction.CommitAsync();
             return Ok(new
             {
-                pedidoId = pedido.Id,
+                pedido = pedido.Id,
                 estado = pedido.Estado,
+                pedidoQR = pedido.CodigoQRPedido,
                 total = pedido.Total
             });
 
@@ -209,6 +212,7 @@ public class PedidosController : ControllerBase
                 estado = p.Estado,
                 total = p.Total,
                 fecha = p.Fecha,
+                codigoQR = p.CodigoQRPedido,
                 numeroPedido = p.NumeroPedido,
                 cantidadProductos = p.Detalles.Sum(d => d.Cantidad)
             })
@@ -218,14 +222,14 @@ public class PedidosController : ControllerBase
 
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> ObtenerPedido(int id)
+    public async Task<IActionResult> ObtenerPedido(string id)
     {
         var pedido = await _context.Pedidos
             .Include(p => p.Mesa)
             .ThenInclude(m => m.Restaurant)
             .Include(p => p.Detalles)
             .ThenInclude(d => d.Producto)
-            .FirstOrDefaultAsync(p => p.Id == id);
+            .FirstOrDefaultAsync(p => p.CodigoQRPedido == id);
         if (pedido == null)
             return NotFound();
         return Ok(new
@@ -237,6 +241,7 @@ public class PedidosController : ControllerBase
             total = pedido.Total,
             numeroPedido = pedido.NumeroPedido,
             fecha = pedido.Fecha,
+            codigoQR = pedido.CodigoQRPedido,
             detalles = pedido.Detalles.Select(d => new
             {
                 id = d.Id,
