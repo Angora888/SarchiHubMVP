@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantHub.Api.Data;
-using Microsoft.AspNetCore.Authorization;
+using RestaurantHub.Core.Entities;
+using System.Security.Claims;
 namespace RestaurantHub.Api.Controllers;
 
 [ApiController]
@@ -18,27 +20,52 @@ public class DashboardController : ControllerBase
     public async Task<IActionResult> GetDashboard()
     {
         var (inicio, fin) = FechaHelper.ObtenerRangoHoyCostaRica();
+        var restaurantId = ObtenerRestaurantId();
+        var rol = User.FindFirst(ClaimTypes.Role)?.Value;
+        var esAdmin = rol == "Admin";
         var dashboard = new DashboardDto
         {
             Restaurantes = await _context.Restaurants.CountAsync(),
-            Categorias = await _context.Categoria.CountAsync(),
-            Mesas = await _context.Mesa.CountAsync(),
-            Productos = await _context.Producto.CountAsync(),
-            Pedidos = await _context.Pedidos
-               .CountAsync(p => p.Fecha >= inicio &&
-                                p.Fecha < fin),
-            Cocina = await _context.Pedidos
-               .CountAsync(p =>
-                   p.Fecha >= inicio &&
-                   p.Fecha < fin &&
-                   (p.Estado == "Pendiente" ||
-                    p.Estado == "Preparando")),
-            Caja = await _context.Pedidos
-               .CountAsync(p =>
-                   p.Fecha >= inicio &&
-                   p.Fecha < fin &&
-                   p.Estado == "Listo"),
-            Usuarios = await _context.Usuarios.CountAsync()
+            Categorias = esAdmin
+                       ? await _context.Categoria.CountAsync()
+                       : await _context.Categoria.CountAsync(c => c.RestaurantId == restaurantId),
+            Mesas = esAdmin
+                       ? await _context.Mesa.CountAsync()
+                       : await _context.Mesa.CountAsync(m => m.RestaurantId == restaurantId),
+            Productos = esAdmin
+                       ? await _context.Producto.CountAsync()
+                       : await _context.Producto.CountAsync(p => p.RestaurantId == restaurantId),
+            Usuarios = esAdmin
+                       ? await _context.Usuarios.CountAsync()
+                       : await _context.Usuarios.CountAsync(u => u.RestaurantId == restaurantId),
+            Pedidos = esAdmin
+                       ? await _context.Pedidos.CountAsync(p =>
+                           p.Fecha >= inicio &&
+                           p.Fecha < fin)
+                       : await _context.Pedidos.CountAsync(p =>
+                           p.Mesa!.RestaurantId == restaurantId &&
+                           p.Fecha >= inicio &&
+                           p.Fecha < fin),
+            Cocina = esAdmin
+                       ? await _context.Pedidos.CountAsync(p =>
+                           p.Fecha >= inicio &&
+                           p.Fecha < fin &&
+                           (p.Estado == "Pendiente" || p.Estado == "Preparando"))
+                       : await _context.Pedidos.CountAsync(p =>
+                           p.Mesa!.RestaurantId == restaurantId &&
+                           p.Fecha >= inicio &&
+                           p.Fecha < fin &&
+                           (p.Estado == "Pendiente" || p.Estado == "Preparando")),
+            Caja = esAdmin
+                       ? await _context.Pedidos.CountAsync(p =>
+                           p.Fecha >= inicio &&
+                           p.Fecha < fin &&
+                           p.Estado == "Listo")
+                       : await _context.Pedidos.CountAsync(p =>
+                           p.Mesa!.RestaurantId == restaurantId &&
+                           p.Fecha >= inicio &&
+                           p.Fecha < fin &&
+                           p.Estado == "Listo")
         };
         return Ok(dashboard);
     }
@@ -53,5 +80,31 @@ public class DashboardController : ControllerBase
             var fin = inicio.AddDays(1);
             return (inicio, fin);
         }
+    }
+
+    private int ObtenerRestaurantId()
+    {
+        Console.WriteLine("===== CLAIMS DEL USUARIO =====");
+        foreach (var claim in User.Claims)
+        {
+            Console.WriteLine($"{claim.Type} = {claim.Value}");
+        }
+        Console.WriteLine("==============================");
+        if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            throw new UnauthorizedAccessException("El usuario no está autenticado.");
+        }
+        var claimRestaurant = User.FindFirst("RestaurantId");
+        if (claimRestaurant == null)
+        {
+            throw new UnauthorizedAccessException(
+                "El token no contiene el claim RestaurantId.");
+        }
+        if (!int.TryParse(claimRestaurant.Value, out var restaurantId))
+        {
+            throw new Exception(
+                $"RestaurantId inválido: {claimRestaurant.Value}");
+        }
+        return restaurantId;
     }
 }

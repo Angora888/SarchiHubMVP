@@ -8,5 +8,8 @@ public class Pedido
     public decimal Total { get; set; }
     public int MesaId { get; set; }
     public Mesa? Mesa { get; set; }
+
+    public string? CodigoQRPedido { get; set; }
+    public int NumeroPedido { get; set; }
     public List<DetallePedido> Detalles { get; set; } = new();
 }

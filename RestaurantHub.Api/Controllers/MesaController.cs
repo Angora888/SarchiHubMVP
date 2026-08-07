@@ -32,6 +32,7 @@ public class MesasController : ControllerBase
         return mesa;
     }
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<Mesa>> CrearMesa(Mesa mesa)
     {
         _context.Mesa.Add(mesa);
@@ -49,6 +50,7 @@ public class MesasController : ControllerBase
     //    return NoContent();
     //}
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> EliminarMesa(int id)
     {
         var mesa = await _context.Mesa.FindAsync(id);
@@ -79,8 +81,16 @@ public class MesasController : ControllerBase
     [Authorize]
     public async Task<IActionResult> ObtenerMesasAdmin()
     {
-        var mesas = await _context.Mesa
+        var restaurantId = ObtenerRestaurantId();
+        var esAdmin = User.IsInRole("Admin");
+        var query = _context.Mesa
             .Include(m => m.Restaurant)
+            .AsQueryable();
+        if (!esAdmin)
+        {
+            query = query.Where(m => m.RestaurantId == restaurantId);
+        }
+        var mesas = await query
             .OrderBy(m => m.Number)
             .Select(m => new
             {
@@ -110,5 +120,31 @@ public class MesasController : ControllerBase
         mesa.Status = dto.Status;
         await _context.SaveChangesAsync();
         return Ok();
+    }
+
+    private int ObtenerRestaurantId()
+    {
+        Console.WriteLine("===== CLAIMS DEL USUARIO =====");
+        foreach (var claim in User.Claims)
+        {
+            Console.WriteLine($"{claim.Type} = {claim.Value}");
+        }
+        Console.WriteLine("==============================");
+        if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            throw new UnauthorizedAccessException("El usuario no está autenticado.");
+        }
+        var claimRestaurant = User.FindFirst("RestaurantId");
+        if (claimRestaurant == null)
+        {
+            throw new UnauthorizedAccessException(
+                "El token no contiene el claim RestaurantId.");
+        }
+        if (!int.TryParse(claimRestaurant.Value, out var restaurantId))
+        {
+            throw new Exception(
+                $"RestaurantId inválido: {claimRestaurant.Value}");
+        }
+        return restaurantId;
     }
 }

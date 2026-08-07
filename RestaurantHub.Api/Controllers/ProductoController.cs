@@ -124,8 +124,13 @@ public class ProductosController : ControllerBase
     public async Task<IActionResult> ObtenerProductosAdmin()
     {
         var restaurantId = ObtenerRestaurantId();
-        var productos = await _context.Producto
-            .Where(p => p.RestaurantId == restaurantId)
+        var esAdmin = User.IsInRole("Admin");
+        var query = _context.Producto.AsQueryable();
+        if (!esAdmin)
+        {
+            query = query.Where(p => p.RestaurantId == restaurantId);
+        }
+        var productos = await query
             .OrderBy(p => p.Nombre)
             .Select(p => new
             {

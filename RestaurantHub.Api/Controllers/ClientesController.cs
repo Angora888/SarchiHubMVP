@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantHub.Api.Data;
 namespace RestaurantHub.Api.Controllers;
@@ -24,6 +25,7 @@ public class ClientesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> CrearCliente(Cliente cliente)
     {
         // Validar teléfono
@@ -56,6 +58,7 @@ public class ClientesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> EditarCliente(int id, Cliente cliente)
     {
         if (id != cliente.Id)
@@ -82,6 +85,7 @@ public class ClientesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> EliminarCliente(int id)
     {
         var cliente = await _context.Clientes.FindAsync(id);

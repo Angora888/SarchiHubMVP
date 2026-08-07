@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RestaurantHub.Api.Data;
@@ -11,9 +12,11 @@ using RestaurantHub.Api.Data;
 namespace RestaurantHub.Api.Migrations
 {
     [DbContext(typeof(RestaurantHubContext))]
-    partial class RestaurantHubContextModelSnapshot : ModelSnapshot
+    [Migration("20260807184325_AgregarNumerePedidoYQR")]
+    partial class AgregarNumerePedidoYQR
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

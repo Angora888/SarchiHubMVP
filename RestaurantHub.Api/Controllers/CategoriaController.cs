@@ -113,8 +113,13 @@ public class CategoriaController : ControllerBase
     public async Task<IActionResult> ObtenerCategoriasAdmin()
     {
         var restaurantId = ObtenerRestaurantId();
-        var categorias = await _context.Categoria
-            .Where(c => c.RestaurantId == restaurantId)
+        var esAdmin = User.IsInRole("Admin");
+        var query = _context.Categoria.AsQueryable();
+        if (!esAdmin)
+        {
+            query = query.Where(c => c.RestaurantId == restaurantId);
+        }
+        var categorias = await query
             .Select(c => new
             {
                 c.Id,

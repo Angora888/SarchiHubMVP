@@ -40,6 +40,13 @@ public class PedidosController : ControllerBase
                 Estado = "Pendiente",
                 Total = 0
             };
+
+            var restaurantId = mesa.RestaurantId;
+            var ultimoNumero = await _context.Pedidos
+               .Where(p => p.Mesa!.RestaurantId == restaurantId)
+               .MaxAsync(p => (int?)p.NumeroPedido) ?? 0;
+            pedido.NumeroPedido = ultimoNumero + 1;
+
             _context.Pedidos.Add(pedido);
             decimal total = 0;
             // 3. Recorrer todos los productos enviados
@@ -178,34 +185,35 @@ public class PedidosController : ControllerBase
     [HttpGet]
 
     public async Task<IActionResult> ObtenerPedidos()
-
     {
         var restaurantId = ObtenerRestaurantId();
-        //var pedidos = await _context.Pedidos
-
+        var esAdmin = User.IsInRole("Admin");
         var (inicio, fin) = FechaHelper.ObtenerRangoHoyCostaRica();
-        //var fin = inicio.AddDays(1);
-        var pedidos = await _context.Pedidos
-           .Include(p => p.Mesa)
-           .Include(p => p.Detalles)
-           .Where(p =>
-               p.Mesa!.RestaurantId == restaurantId &&
-               p.Fecha >= inicio &&
-               p.Fecha < fin)
-           .OrderByDescending(p => p.Fecha)
-           .Select(p => new
-           {
-               id = p.Id,
-               mesa = p.Mesa.Number,
-               estado = p.Estado,
-               total = p.Total,
-               fecha = p.Fecha,
-               cantidadProductos = p.Detalles.Sum(d => d.Cantidad)
-           })
-           .ToListAsync();
-
+        var query = _context.Pedidos
+            .Include(p => p.Mesa)
+            .Include(p => p.Detalles)
+            .AsQueryable();
+        if (!esAdmin)
+        {
+            query = query.Where(p => p.Mesa!.RestaurantId == restaurantId);
+        }
+        var pedidos = await query
+            .Where(p =>
+                p.Fecha >= inicio &&
+                p.Fecha < fin)
+            .OrderByDescending(p => p.Fecha)
+            .Select(p => new
+            {
+                id = p.Id,
+                mesa = p.Mesa.Number,
+                estado = p.Estado,
+                total = p.Total,
+                fecha = p.Fecha,
+                numeroPedido = p.NumeroPedido,
+                cantidadProductos = p.Detalles.Sum(d => d.Cantidad)
+            })
+            .ToListAsync();
         return Ok(pedidos);
-
     }
 
 
@@ -227,6 +235,7 @@ public class PedidosController : ControllerBase
             mesa = pedido.Mesa?.Number,
             estado = pedido.Estado,
             total = pedido.Total,
+            numeroPedido = pedido.NumeroPedido,
             fecha = pedido.Fecha,
             detalles = pedido.Detalles.Select(d => new
             {
@@ -245,13 +254,20 @@ public class PedidosController : ControllerBase
     public async Task<IActionResult> ObtenerPedidosCocina()
     {
         var restaurantId = ObtenerRestaurantId();
-        var pedidos = await _context.Pedidos
+        var esAdmin = User.IsInRole("Admin");
+        var query = _context.Pedidos
             .Include(p => p.Mesa)
             .Include(p => p.Detalles)
-            .ThenInclude(d => d.Producto)
-.Where(p =>
-   p.Mesa!.RestaurantId == restaurantId &&
-   (p.Estado == "Pendiente" || p.Estado == "Preparando"))
+                .ThenInclude(d => d.Producto)
+            .AsQueryable();
+        if (!esAdmin)
+        {
+            query = query.Where(p => p.Mesa!.RestaurantId == restaurantId);
+        }
+        var pedidos = await query
+            .Where(p =>
+                p.Estado == "Pendiente" ||
+                p.Estado == "Preparando")
             .OrderBy(p => p.Fecha)
             .ToListAsync();
         return Ok(
@@ -262,6 +278,7 @@ public class PedidosController : ControllerBase
                 estado = p.Estado,
                 fecha = p.Fecha,
                 total = p.Total,
+                numeroPedido = p.NumeroPedido,
                 detalles = p.Detalles.Select(d => new
                 {
                     producto = d.Producto!.Nombre,
@@ -334,17 +351,25 @@ public class PedidosController : ControllerBase
     public async Task<IActionResult> ObtenerPedidosCaja()
     {
         var restaurantId = ObtenerRestaurantId();
-        var pedidos = await _context.Pedidos
+        var esAdmin = User.IsInRole("Admin");
+        var query = _context.Pedidos
             .Include(p => p.Mesa)
             .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
-            .Where(p => p.Estado == "Listo" && p.Mesa!.RestaurantId == restaurantId)
+            .AsQueryable();
+        if (!esAdmin)
+        {
+            query = query.Where(p => p.Mesa!.RestaurantId == restaurantId);
+        }
+        var pedidos = await query
+            .Where(p => p.Estado == "Listo")
             .OrderBy(p => p.Fecha)
             .Select(p => new
             {
                 p.Id,
                 Mesa = p.Mesa.Number,
                 p.Total,
+                numeroPedido = p.NumeroPedido,
                 p.Fecha,
                 Detalles = p.Detalles.Select(d => new
                 {
@@ -355,6 +380,27 @@ public class PedidosController : ControllerBase
             })
             .ToListAsync();
         return Ok(pedidos);
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize]
+    public async Task<IActionResult> EliminarPedido(int id)
+    {
+        var restaurantId = ObtenerRestaurantId();
+        var pedido = await _context.Pedidos
+            .Include(p => p.Detalles)
+            .Include(p => p.Mesa)
+            .FirstOrDefaultAsync(p =>
+                p.Id == id &&
+                p.Mesa!.RestaurantId == restaurantId);
+        if (pedido == null)
+            return NotFound();
+        //_context.DetallePedido.RemoveRange(pedido.Detalles);
+        var mesa = await _context.Mesa.FindAsync(pedido.MesaId);
+        mesa.Status = "Disponible";
+        _context.Pedidos.Remove(pedido);
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 
     private int ObtenerRestaurantId()

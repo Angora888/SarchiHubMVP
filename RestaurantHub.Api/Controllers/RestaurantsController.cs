@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantHub.Api.Data;
 using RestaurantHub.Core.Entities;
@@ -6,6 +7,7 @@ namespace RestaurantHub.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+
 public class RestaurantsController : ControllerBase
 {
     private readonly RestaurantHubContext _context;
@@ -20,6 +22,7 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<Restaurant>> CreateRestaurant(Restaurant restaurant)
     {
         _context.Restaurants.Add(restaurant);
@@ -42,6 +45,7 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> UpdateRestaurant(int id, Restaurant restaurant)
     {
         if (id != restaurant.Id)
@@ -68,6 +72,7 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteRestaurant(int id)
     {
         var restaurant = await _context.Restaurants.FindAsync(id);
@@ -79,6 +84,7 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpPost("{id}/image")]
+    [Authorize]
     public async Task<IActionResult> UploadImage(
    int id,
    IFormFile file)
