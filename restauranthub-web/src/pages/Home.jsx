@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import logo from "../assets/Logosinfilas.png";
 import NavbarPublic from "../components/NavbarPublic";
 import RestaurantCard from "../components/RestaurantCard";
 import Footer from "../components/Footer";
@@ -48,22 +49,18 @@ const restaurantesFiltrados = restaurantes.filter(r => {
 
 <section className="container py-4">
 <div className="text-center mb-4">
-<div
-           className="mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm"
-           style={{
-               width: "70px",
-               height: "70px",
-               background: "#198754",
-               borderRadius: "20px",
-               color: "white",
-               fontSize: "32px"
-           }}
->
-           🍽️
+<div className="text-center mb-4">
+
+    <img
+        src={logo}
+        alt="Sin Filas"
+        className="img-fluid"
+        style={{
+            width: "220px",
+            maxWidth: "70%"
+        }}
+    />
 </div>
-<h1 className="fw-bold mb-2">
-           Sin Filas
-</h1>
 <p className="text-muted mb-4">
            Pide desde tu mesa sin esperas.
 </p>

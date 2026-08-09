@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+
 function NavbarPublic() {
    const navigate = useNavigate();
    const token = localStorage.getItem("token");
