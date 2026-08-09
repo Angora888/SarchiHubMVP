@@ -1,8 +1,8 @@
-# 🍽️ Sarchi Hub MVP
+# 🍽️ Sin Filas
 
 Sistema web para la administración de restaurantes, diseñado para pequeños y medianos negocios.
 
-Sarchi Hub permite gestionar productos, mesas, pedidos, cocina y caja desde una interfaz sencilla y moderna.
+Sin Filas permite gestionar productos, mesas, pedidos, cocina y caja desde una interfaz sencilla y moderna.
 
 ---
 
@@ -109,8 +109,6 @@ Próximas mejoras:
 - 📊 Reportes
 
 - 📱 Mejor experiencia móvil
-
-- ☁️ Despliegue en producción
 
 ---
 
