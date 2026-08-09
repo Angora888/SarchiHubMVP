@@ -24,13 +24,18 @@ function MainLayout() {
                👋 {usuario}
 </div>
 </div>
-<button
-           className="btn btn-danger"
-           onClick={cerrarSesion}
->
-<i className="bi bi-box-arrow-right me-2"></i>
-           Cerrar sesión
-</button>
+        <button
+            className="btn btn-outline-danger btn-sm px-2 py-1"
+            onClick={() => navigate("/")}
+        >
+            🏠
+        </button>
+        <button
+            className="btn btn-outline-danger btn-sm px-2 py-1"
+            onClick={cerrarSesion}
+        >
+            🚪
+        </button>
 </div>
 </div>
  

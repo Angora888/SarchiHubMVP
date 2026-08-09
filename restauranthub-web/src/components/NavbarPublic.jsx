@@ -30,7 +30,7 @@ if (token) {
                    className="navbar-brand fw-bold"
                    to="/"
 >
-                   🏡 Sarchi Hub
+                   🏡 Sin Filas
 </Link>
                {
                    token ? (
@@ -38,12 +38,18 @@ if (token) {
 <span className="fw-semibold text-success">
                                👋 {nombreUsuario}
 </span>
-<button
-                               className="btn btn-danger"
-                               onClick={cerrarSesion}
->
-                               Cerrar sesión
-</button>
+        <button
+            className="btn btn-success btn-sm px-2 py-1"
+            onClick={() => navigate("/dashboard")}
+        >
+            📊
+        </button>
+        <button
+            className="btn btn-outline-danger btn-sm px-2 py-1"
+            onClick={cerrarSesion}
+        >
+            🚪
+        </button>
 </div>
                    ) : (
 <Link

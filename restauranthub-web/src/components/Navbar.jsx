@@ -26,7 +26,7 @@ function Navbar() {
 </div>
 </span>
 <button
-                       className="btn btn-outline-danger btn-sm"
+                       className="btn btn-outline-danger btn-sm px-2 py-1"
                        onClick={salir}
 >
                        Cerrar sesión

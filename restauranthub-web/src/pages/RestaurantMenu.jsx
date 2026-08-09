@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { API_URL } from "../config";
 function PublicMenu(){
    const { id } = useParams();
+   const navigate = useNavigate();
    const [restaurant,setRestaurant]=useState(null);
    const [categorias,setCategorias]=useState([]);
    useEffect(()=>{
@@ -19,7 +20,17 @@ function PublicMenu(){
        return <p className="text-center mt-5">Cargando...</p>;
    }
    return(
-<div className="container py-5">
+    <div className="container py-4">
+
+        <div className="d-flex justify-content-end mb-3">
+            <button
+                className="btn btn-outline-success rounded-pill"
+                onClick={() => navigate("/")}
+            >
+                <i className="bi bi-house me-2"></i>
+                Inicio
+            </button>
+        </div>
 <div className="text-center mb-5">
 <img
 src={`${API_URL}/${restaurant.imageUrl}`}
