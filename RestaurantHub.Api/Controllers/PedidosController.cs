@@ -22,45 +22,67 @@ public class PedidosController : ControllerBase
     public async Task<IActionResult> CrearPedido(CrearPedidoDto dto)
     {
         await using var transaction =
-       await _context.Database.BeginTransactionAsync();
-
-        try {
-
-            // 1. Verificar que la mesa exista
-
-            var mesa = await _context.Mesa.FindAsync(dto.MesaId);
-            if (mesa == null)
-                return BadRequest("La mesa no existe.");
-            if (mesa.Status == "Ocupada")
-                return BadRequest("La mesa esta ocupada.");
-            // 2. Crear el pedido
-            var pedido = new Pedido
-            {
-                MesaId = dto.MesaId,
-                Fecha = DateTime.UtcNow,
-                Estado = "Pendiente",
-                Total = 0
-            };
-
-            var restaurantId = mesa.RestaurantId;
-            var ultimoNumero = await _context.Pedidos
-               .Where(p => p.Mesa!.RestaurantId == restaurantId)
-               .MaxAsync(p => (int?)p.NumeroPedido) ?? 0;
-            pedido.NumeroPedido = ultimoNumero + 1;
-            pedido.CodigoQRPedido = Guid.NewGuid().ToString();
-
-            _context.Pedidos.Add(pedido);
-            decimal total = 0;
-            // 3. Recorrer todos los productos enviados
+            await _context.Database.BeginTransactionAsync();
+        try
+        {
             if (dto.Productos == null || !dto.Productos.Any())
                 return BadRequest("Debe agregar al menos un producto al pedido.");
-
+            Mesa? mesa = null;
+            int restaurantId;
+            // 🪑 PEDIDO DESDE MESA
+            if (dto.MesaId.HasValue)
+            {
+                mesa = await _context.Mesa
+                    .FirstOrDefaultAsync(m => m.Id == dto.MesaId.Value);
+                if (mesa == null)
+                    return BadRequest("La mesa no existe.");
+                if (mesa.Status == "Ocupada")
+                    return BadRequest("La mesa está ocupada.");
+                restaurantId = mesa.RestaurantId;
+            }
+            // 📞 PEDIDO XPRESS
+            else
+            {
+                // Para Xpress obtenemos el restaurante
+                // del usuario que está creando el pedido.
+                restaurantId = ObtenerRestaurantId();
+                if (!dto.ClienteId.HasValue)
+                    return BadRequest("El pedido Xpress requiere un cliente.");
+            }
+            // 🔢 Número consecutivo por restaurante
+            var ultimoNumero = await _context.Pedidos
+                .Where(p => p.RestaurantId == restaurantId)
+                .MaxAsync(p => (int?)p.NumeroPedido) ?? 0;
+            var pedido = new Pedido
+            {
+                RestaurantId = restaurantId,
+                MesaId = dto.MesaId,
+                ClienteId = dto.ClienteId,
+                Fecha = DateTime.UtcNow,
+                Estado = "Pendiente",
+                Total = 0,
+                NumeroPedido = ultimoNumero + 1,
+                CodigoQRPedido = Guid.NewGuid().ToString()
+            };
+            _context.Pedidos.Add(pedido);
+            decimal total = 0;
+            // 🛒 Productos
             foreach (var item in dto.Productos)
             {
-                var producto = await _context.Producto.FindAsync(item.ProductoId);
+                var producto = await _context.Producto
+                    .FirstOrDefaultAsync(p =>
+                        p.Id == item.ProductoId &&
+                        p.RestaurantId == restaurantId);
                 if (producto == null)
-                    return BadRequest($"Producto {item.ProductoId} no existe.");
-                decimal subtotal = producto.Precio * item.Cantidad;
+                    return BadRequest(
+                        $"El producto {item.ProductoId} no existe para este restaurante."
+                    );
+                if (item.Cantidad <= 0)
+                    return BadRequest(
+                        "La cantidad de productos debe ser mayor que cero."
+                    );
+                decimal subtotal =
+                    producto.Precio * item.Cantidad;
                 total += subtotal;
                 var detalle = new DetallePedido
                 {
@@ -71,12 +93,14 @@ public class PedidosController : ControllerBase
                     Observaciones = item.Observaciones,
                     Subtotal = subtotal
                 };
-                Console.WriteLine(item.Observaciones);
                 _context.DetallesPedido.Add(detalle);
             }
-            // 4. Guardar el total
             pedido.Total = total;
-            mesa.Status = "Ocupada";
+            // 🪑 Solo ocupamos la mesa si existe
+            if (mesa != null)
+            {
+                mesa.Status = "Ocupada";
+            }
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
             return Ok(new
@@ -84,18 +108,18 @@ public class PedidosController : ControllerBase
                 pedido = pedido.Id,
                 estado = pedido.Estado,
                 pedidoQR = pedido.CodigoQRPedido,
+                numeroPedido = pedido.NumeroPedido,
                 total = pedido.Total
             });
-
         }
-        catch (Exception ex) { 
-
+        catch (Exception ex)
+        {
             await transaction.RollbackAsync();
-            return StatusCode(500, $"Error al crear el pedido: {ex.Message}");
-
+            return StatusCode(
+                500,
+                $"Error al crear el pedido: {ex.Message}"
+            );
         }
-
-
     }
 
     [HttpPost("{id}/cerrar")]
@@ -122,55 +146,122 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPost("{id}/agregar-producto")]
-    public async Task<IActionResult> AgregarProducto(int id, AgregarProductoDto dto)
+    [Authorize]
+    public async Task<IActionResult> AgregarProducto(
+        int id,
+        AgregarProductoDto dto)
     {
-        await using var transaction = await _context.Database.BeginTransactionAsync();
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
         try
         {
-            var pedido = await _context.Pedidos.FindAsync(id);
+            var restaurantId = ObtenerRestaurantId();
+            var esAdmin = User.IsInRole("Admin");
+
+            var query = _context.Pedidos
+                .Where(p => p.Id == id);
+
+            // Cliente solamente puede modificar pedidos de su restaurante
+            if (!esAdmin)
+            {
+                query = query.Where(
+                    p => p.RestaurantId == restaurantId
+                );
+            }
+
+            var pedido = await query.FirstOrDefaultAsync();
+
             if (pedido == null)
                 return NotFound("Pedido no encontrado.");
-            if (pedido.Estado == "Finalizado")
-                return BadRequest("El pedido ya fue finalizado.");
+
+            // Ya terminado no se puede tocar
+            if (pedido.Estado == "Terminado")
+            {
+                return BadRequest(
+                    "No se pueden agregar productos a un pedido terminado."
+                );
+            }
+
             if (dto.Cantidad <= 0)
-                return BadRequest("La cantidad debe ser mayor que cero.");
-            var producto = await _context.Producto.FindAsync(dto.ProductoId);
+            {
+                return BadRequest(
+                    "La cantidad debe ser mayor que cero."
+                );
+            }
+
+            // Importantísimo:
+            // el producto tiene que pertenecer al mismo restaurante del pedido.
+            var producto = await _context.Producto
+                .FirstOrDefaultAsync(p =>
+                    p.Id == dto.ProductoId &&
+                    p.RestaurantId == pedido.RestaurantId);
+
             if (producto == null)
-                return BadRequest("El producto no existe.");
+            {
+                return BadRequest(
+                    "El producto no existe o no pertenece a este restaurante."
+                );
+            }
+
             if (!producto.Disponible)
-                return BadRequest("El producto no está disponible.");
-            // Buscar si el producto ya existe en el pedido
+            {
+                return BadRequest(
+                    "El producto no está disponible."
+                );
+            }
+
             var detalle = await _context.DetallesPedido
                 .FirstOrDefaultAsync(d =>
                     d.PedidoId == pedido.Id &&
                     d.ProductoId == producto.Id);
+
             if (detalle != null)
             {
-                // Ya existe, solo aumentamos la cantidad
+                // Ya estaba en el pedido
                 detalle.Cantidad += dto.Cantidad;
-                detalle.Subtotal = detalle.Cantidad * detalle.PrecioUnitario;
+
+                detalle.Subtotal =
+                    detalle.Cantidad *
+                    detalle.PrecioUnitario;
+
+                // Si escribieron una nueva observación,
+                // la actualizamos
+                if (!string.IsNullOrWhiteSpace(dto.Observaciones))
+                {
+                    detalle.Observaciones =
+                        dto.Observaciones;
+                }
             }
             else
             {
-                // No existe, creamos una nueva línea
+                // Producto nuevo dentro del pedido
                 detalle = new DetallePedido
                 {
                     PedidoId = pedido.Id,
                     ProductoId = producto.Id,
                     Cantidad = dto.Cantidad,
                     PrecioUnitario = producto.Precio,
-                    Observaciones = detalle.Observaciones,
-                    Subtotal = producto.Precio * dto.Cantidad
+                    Observaciones = dto.Observaciones,
+                    Subtotal =
+                        producto.Precio *
+                        dto.Cantidad
                 };
+
                 _context.DetallesPedido.Add(detalle);
             }
-            // Recalcular el total del pedido
+
             await _context.SaveChangesAsync();
+
+            // Recalcular total completo del pedido
             pedido.Total = await _context.DetallesPedido
                 .Where(d => d.PedidoId == pedido.Id)
                 .SumAsync(d => d.Subtotal);
+
             await _context.SaveChangesAsync();
+
             await transaction.CommitAsync();
+
             return Ok(new
             {
                 mensaje = "Producto agregado correctamente.",
@@ -181,25 +272,30 @@ public class PedidosController : ControllerBase
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
+
             return StatusCode(500, ex.Message);
         }
     }
 
     [HttpGet]
-
     public async Task<IActionResult> ObtenerPedidos()
     {
         var restaurantId = ObtenerRestaurantId();
         var esAdmin = User.IsInRole("Admin");
+
         var (inicio, fin) = FechaHelper.ObtenerRangoHoyCostaRica();
+
         var query = _context.Pedidos
             .Include(p => p.Mesa)
+            .Include(p => p.Cliente)
             .Include(p => p.Detalles)
             .AsQueryable();
+
         if (!esAdmin)
         {
-            query = query.Where(p => p.Mesa!.RestaurantId == restaurantId);
+            query = query.Where(p => p.RestaurantId == restaurantId);
         }
+
         var pedidos = await query
             .Where(p =>
                 p.Fecha >= inicio &&
@@ -208,15 +304,31 @@ public class PedidosController : ControllerBase
             .Select(p => new
             {
                 id = p.Id,
-                mesa = p.Mesa.Number,
+
+                mesa = p.Mesa != null
+                    ? p.Mesa.Number
+                    : (int?)null,
+
+                cliente = p.Cliente == null
+                    ? null
+                    : new
+                    {
+                        id = p.Cliente.Id,
+                        nombre = p.Cliente.NombreCompleto,
+                        telefono = p.Cliente.Telefono,
+                        direccion = p.Cliente.Direccion
+                    },
+
                 estado = p.Estado,
                 total = p.Total,
                 fecha = p.Fecha,
                 codigoQR = p.CodigoQRPedido,
                 numeroPedido = p.NumeroPedido,
+
                 cantidadProductos = p.Detalles.Sum(d => d.Cantidad)
             })
             .ToListAsync();
+
         return Ok(pedidos);
     }
 
@@ -225,8 +337,9 @@ public class PedidosController : ControllerBase
     public async Task<IActionResult> ObtenerPedido(string id)
     {
         var pedido = await _context.Pedidos
+            .Include(p => p.Restaurant)
             .Include(p => p.Mesa)
-            .ThenInclude(m => m.Restaurant)
+            .Include(p => p.Cliente)
             .Include(p => p.Detalles)
             .ThenInclude(d => d.Producto)
             .FirstOrDefaultAsync(p => p.CodigoQRPedido == id);
@@ -235,8 +348,17 @@ public class PedidosController : ControllerBase
         return Ok(new
         {
             id = pedido.Id,
-            restaurant = pedido.Mesa?.Restaurant?.Name,
+            restaurant = pedido.Restaurant?.Name,
             mesa = pedido.Mesa?.Number,
+            cliente = pedido.Cliente == null
+                ? null
+                : new
+                {
+                    id = pedido.Cliente.Id,
+                    nombre = pedido.Cliente.NombreCompleto,
+                    telefono = pedido.Cliente.Telefono,
+                    direccion = pedido.Cliente.Direccion
+                },
             estado = pedido.Estado,
             total = pedido.Total,
             numeroPedido = pedido.NumeroPedido,
@@ -262,12 +384,13 @@ public class PedidosController : ControllerBase
         var esAdmin = User.IsInRole("Admin");
         var query = _context.Pedidos
             .Include(p => p.Mesa)
+            .Include(p => p.Cliente)
             .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
             .AsQueryable();
         if (!esAdmin)
         {
-            query = query.Where(p => p.Mesa!.RestaurantId == restaurantId);
+            query = query.Where(p => p.RestaurantId == restaurantId);
         }
         var pedidos = await query
             .Where(p =>
@@ -279,7 +402,15 @@ public class PedidosController : ControllerBase
             pedidos.Select(p => new
             {
                 id = p.Id,
-                mesa = p.Mesa!.Number,
+                mesa = p.Mesa?.Number,
+                cliente = p.Cliente == null
+                    ? null
+                    : new
+                    {
+                        nombre = p.Cliente.NombreCompleto,
+                        telefono = p.Cliente.Telefono,
+                        direccion = p.Cliente.Direccion
+                    },
                 estado = p.Estado,
                 fecha = p.Fecha,
                 total = p.Total,
@@ -334,16 +465,19 @@ public class PedidosController : ControllerBase
     [Authorize]
     public async Task<IActionResult> TerminarPedido(int id)
     {
-        var pedido = await _context.Pedidos.FindAsync(id);
+        var pedido = await _context.Pedidos
+            .Include(p => p.Mesa)
+            .FirstOrDefaultAsync(p => p.Id == id);
         if (pedido == null)
             return NotFound("Pedido no encontrado.");
         if (pedido.Estado != "Listo")
             return BadRequest("Solo se pueden terminar pedidos listos.");
-        var mesa = await _context.Mesa.FindAsync(pedido.MesaId);
-        if (mesa == null)
-            return BadRequest("La mesa no existe.");
         pedido.Estado = "Terminado";
-        mesa.Status = "Disponible";
+        // Solo liberar mesa si el pedido viene de una mesa
+        if (pedido.Mesa != null)
+        {
+            pedido.Mesa.Status = "Disponible";
+        }
         await _context.SaveChangesAsync();
         return Ok(new
         {
@@ -359,12 +493,13 @@ public class PedidosController : ControllerBase
         var esAdmin = User.IsInRole("Admin");
         var query = _context.Pedidos
             .Include(p => p.Mesa)
+            .Include(p => p.Cliente)
             .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
             .AsQueryable();
         if (!esAdmin)
         {
-            query = query.Where(p => p.Mesa!.RestaurantId == restaurantId);
+            query = query.Where(p => p.RestaurantId == restaurantId);
         }
         var pedidos = await query
             .Where(p => p.Estado == "Listo")
@@ -372,13 +507,23 @@ public class PedidosController : ControllerBase
             .Select(p => new
             {
                 p.Id,
-                Mesa = p.Mesa.Number,
+                Mesa = p.Mesa != null
+                    ? p.Mesa.Number
+                    : (int?)null,
+                Cliente = p.Cliente == null
+                    ? null
+                    : new
+                    {
+                        nombre = p.Cliente.NombreCompleto,
+                        telefono = p.Cliente.Telefono,
+                        direccion = p.Cliente.Direccion
+                    },
                 p.Total,
                 numeroPedido = p.NumeroPedido,
                 p.Fecha,
                 Detalles = p.Detalles.Select(d => new
                 {
-                    Producto = d.Producto.Nombre,
+                    Producto = d.Producto!.Nombre,
                     d.Cantidad,
                     d.Observaciones
                 })
@@ -397,15 +542,67 @@ public class PedidosController : ControllerBase
             .Include(p => p.Mesa)
             .FirstOrDefaultAsync(p =>
                 p.Id == id &&
-                p.Mesa!.RestaurantId == restaurantId);
+                p.RestaurantId == restaurantId);
         if (pedido == null)
             return NotFound();
-        //_context.DetallePedido.RemoveRange(pedido.Detalles);
-        var mesa = await _context.Mesa.FindAsync(pedido.MesaId);
-        mesa.Status = "Disponible";
+        // Si el pedido tiene mesa, la liberamos
+        if (pedido.Mesa != null)
+        {
+            pedido.Mesa.Status = "Disponible";
+        }
         _context.Pedidos.Remove(pedido);
         await _context.SaveChangesAsync();
         return NoContent();
+    }
+
+    [HttpGet("cierre-caja")]
+    [Authorize]
+    public async Task<IActionResult> ObtenerCierreCaja()
+    {
+        var restaurantId = ObtenerRestaurantId();
+        var (inicio, fin) = FechaHelper.ObtenerRangoHoyCostaRica();
+
+        var pedidos = await _context.Pedidos
+            .Where(p =>
+                p.RestaurantId == restaurantId &&
+                p.Fecha >= inicio &&
+                p.Fecha < fin &&
+                p.Estado == "Terminado")
+            .ToListAsync();
+
+        var cantidadPedidos = pedidos.Count;
+        var totalVentas = pedidos.Sum(p => p.Total);
+
+        var pedidosMesa = pedidos
+            .Where(p => p.MesaId != null)
+            .ToList();
+
+        var pedidosXpress = pedidos
+            .Where(p => p.MesaId == null)
+            .ToList();
+
+        return Ok(new
+        {
+            cantidadPedidos,
+
+            totalVentas,
+
+            ticketPromedio = cantidadPedidos > 0
+                ? totalVentas / cantidadPedidos
+                : 0,
+
+            mesa = new
+            {
+                cantidad = pedidosMesa.Count,
+                total = pedidosMesa.Sum(p => p.Total)
+            },
+
+            xpress = new
+            {
+                cantidad = pedidosXpress.Count,
+                total = pedidosXpress.Sum(p => p.Total)
+            }
+        });
     }
 
     private int ObtenerRestaurantId()

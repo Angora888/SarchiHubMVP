@@ -99,6 +99,32 @@ public class ClientesController : ControllerBase
         });
     }
 
+
+    [HttpGet("cliente/{telefono}")]
+    [Authorize]
+    public async Task<IActionResult> BuscarCliente(string telefono)
+    {
+        var cliente = await _context.Clientes
+            .FirstOrDefaultAsync(c => c.Telefono == telefono);
+        if (cliente == null)
+            return NotFound();
+        return Ok(cliente);
+    }
+
+    [HttpPost("cliente")]
+    [Authorize]
+    public async Task<IActionResult> CrearClienteAdmin(Cliente cliente)
+    {
+        var existente = await _context.Clientes
+            .FirstOrDefaultAsync(c => c.Telefono == cliente.Telefono);
+        if (existente != null)
+            return Ok(existente);
+        cliente.FechaRegistro = DateTime.UtcNow;
+        _context.Clientes.Add(cliente);
+        await _context.SaveChangesAsync();
+        return Ok(cliente);
+    }
+
     [HttpGet]
     public async Task<IActionResult> ObtenerClientes()
     {

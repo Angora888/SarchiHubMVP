@@ -167,7 +167,23 @@ return (
 </h5>
 <div className="text-muted">
 
-                                        🍽 Mesa {pedido.mesa}
+{pedido.mesa ? (
+    <>
+        <span className="badge bg-primary mb-2">
+            🪑 Mesa #{pedido.mesa}
+        </span>
+    </>
+) : (
+    <>
+        <span className="badge bg-success mb-2">
+            📞 Xpress
+        </span>
+
+        <div className="fw-semibold">
+            👤 {pedido.cliente?.nombre}
+        </div>
+    </>
+)}
 </div>
 <div className="text-muted">
 

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import StatCard from "../components/StatCard";
-
 import "../styles/dashboard.css";
 
 
@@ -35,13 +34,13 @@ const cargarDashboard = async () => {
 };
 
 const colorCocina = (cantidad) => {
-   if (cantidad === 0)
-       return "bg-success text-white";
-   if (cantidad <= 3)
-       return "bg-warning";
-   if (cantidad <= 6)
-       return "bg-orange text-white";
-   return "bg-danger text-white";
+    if (cantidad <= 3)
+        return "bg-success text-white";
+
+    if (cantidad <= 6)
+        return "bg-warning";
+
+    return "bg-danger text-white";
 };
 
    return (
@@ -55,6 +54,12 @@ const colorCocina = (cantidad) => {
                Dashboard
 </h2>
 <div className="row">
+<StatCard
+    titulo="Pedidos Xpress"
+    icono="bi bi-telephone-fill"
+    color="bg-info-subtle text-info-emphasis"
+    ruta="/dashboard/pedido-xpress"
+/>
 <StatCard
    titulo="Pedidos"
    valor={datos.pedidos}
@@ -96,20 +101,26 @@ const colorCocina = (cantidad) => {
    ruta="/productos"
 />
 <StatCard
+   titulo="Mesas"
+   valor={datos.mesas}
+   icono="bi bi-grid-3x3-gap-fill"
+   color="bg-primary text-white"
+   ruta="/mesas"
+/>
+<StatCard
+    titulo="Cierre de Caja"
+    valor="→"
+    icono="bi bi-cash-coin"
+    color="bg-success-subtle text-success"
+    ruta="/cierre-caja"
+/>
+<StatCard
 
     titulo="Directorio"
     valor="→"
     icono="bi bi-building"
     color="bg-info text-white"
     ruta="/clientes"
-/>
-
-<StatCard
-   titulo="Mesas"
-   valor={datos.mesas}
-   icono="bi bi-grid-3x3-gap-fill"
-   color="bg-primary text-white"
-   ruta="/mesas"
 />
 {rol === "Admin" && (
 <>

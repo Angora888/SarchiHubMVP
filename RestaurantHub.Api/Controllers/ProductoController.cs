@@ -144,6 +144,65 @@ public class ProductosController : ControllerBase
         return Ok(productos);
     }
 
+    [HttpGet("productos-xpress")]
+    [Authorize]
+    public async Task<IActionResult> ObtenerProductosXpress()
+    {
+        var restaurantId = ObtenerRestaurantId();
+        var productos = await _context.Producto
+            .Where(p =>
+                p.RestaurantId == restaurantId &&
+                p.Disponible)
+            .OrderBy(p => p.Nombre)
+            .Select(p => new
+            {
+                p.Id,
+                p.Nombre,
+                p.Descripcion,
+                p.Precio,
+                p.ImagenUrl,
+                p.CategoriaId,
+                Categoria = p.Categoria.Name
+            })
+            .ToListAsync();
+        return Ok(productos);
+    }
+
+    [HttpGet("productos-disponibles/{codigoPedido}")]
+    public async Task<IActionResult> ObtenerProductosDisponibles(
+        string codigoPedido)
+    {
+        var pedido = await _context.Pedidos
+            .FirstOrDefaultAsync(p =>
+                p.CodigoQRPedido == codigoPedido);
+
+        if (pedido == null)
+            return NotFound("Pedido no encontrado.");
+
+        if (pedido.Estado == "Terminado")
+            return BadRequest(
+                "No se pueden agregar productos a un pedido terminado."
+            );
+
+        var productos = await _context.Producto
+            .Where(p =>
+                p.RestaurantId == pedido.RestaurantId &&
+                p.Disponible)
+            .OrderBy(p => p.Nombre)
+            .Select(p => new
+            {
+                p.Id,
+                p.Nombre,
+                p.Descripcion,
+                p.Precio,
+                p.ImagenUrl,
+                p.CategoriaId
+            })
+            .ToListAsync();
+
+        return Ok(productos);
+    }
+
     [HttpPut("{id}")]
     public async Task<IActionResult> ActualizarProducto(int id, ProductoUpdateDto dto)
     {

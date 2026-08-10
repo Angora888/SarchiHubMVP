@@ -49,7 +49,7 @@ const restaurantesFiltrados = restaurantes.filter(r => {
 
 <section className="container py-4">
 <div className="text-center mb-4"> 
-<div className="text-center mb-4">
+<div className="text-center mb-4"> 
 
     <img
         src={logo}

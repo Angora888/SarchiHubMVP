@@ -114,7 +114,23 @@ function Caja() {
 <div className="card-header d-flex justify-content-between">
 <h4 className="mb-0">
 
-                                        Mesa #{pedido.mesa}
+{pedido.mesa ? (
+    <>
+        <span className="badge bg-primary mb-2">
+            🪑 Mesa #{pedido.mesa}
+        </span>
+    </>
+) : (
+    <>
+        <span className="badge bg-success mb-2">
+            📞 Xpress
+        </span>
+
+        <div className="fw-semibold">
+            👤 {pedido.cliente?.nombre}
+        </div>
+    </>
+)}
 </h4>
 <h4 className="mb-1">
                                        Pedido #{pedido.numeroPedido.toString().padStart(3, "0")}

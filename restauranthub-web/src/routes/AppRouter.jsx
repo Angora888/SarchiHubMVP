@@ -21,6 +21,8 @@ import Categorias from "../pages/Categorias";
 import UsuarioForm from "../pages/UsuarioForm";
 import MesaForm from "../pages/MesaForm";
 import MenuRestaurant from "../pages/RestaurantMenu";
+import PedidoXpress from "../pages/PedidoXpress"
+import CierreCaja from "../pages/CierreCaja"
 
 function AppRouter() {
    return (
@@ -52,6 +54,8 @@ function AppRouter() {
 <Route path="/categorias" element={<Categorias />}/>
 <Route path="/usuarios/nuevo" element={<UsuarioForm />}/>
 <Route path="/mesas/nuevo" element={<MesaForm />}/>
+<Route path="/dashboard/pedido-xpress" element={<PedidoXpress />} />
+<Route path="/cierre-caja" element={<CierreCaja />} />
 
 </Route>
 </Route>

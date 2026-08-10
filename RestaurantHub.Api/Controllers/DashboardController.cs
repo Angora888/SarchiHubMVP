@@ -27,45 +27,51 @@ public class DashboardController : ControllerBase
         {
             Restaurantes = await _context.Restaurants.CountAsync(),
             Categorias = esAdmin
-                       ? await _context.Categoria.CountAsync()
-                       : await _context.Categoria.CountAsync(c => c.RestaurantId == restaurantId),
+                ? await _context.Categoria.CountAsync()
+                : await _context.Categoria.CountAsync(
+                    c => c.RestaurantId == restaurantId),
             Mesas = esAdmin
-                       ? await _context.Mesa.CountAsync()
-                       : await _context.Mesa.CountAsync(m => m.RestaurantId == restaurantId),
+                ? await _context.Mesa.CountAsync()
+                : await _context.Mesa.CountAsync(
+                    m => m.RestaurantId == restaurantId),
             Productos = esAdmin
-                       ? await _context.Producto.CountAsync()
-                       : await _context.Producto.CountAsync(p => p.RestaurantId == restaurantId),
+                ? await _context.Producto.CountAsync()
+                : await _context.Producto.CountAsync(
+                    p => p.RestaurantId == restaurantId),
             Usuarios = esAdmin
-                       ? await _context.Usuarios.CountAsync()
-                       : await _context.Usuarios.CountAsync(u => u.RestaurantId == restaurantId),
+                ? await _context.Usuarios.CountAsync()
+                : await _context.Usuarios.CountAsync(
+                    u => u.RestaurantId == restaurantId),
             Pedidos = esAdmin
-                       ? await _context.Pedidos.CountAsync(p =>
-                           p.Fecha >= inicio &&
-                           p.Fecha < fin)
-                       : await _context.Pedidos.CountAsync(p =>
-                           p.Mesa!.RestaurantId == restaurantId &&
-                           p.Fecha >= inicio &&
-                           p.Fecha < fin),
+                ? await _context.Pedidos.CountAsync(p =>
+                    p.Fecha >= inicio &&
+                    p.Fecha < fin)
+                : await _context.Pedidos.CountAsync(p =>
+                    p.RestaurantId == restaurantId &&
+                    p.Fecha >= inicio &&
+                    p.Fecha < fin),
             Cocina = esAdmin
-                       ? await _context.Pedidos.CountAsync(p =>
-                           p.Fecha >= inicio &&
-                           p.Fecha < fin &&
-                           (p.Estado == "Pendiente" || p.Estado == "Preparando"))
-                       : await _context.Pedidos.CountAsync(p =>
-                           p.Mesa!.RestaurantId == restaurantId &&
-                           p.Fecha >= inicio &&
-                           p.Fecha < fin &&
-                           (p.Estado == "Pendiente" || p.Estado == "Preparando")),
+                ? await _context.Pedidos.CountAsync(p =>
+                    p.Fecha >= inicio &&
+                    p.Fecha < fin &&
+                    (p.Estado == "Pendiente" ||
+                     p.Estado == "Preparando"))
+                : await _context.Pedidos.CountAsync(p =>
+                    p.RestaurantId == restaurantId &&
+                    p.Fecha >= inicio &&
+                    p.Fecha < fin &&
+                    (p.Estado == "Pendiente" ||
+                     p.Estado == "Preparando")),
             Caja = esAdmin
-                       ? await _context.Pedidos.CountAsync(p =>
-                           p.Fecha >= inicio &&
-                           p.Fecha < fin &&
-                           p.Estado == "Listo")
-                       : await _context.Pedidos.CountAsync(p =>
-                           p.Mesa!.RestaurantId == restaurantId &&
-                           p.Fecha >= inicio &&
-                           p.Fecha < fin &&
-                           p.Estado == "Listo")
+                ? await _context.Pedidos.CountAsync(p =>
+                    p.Fecha >= inicio &&
+                    p.Fecha < fin &&
+                    p.Estado == "Listo")
+                : await _context.Pedidos.CountAsync(p =>
+                    p.RestaurantId == restaurantId &&
+                    p.Fecha >= inicio &&
+                    p.Fecha < fin &&
+                    p.Estado == "Listo")
         };
         return Ok(dashboard);
     }
