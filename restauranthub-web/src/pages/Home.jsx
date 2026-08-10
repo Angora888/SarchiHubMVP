@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import logo from "../assets/Logosinfilas.png";
+import logo from "../assets/Logosinfilas.PNG";
 import NavbarPublic from "../components/NavbarPublic";
 import RestaurantCard from "../components/RestaurantCard";
 import Footer from "../components/Footer";
