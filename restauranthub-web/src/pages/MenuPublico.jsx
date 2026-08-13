@@ -54,6 +54,23 @@ function MenuPublico() {
             setLoading(false);
         }
     };
+	
+	const refrescarResumen = () => {
+    setVersionResumen(v => v + 1);
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            const resumen =
+                document.getElementById("resumen-pedido");
+
+            if (resumen) {
+                resumen.style.transform = "translateZ(0)";
+                void resumen.offsetHeight;
+                resumen.style.transform = "";
+            }
+        });
+    });
+};
 
     /*
      * Categorías utilizadas como categorías de extras.
@@ -239,6 +256,7 @@ const nuevaUnidad = {
         );
 
         cerrarExtras();
+		refrescarResumen();
     };
 
     /*
@@ -282,6 +300,8 @@ const nuevaUnidad = {
             producto.id,
             -1
         );
+		
+		    refrescarResumen();
     };
 
     const actualizarObservacion = (
@@ -726,7 +746,18 @@ const pedido = {
 )}
             </div>
 
-            <div className="sticky-bottom bg-white border-top p-3 shadow-lg">
+<div
+    id="resumen-pedido"
+    key={`resumen-${versionResumen}-${articulos}-${total}`}
+    className="bg-white border-top p-3 shadow-lg"
+    style={{
+        position: "sticky",
+        bottom: 0,
+        zIndex: 1020,
+        WebkitBackfaceVisibility: "hidden",
+        backfaceVisibility: "hidden"
+    }}
+>
 
                 <div className="d-flex justify-content-between">
 
