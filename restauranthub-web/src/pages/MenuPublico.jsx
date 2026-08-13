@@ -15,6 +15,8 @@ function MenuPublico() {
         useState("Todos");
 		
 		const [busqueda, setBusqueda] = useState("");
+		
+			const [versionResumen, setVersionResumen] = useState(0);
 
     // Modal de extras
     const [productoSeleccionado, setProductoSeleccionado] =
@@ -266,43 +268,46 @@ const nuevaUnidad = {
      * elimina la última unidad agregada
      * junto con sus extras.
      */
-    const quitarProducto = (producto) => {
-        if (producto.cantidad <= 0)
-            return;
+const quitarProducto = (producto) => {
 
-        if (producto.categoriaExtrasId != null) {
+    if (producto.cantidad <= 0)
+        return;
 
-            setProductos(prev =>
-                prev.map(p => {
+    if (producto.categoriaExtrasId != null) {
 
-                    if (p.id !== producto.id)
-                        return p;
+        setProductos(prev =>
+            prev.map(p => {
 
-                    return {
-                        ...p,
+                if (p.id !== producto.id)
+                    return p;
 
-                        cantidad:
-                            Math.max(
-                                0,
-                                p.cantidad - 1
-                            ),
+                return {
+                    ...p,
 
-                        unidades:
-                            p.unidades.slice(0, -1)
-                    };
-                })
-            );
+                    cantidad:
+                        Math.max(
+                            0,
+                            p.cantidad - 1
+                        ),
 
-            return;
-        }
-
-        cambiarCantidadNormal(
-            producto.id,
-            -1
+                    unidades:
+                        p.unidades.slice(0, -1)
+                };
+            })
         );
-		
-		    refrescarResumen();
-    };
+
+        refrescarResumen();
+
+        return;
+    }
+
+    cambiarCantidadNormal(
+        producto.id,
+        -1
+    );
+
+    refrescarResumen();
+};
 
     const actualizarObservacion = (
         id,
