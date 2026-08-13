@@ -215,15 +215,15 @@ const productosFiltrados = productosMenu.filter(p => {
                     return p;
                 }
 
-                const nuevaUnidad = {
-                    extras:
-                        extrasSeleccionados.map(extra => ({
-                            id: extra.id,
-                            productoId: extra.id,
-                            nombre: extra.nombre,
-                            precio: extra.precio
-                        }))
-                };
+const nuevaUnidad = {
+    extras:
+        extrasSeleccionados.map(extra => ({
+            id: extra.id,
+            productoId: extra.id,
+            nombre: extra.nombre,
+            precio: Number(extra.precio ?? 0)
+        }))
+};
 
                 return {
                     ...p,
@@ -305,43 +305,50 @@ const productosFiltrados = productosMenu.filter(p => {
     /*
      * Total de extras.
      */
-    const calcularExtrasProducto = (producto) => {
+const calcularExtrasProducto = (producto) => {
 
-        if (!producto.unidades)
-            return 0;
+    if (!producto.unidades)
+        return 0;
 
-        return producto.unidades.reduce(
-            (totalUnidades, unidad) => {
-
-                const totalExtras =
-                    unidad.extras.reduce(
-                        (total, extra) =>
-                            total + extra.precio,
-                        0
-                    );
-
-                return totalUnidades +
-                    totalExtras;
-            },
-            0
-        );
-    };
-
-    const total = productos.reduce(
-        (suma, p) => {
-
-            const totalProducto =
-                p.precio * p.cantidad;
+    return producto.unidades.reduce(
+        (totalUnidades, unidad) => {
 
             const totalExtras =
-                calcularExtrasProducto(p);
+                (unidad.extras ?? []).reduce(
+                    (total, extra) =>
+                        total + Number(extra.precio ?? 0),
+                    0
+                );
 
-            return suma +
-                totalProducto +
-                totalExtras;
+            return totalUnidades + totalExtras;
         },
         0
     );
+};
+
+const total = productos.reduce(
+    (suma, p) => {
+
+        const precio =
+            Number(p.precio ?? 0);
+
+        const cantidad =
+            Number(p.cantidad ?? 0);
+
+        const totalProducto =
+            precio * cantidad;
+
+        const totalExtras =
+            calcularExtrasProducto(p);
+
+        return (
+            Number(suma) +
+            totalProducto +
+            totalExtras
+        );
+    },
+    0
+);
 
     const articulos = productos.reduce(
         (suma, p) =>
@@ -740,7 +747,7 @@ const pedido = {
                     </strong>
 
                     <strong>
-                        ₡ {total.toLocaleString()}
+                        ₡ {Number(total).toLocaleString()}
                     </strong>
 
                 </div>
