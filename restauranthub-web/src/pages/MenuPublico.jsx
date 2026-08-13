@@ -578,7 +578,7 @@ const pedido = {
                                     </p>
 
                                     <h5>
-                                        ₡ {producto.precio}
+                                        ₡ {producto.precio.toLocaleString()}
                                     </h5>
 
                                     {producto.categoriaExtrasId != null && (
@@ -740,7 +740,7 @@ const pedido = {
                     </strong>
 
                     <strong>
-                        ₡ {total}
+                        ₡ {total.toLocaleString()}
                     </strong>
 
                 </div>
@@ -754,136 +754,172 @@ const pedido = {
 
             </div>
 
-            {/* MODAL EXTRAS */}
+{/* MODAL EXTRAS */}
 
-            {productoSeleccionado && (
+{productoSeleccionado && (
 
-                <div
-                    className="modal show d-block"
-                    tabIndex="-1"
-                    style={{
-                        backgroundColor:
-                            "rgba(0,0,0,.5)"
-                    }}
-                >
+    <div
+        className="modal show d-block"
+        tabIndex="-1"
+        role="dialog"
+        aria-modal="true"
+        style={{
+            backgroundColor: "rgba(0,0,0,.5)",
+            overflowY: "auto",
+            WebkitOverflowScrolling: "touch",
+            paddingTop: "env(safe-area-inset-top)",
+            paddingBottom: "env(safe-area-inset-bottom)"
+        }}
+    >
 
-                    <div className="modal-dialog modal-dialog-centered">
+        <div
+            className="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+            style={{
+                margin: "1rem auto",
+                minHeight: "calc(100% - 2rem)",
+                maxWidth: "500px"
+            }}
+        >
 
-                        <div className="modal-content">
+            <div
+                className="modal-content"
+                style={{
+                    maxHeight: "calc(100dvh - 2rem)",
+                    overflow: "hidden"
+                }}
+            >
 
-                            <div className="modal-header">
+                {/* HEADER */}
 
-                                <div>
+                <div className="modal-header">
 
-                                    <h5 className="modal-title">
-                                        {
-                                            productoSeleccionado.nombre
-                                        }
-                                    </h5>
+                    <div>
 
-                                    <small className="text-muted">
-                                        Selecciona los extras
-                                    </small>
+                        <h5 className="modal-title">
+                            {productoSeleccionado.nombre}
+                        </h5>
 
-                                </div>
-
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    onClick={
-                                        cerrarExtras
-                                    }
-                                />
-
-                            </div>
-
-                            <div className="modal-body">
-
-                                {extrasDisponibles.map(
-                                    extra => {
-
-                                        const seleccionado =
-                                            extrasSeleccionados
-                                                .some(
-                                                    e =>
-                                                        e.id ===
-                                                        extra.id
-                                                );
-
-                                        return (
-
-                                            <div
-                                                key={extra.id}
-                                                className="d-flex justify-content-between align-items-center border-bottom py-3"
-                                            >
-
-                                                <div>
-
-                                                    <strong>
-                                                        {
-                                                            extra.nombre
-                                                        }
-                                                    </strong>
-
-                                                    <div className="text-muted">
-                                                        + ₡{" "}
-                                                        {
-                                                            extra.precio
-                                                        }
-                                                    </div>
-
-                                                </div>
-
-                                                <input
-                                                    type="checkbox"
-                                                    className="form-check-input"
-                                                    checked={
-                                                        seleccionado
-                                                    }
-                                                    onChange={() =>
-                                                        seleccionarExtra(
-                                                            extra
-                                                        )
-                                                    }
-                                                />
-
-                                            </div>
-
-                                        );
-                                    }
-                                )}
-
-                            </div>
-
-                            <div className="modal-footer">
-
-                                <button
-                                    className="btn btn-secondary"
-                                    onClick={
-                                        cerrarExtras
-                                    }
-                                >
-                                    Cancelar
-                                </button>
-
-                                <button
-                                    className="btn btn-success"
-                                    onClick={
-                                        confirmarProductoConExtras
-                                    }
-                                >
-                                    Agregar
-                                </button>
-
-                            </div>
-
-                        </div>
+                        <small className="text-muted">
+                            Selecciona los extras
+                        </small>
 
                     </div>
 
+                    <button
+                        type="button"
+                        className="btn-close"
+                        onClick={cerrarExtras}
+                        aria-label="Cerrar"
+                    />
+
                 </div>
 
-            )}
+                {/* BODY */}
+
+                <div
+                    className="modal-body"
+                    style={{
+                        overflowY: "auto",
+                        WebkitOverflowScrolling: "touch"
+                    }}
+                >
+
+                    {extrasDisponibles.length === 0 && (
+
+                        <div className="text-muted text-center py-3">
+                            No hay extras disponibles.
+                        </div>
+
+                    )}
+
+                    {extrasDisponibles.map(extra => {
+
+                        const seleccionado =
+                            extrasSeleccionados.some(
+                                e => e.id === extra.id
+                            );
+
+                        return (
+
+                            <label
+                                key={extra.id}
+                                className="d-flex justify-content-between align-items-center border-bottom py-3"
+                                style={{
+                                    cursor: "pointer",
+                                    minHeight: "60px"
+                                }}
+                            >
+
+                                <div>
+
+                                    <strong>
+                                        {extra.nombre}
+                                    </strong>
+
+                                    <div className="text-muted">
+                                        + ₡ {extra.precio.toLocaleString()}
+                                    </div>
+
+                                </div>
+
+                                <input
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    checked={seleccionado}
+                                    onChange={() =>
+                                        seleccionarExtra(extra)
+                                    }
+                                    style={{
+                                        width: "1.4rem",
+                                        height: "1.4rem",
+                                        flexShrink: 0
+                                    }}
+                                />
+
+                            </label>
+
+                        );
+
+                    })}
+
+                </div>
+
+                {/* FOOTER */}
+
+                <div
+                    className="modal-footer bg-white"
+                    style={{
+                        flexShrink: 0,
+                        paddingBottom:
+                            "max(0.75rem, env(safe-area-inset-bottom))"
+                    }}
+                >
+
+                    <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={cerrarExtras}
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="button"
+                        className="btn btn-success"
+                        onClick={confirmarProductoConExtras}
+                    >
+                        Agregar
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+)}
 
         </div>
     );
