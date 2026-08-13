@@ -46,16 +46,19 @@ public class MenuController : ControllerBase
                p.RestaurantId == mesa.RestaurantId &&
                p.Disponible)
            .OrderBy(p => p.Id)
-           .Select(p => new
-           {
-               p.Id,
-               p.Nombre,
-               p.Descripcion,
-               p.Precio,
-               p.ImagenUrl,
-               p.CategoriaId,
-               CategoriaNombre = p.Categoria.Name
-           })
+.Select(p => new
+{
+    p.Id,
+    p.Nombre,
+    p.Descripcion,
+    p.Precio,
+    p.ImagenUrl,
+    p.CategoriaId,
+    p.CategoriaExtrasId,
+    CategoriaNombre = p.Categoria != null
+        ? p.Categoria.Name
+        : null
+})
            .ToListAsync();
 
         return Ok(new

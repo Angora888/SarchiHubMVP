@@ -14,4 +14,8 @@ public class Producto
     public Categoria? Categoria { get; set; }
     public int RestaurantId { get; set; }
     public Restaurant? Restaurant { get; set; }
+
+    // Categoría que contiene los extras permitidos para este producto
+    public int? CategoriaExtrasId { get; set; }
+    public Categoria? CategoriaExtras { get; set; }
 }

@@ -24,4 +24,30 @@ public class RestaurantHubContext : DbContext
 
     public DbSet<Cliente> Clientes { get; set; }
 
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Categoría principal del producto
+        modelBuilder.Entity<Producto>()
+            .HasOne(p => p.Categoria)
+            .WithMany(c => c.Productos)
+            .HasForeignKey(p => p.CategoriaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Categoría que contiene los extras disponibles para el producto
+        modelBuilder.Entity<Producto>()
+            .HasOne(p => p.CategoriaExtras)
+            .WithMany()
+            .HasForeignKey(p => p.CategoriaExtrasId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Relación padre/hijo entre detalles del pedido
+        modelBuilder.Entity<DetallePedido>()
+            .HasOne(d => d.DetallePadre)
+            .WithMany(d => d.Extras)
+            .HasForeignKey(d => d.DetallePadreId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+
 }

@@ -174,6 +174,12 @@ public class ClientesController : ControllerBase
     {
         var restaurantId = ObtenerRestaurantId();
 
+        if (string.IsNullOrWhiteSpace(cliente.Telefono))
+            return BadRequest("El teléfono es obligatorio.");
+
+        if (string.IsNullOrWhiteSpace(cliente.NombreCompleto))
+            return BadRequest("El nombre es obligatorio.");
+
         var existente = await _context.Clientes
             .FirstOrDefaultAsync(c =>
                 c.Telefono == cliente.Telefono &&
@@ -184,6 +190,9 @@ public class ClientesController : ControllerBase
 
         cliente.RestaurantId = restaurantId;
         cliente.FechaRegistro = DateTime.UtcNow;
+
+        // Dirección puede quedar vacía para "Pasa a llevar"
+        cliente.Direccion ??= "";
 
         _context.Clientes.Add(cliente);
         await _context.SaveChangesAsync();

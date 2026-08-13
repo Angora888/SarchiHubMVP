@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 function CierreCaja() {
-
     const navigate = useNavigate();
 
     const [resumen, setResumen] = useState(null);
@@ -14,28 +13,22 @@ function CierreCaja() {
     }, []);
 
     const cargarCierre = async () => {
-
         try {
-
             const respuesta =
                 await api.get("/Pedidos/cierre-caja");
 
             setResumen(respuesta.data);
-
         }
         catch (error) {
-
             console.error(error);
 
-            alert("No fue posible cargar el cierre de caja.");
-
+            alert(
+                "No fue posible cargar el cierre de caja."
+            );
         }
         finally {
-
             setLoading(false);
-
         }
-
     };
 
     if (loading) {
@@ -73,13 +66,14 @@ function CierreCaja() {
 
                 <button
                     className="btn btn-outline-secondary"
-                    onClick={() => navigate("/dashboard")}
+                    onClick={() =>
+                        navigate("/dashboard")
+                    }
                 >
                     ← Dashboard
                 </button>
 
             </div>
-
 
             {/* TOTAL VENTAS */}
 
@@ -98,7 +92,6 @@ function CierreCaja() {
                 </div>
 
             </div>
-
 
             {/* RESUMEN */}
 
@@ -124,7 +117,6 @@ function CierreCaja() {
 
                 </div>
 
-
                 <div className="col-md-6">
 
                     <div className="card shadow-sm border-0 rounded-4 h-100">
@@ -136,7 +128,9 @@ function CierreCaja() {
                             </div>
 
                             <h2 className="fw-bold mb-0">
-                                ₡ {Math.round(resumen.ticketPromedio).toLocaleString()}
+                                ₡ {Math.round(
+                                    resumen.ticketPromedio
+                                ).toLocaleString()}
                             </h2>
 
                         </div>
@@ -146,7 +140,6 @@ function CierreCaja() {
                 </div>
 
             </div>
-
 
             {/* ORIGEN PEDIDOS */}
 
@@ -164,7 +157,9 @@ function CierreCaja() {
 
                     <div className="row g-3">
 
-                        <div className="col-md-6">
+                        {/* MESA */}
+
+                        <div className="col-md-4">
 
                             <div className="border rounded-4 p-4 h-100">
 
@@ -177,7 +172,7 @@ function CierreCaja() {
                                 </div>
 
                                 <h3>
-                                    {resumen.mesa.cantidad}
+                                    {resumen.mesa?.cantidad ?? 0}
                                 </h3>
 
                                 <div className="text-muted">
@@ -185,20 +180,22 @@ function CierreCaja() {
                                 </div>
 
                                 <h4 className="text-success">
-                                    ₡ {resumen.mesa.total.toLocaleString()}
+                                    ₡ {(resumen.mesa?.total ?? 0)
+                                        .toLocaleString()}
                                 </h4>
 
                             </div>
 
                         </div>
 
+                        {/* XPRESS */}
 
-                        <div className="col-md-6">
+                        <div className="col-md-4">
 
                             <div className="border rounded-4 p-4 h-100">
 
                                 <h5>
-                                    📞 Pedidos Xpress
+                                    🛵 Pedidos Xpress
                                 </h5>
 
                                 <div className="text-muted">
@@ -206,7 +203,7 @@ function CierreCaja() {
                                 </div>
 
                                 <h3>
-                                    {resumen.xpress.cantidad}
+                                    {resumen.xpress?.cantidad ?? 0}
                                 </h3>
 
                                 <div className="text-muted">
@@ -214,7 +211,39 @@ function CierreCaja() {
                                 </div>
 
                                 <h4 className="text-success">
-                                    ₡ {resumen.xpress.total.toLocaleString()}
+                                    ₡ {(resumen.xpress?.total ?? 0)
+                                        .toLocaleString()}
+                                </h4>
+
+                            </div>
+
+                        </div>
+
+                        {/* LLEVAR */}
+
+                        <div className="col-md-4">
+
+                            <div className="border rounded-4 p-4 h-100">
+
+                                <h5>
+                                    🥡 Pasa a llevar
+                                </h5>
+
+                                <div className="text-muted">
+                                    Cantidad
+                                </div>
+
+                                <h3>
+                                    {resumen.llevar?.cantidad ?? 0}
+                                </h3>
+
+                                <div className="text-muted">
+                                    Total
+                                </div>
+
+                                <h4 className="text-success">
+                                    ₡ {(resumen.llevar?.total ?? 0)
+                                        .toLocaleString()}
                                 </h4>
 
                             </div>

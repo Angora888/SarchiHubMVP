@@ -28,5 +28,7 @@ public class Pedido
 
     public int NumeroPedido { get; set; }
 
+    public string TipoPedido { get; set; } = "Mesa";
+
     public List<DetallePedido> Detalles { get; set; } = new();
 }

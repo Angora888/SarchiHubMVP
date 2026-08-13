@@ -23,102 +23,391 @@ public class PedidosController : ControllerBase
     {
         await using var transaction =
             await _context.Database.BeginTransactionAsync();
+
         try
         {
             if (dto.Productos == null || !dto.Productos.Any())
-                return BadRequest("Debe agregar al menos un producto al pedido.");
-            Mesa? mesa = null;
-            int restaurantId;
-            // 🪑 PEDIDO DESDE MESA
-            if (dto.MesaId.HasValue)
             {
-                mesa = await _context.Mesa
-                    .FirstOrDefaultAsync(m => m.Id == dto.MesaId.Value);
-                if (mesa == null)
-                    return BadRequest("La mesa no existe.");
-                if (mesa.Status == "Ocupada")
-                    return BadRequest("La mesa está ocupada.");
-                restaurantId = mesa.RestaurantId;
+                return BadRequest(
+                    "Debe agregar al menos un producto al pedido.");
             }
-            // 📞 PEDIDO XPRESS
+
+            // =====================================================
+            // TIPO DE PEDIDO
+            // =====================================================
+
+            // Compatibilidad temporal:
+            // si todavía algún frontend no manda TipoPedido,
+            // lo deducimos con la lógica anterior.
+            var tipoPedido = string.IsNullOrWhiteSpace(dto.TipoPedido)
+                ? (dto.MesaId.HasValue ? "Mesa" : "Xpress")
+                : dto.TipoPedido.Trim();
+
+            // Normalizar para evitar problemas de mayúsculas/minúsculas
+            if (tipoPedido.Equals(
+                "Mesa",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                tipoPedido = "Mesa";
+            }
+            else if (tipoPedido.Equals(
+                "Xpress",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                tipoPedido = "Xpress";
+            }
+            else if (tipoPedido.Equals(
+                "Llevar",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                tipoPedido = "Llevar";
+            }
             else
             {
-                // Para Xpress obtenemos el restaurante
-                // del usuario que está creando el pedido.
-                restaurantId = ObtenerRestaurantId();
-                if (!dto.ClienteId.HasValue)
-                    return BadRequest("El pedido Xpress requiere un cliente.");
+                return BadRequest(
+                    "TipoPedido inválido. Debe ser Mesa, Xpress o Llevar.");
             }
-            // 🔢 Número consecutivo por restaurante
-            var ultimoNumero = await _context.Pedidos
-                .Where(p => p.RestaurantId == restaurantId)
-                .MaxAsync(p => (int?)p.NumeroPedido) ?? 0;
+
+            Mesa? mesa = null;
+            int restaurantId;
+
+            // =====================================================
+            // 🪑 PEDIDO DE MESA
+            // =====================================================
+
+            if (tipoPedido == "Mesa")
+            {
+                if (!dto.MesaId.HasValue)
+                {
+                    return BadRequest(
+                        "El pedido de mesa requiere una MesaId.");
+                }
+
+                mesa = await _context.Mesa
+                    .FirstOrDefaultAsync(m =>
+                        m.Id == dto.MesaId.Value);
+
+                if (mesa == null)
+                {
+                    return BadRequest(
+                        "La mesa no existe.");
+                }
+
+                if (mesa.Status == "Ocupada")
+                {
+                    return BadRequest(
+                        "La mesa está ocupada.");
+                }
+
+                restaurantId =
+                    mesa.RestaurantId;
+
+                // Un pedido de mesa no necesita cliente
+                dto.ClienteId = null;
+            }
+
+            // =====================================================
+            // 🛵 XPRESS / 🥡 LLEVAR
+            // =====================================================
+
+            else
+            {
+                restaurantId =
+                    ObtenerRestaurantId();
+
+                if (dto.MesaId.HasValue)
+                {
+                    return BadRequest(
+                        $"Un pedido tipo {tipoPedido} no puede tener una mesa asociada.");
+                }
+
+                if (!dto.ClienteId.HasValue)
+                {
+                    return BadRequest(
+                        tipoPedido == "Xpress"
+                            ? "El pedido Xpress requiere un cliente."
+                            : "El pedido para llevar requiere un cliente.");
+                }
+
+                // Seguridad:
+                // el cliente debe pertenecer al restaurante
+                // del usuario autenticado.
+                var clienteExiste =
+                    await _context.Clientes
+                        .AnyAsync(c =>
+                            c.Id ==
+                                dto.ClienteId.Value &&
+                            c.RestaurantId ==
+                                restaurantId);
+
+                if (!clienteExiste)
+                {
+                    return BadRequest(
+                        "El cliente no pertenece a este restaurante.");
+                }
+            }
+
+            // =====================================================
+            // 🔢 NÚMERO CONSECUTIVO
+            // =====================================================
+
+            var ultimoNumero =
+                await _context.Pedidos
+                    .Where(p =>
+                        p.RestaurantId ==
+                        restaurantId)
+                    .MaxAsync(p =>
+                        (int?)p.NumeroPedido)
+                    ?? 0;
+
+            // =====================================================
+            // CREAR PEDIDO
+            // =====================================================
+
             var pedido = new Pedido
             {
-                RestaurantId = restaurantId,
-                MesaId = dto.MesaId,
-                ClienteId = dto.ClienteId,
-                Fecha = DateTime.UtcNow,
-                Estado = "Pendiente",
-                Total = 0,
-                NumeroPedido = ultimoNumero + 1,
-                CodigoQRPedido = Guid.NewGuid().ToString()
+                RestaurantId =
+                    restaurantId,
+
+                MesaId =
+                    tipoPedido == "Mesa"
+                        ? dto.MesaId
+                        : null,
+
+                ClienteId =
+                    tipoPedido == "Mesa"
+                        ? null
+                        : dto.ClienteId,
+
+                TipoPedido =
+                    tipoPedido,
+
+                Fecha =
+                    DateTime.UtcNow,
+
+                Estado =
+                    "Pendiente",
+
+                Total =
+                    0,
+
+                NumeroPedido =
+                    ultimoNumero + 1,
+
+                CodigoQRPedido =
+                    Guid.NewGuid().ToString()
             };
-            _context.Pedidos.Add(pedido);
+
+            _context.Pedidos.Add(
+                pedido);
+
             decimal total = 0;
-            // 🛒 Productos
+
+            // =====================================================
+            // 🛒 PRODUCTOS
+            // =====================================================
+
             foreach (var item in dto.Productos)
             {
-                var producto = await _context.Producto
-                    .FirstOrDefaultAsync(p =>
-                        p.Id == item.ProductoId &&
-                        p.RestaurantId == restaurantId);
+                var producto =
+                    await _context.Producto
+                        .FirstOrDefaultAsync(p =>
+                            p.Id ==
+                                item.ProductoId &&
+                            p.RestaurantId ==
+                                restaurantId);
+
                 if (producto == null)
-                    return BadRequest(
-                        $"El producto {item.ProductoId} no existe para este restaurante."
-                    );
-                if (item.Cantidad <= 0)
-                    return BadRequest(
-                        "La cantidad de productos debe ser mayor que cero."
-                    );
-                decimal subtotal =
-                    producto.Precio * item.Cantidad;
-                total += subtotal;
-                var detalle = new DetallePedido
                 {
-                    Pedido = pedido,
-                    ProductoId = producto.Id,
-                    Cantidad = item.Cantidad,
-                    PrecioUnitario = producto.Precio,
-                    Observaciones = item.Observaciones,
-                    Subtotal = subtotal
-                };
-                _context.DetallesPedido.Add(detalle);
+                    return BadRequest(
+                        $"El producto {item.ProductoId} no existe para este restaurante.");
+                }
+
+                // Producto deshabilitado
+                if (!producto.Disponible)
+                {
+                    return BadRequest(
+                        $"El producto {producto.Nombre} no está disponible.");
+                }
+
+                if (item.Cantidad <= 0)
+                {
+                    return BadRequest(
+                        "La cantidad de productos debe ser mayor que cero.");
+                }
+
+                decimal subtotal =
+                    producto.Precio *
+                    item.Cantidad;
+
+                total += subtotal;
+
+                // =================================================
+                // PRODUCTO PRINCIPAL
+                // =================================================
+
+                var detallePrincipal =
+                    new DetallePedido
+                    {
+                        Pedido =
+                            pedido,
+
+                        ProductoId =
+                            producto.Id,
+
+                        Cantidad =
+                            item.Cantidad,
+
+                        PrecioUnitario =
+                            producto.Precio,
+
+                        Observaciones =
+                            item.Observaciones,
+
+                        Subtotal =
+                            subtotal
+                    };
+
+                _context.DetallesPedido.Add(
+                    detallePrincipal);
+
+                // =================================================
+                // ➕ EXTRAS
+                // =================================================
+
+                if (item.Extras != null &&
+                    item.Extras.Any())
+                {
+                    // Si llegan extras, el producto
+                    // debe tener una categoría configurada.
+                    if (!producto.CategoriaExtrasId.HasValue)
+                    {
+                        return BadRequest(
+                            $"El producto {producto.Nombre} no permite extras.");
+                    }
+
+                    foreach (
+                        var extraDto in item.Extras)
+                    {
+                        var extra =
+                            await _context.Producto
+                                .FirstOrDefaultAsync(p =>
+                                    p.Id ==
+                                        extraDto.ProductoId &&
+                                    p.RestaurantId ==
+                                        restaurantId);
+
+                        if (extra == null)
+                        {
+                            return BadRequest(
+                                $"El extra {extraDto.ProductoId} no existe para este restaurante.");
+                        }
+
+                        if (!extra.Disponible)
+                        {
+                            return BadRequest(
+                                $"El extra {extra.Nombre} no está disponible.");
+                        }
+
+                        // El extra realmente debe pertenecer
+                        // a la categoría de extras configurada
+                        // para este producto.
+                        if (extra.CategoriaId !=
+                            producto.CategoriaExtrasId.Value)
+                        {
+                            return BadRequest(
+                                $"El producto {extra.Nombre} no es un extra válido para {producto.Nombre}.");
+                        }
+
+                        var cantidadExtra =
+                            extraDto.Cantidad <= 0
+                                ? 1
+                                : extraDto.Cantidad;
+
+                        decimal subtotalExtra =
+                            extra.Precio *
+                            cantidadExtra;
+
+                        total +=
+                            subtotalExtra;
+
+                        var detalleExtra =
+                            new DetallePedido
+                            {
+                                Pedido =
+                                    pedido,
+
+                                ProductoId =
+                                    extra.Id,
+
+                                Cantidad =
+                                    cantidadExtra,
+
+                                PrecioUnitario =
+                                    extra.Precio,
+
+                                Subtotal =
+                                    subtotalExtra,
+
+                                // Extra perteneciente
+                                // a ESTA unidad/producto
+                                DetallePadre =
+                                    detallePrincipal
+                            };
+
+                        _context.DetallesPedido.Add(
+                            detalleExtra);
+                    }
+                }
             }
-            pedido.Total = total;
-            // 🪑 Solo ocupamos la mesa si existe
-            if (mesa != null)
+
+            // =====================================================
+            // TOTAL
+            // =====================================================
+
+            pedido.Total =
+                total;
+
+            // Solo pedidos de Mesa ocupan una mesa
+            if (tipoPedido == "Mesa" &&
+                mesa != null)
             {
-                mesa.Status = "Ocupada";
+                mesa.Status =
+                    "Ocupada";
             }
+
             await _context.SaveChangesAsync();
+
             await transaction.CommitAsync();
+
             return Ok(new
             {
-                pedido = pedido.Id,
-                estado = pedido.Estado,
-                pedidoQR = pedido.CodigoQRPedido,
-                numeroPedido = pedido.NumeroPedido,
-                total = pedido.Total
+                pedido =
+                    pedido.Id,
+
+                tipoPedido =
+                    pedido.TipoPedido,
+
+                estado =
+                    pedido.Estado,
+
+                pedidoQR =
+                    pedido.CodigoQRPedido,
+
+                numeroPedido =
+                    pedido.NumeroPedido,
+
+                total =
+                    pedido.Total
             });
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
+
             return StatusCode(
                 500,
-                $"Error al crear el pedido: {ex.Message}"
-            );
+                $"Error al crear el pedido: {ex.Message}");
         }
     }
 
@@ -146,7 +435,6 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPost("{id}/agregar-producto")]
-    [Authorize]
     public async Task<IActionResult> AgregarProducto(
         int id,
         AgregarProductoDto dto)
@@ -162,7 +450,7 @@ public class PedidosController : ControllerBase
             var query = _context.Pedidos
                 .Where(p => p.Id == id);
 
-            // Cliente solamente puede modificar pedidos de su restaurante
+            // Mantengo tu lógica actual
             if (!esAdmin)
             {
                 query = query.Where(
@@ -170,12 +458,16 @@ public class PedidosController : ControllerBase
                 );
             }
 
-            var pedido = await query.FirstOrDefaultAsync();
+            var pedido =
+                await query.FirstOrDefaultAsync();
 
             if (pedido == null)
-                return NotFound("Pedido no encontrado.");
+            {
+                return NotFound(
+                    "Pedido no encontrado.");
+            }
 
-            // Ya terminado no se puede tocar
+            // Pedido terminado ya no se modifica
             if (pedido.Estado == "Terminado")
             {
                 return BadRequest(
@@ -190,8 +482,8 @@ public class PedidosController : ControllerBase
                 );
             }
 
-            // Importantísimo:
-            // el producto tiene que pertenecer al mismo restaurante del pedido.
+            // El producto debe pertenecer
+            // al mismo restaurante del pedido
             var producto = await _context.Producto
                 .FirstOrDefaultAsync(p =>
                     p.Id == dto.ProductoId &&
@@ -207,56 +499,202 @@ public class PedidosController : ControllerBase
             if (!producto.Disponible)
             {
                 return BadRequest(
-                    "El producto no está disponible."
+                    $"El producto {producto.Nombre} no está disponible."
                 );
             }
 
-            var detalle = await _context.DetallesPedido
-                .FirstOrDefaultAsync(d =>
-                    d.PedidoId == pedido.Id &&
-                    d.ProductoId == producto.Id);
+            var tieneExtras =
+                dto.Extras != null &&
+                dto.Extras.Any();
 
-            if (detalle != null)
+            /*
+             * IMPORTANTE:
+             *
+             * Los productos configurables se guardan
+             * unidad por unidad.
+             *
+             * Así podemos tener:
+             *
+             * Hamburguesa #1 + Pepinillo
+             * Hamburguesa #2 + Tocino
+             */
+            if (producto.CategoriaExtrasId.HasValue)
             {
-                // Ya estaba en el pedido
-                detalle.Cantidad += dto.Cantidad;
-
-                detalle.Subtotal =
-                    detalle.Cantidad *
-                    detalle.PrecioUnitario;
-
-                // Si escribieron una nueva observación,
-                // la actualizamos
-                if (!string.IsNullOrWhiteSpace(dto.Observaciones))
+                if (dto.Cantidad != 1)
                 {
-                    detalle.Observaciones =
-                        dto.Observaciones;
+                    return BadRequest(
+                        "Los productos personalizables deben agregarse una unidad a la vez."
+                    );
+                }
+
+                // Crear SIEMPRE un detalle nuevo
+                var detallePrincipal =
+                    new DetallePedido
+                    {
+                        PedidoId = pedido.Id,
+                        ProductoId = producto.Id,
+                        Cantidad = 1,
+                        PrecioUnitario = producto.Precio,
+                        Observaciones = dto.Observaciones,
+                        Subtotal = producto.Precio
+                    };
+
+                _context.DetallesPedido.Add(
+                    detallePrincipal);
+
+                // =========================
+                // EXTRAS
+                // =========================
+
+                if (tieneExtras)
+                {
+                    foreach (
+                        var extraDto in dto.Extras!)
+                    {
+                        var extra =
+                            await _context.Producto
+                                .FirstOrDefaultAsync(p =>
+                                    p.Id ==
+                                        extraDto.ProductoId &&
+                                    p.RestaurantId ==
+                                        pedido.RestaurantId);
+
+                        if (extra == null)
+                        {
+                            return BadRequest(
+                                $"El extra {extraDto.ProductoId} no existe para este restaurante."
+                            );
+                        }
+
+                        if (!extra.Disponible)
+                        {
+                            return BadRequest(
+                                $"El extra {extra.Nombre} no está disponible."
+                            );
+                        }
+
+                        // Seguridad:
+                        // comprobar que realmente pertenece
+                        // a la categoría de extras del producto
+                        if (extra.CategoriaId !=
+                            producto.CategoriaExtrasId.Value)
+                        {
+                            return BadRequest(
+                                $"El producto {extra.Nombre} no es un extra válido para {producto.Nombre}."
+                            );
+                        }
+
+                        var cantidadExtra =
+                            extraDto.Cantidad <= 0
+                                ? 1
+                                : extraDto.Cantidad;
+
+                        var detalleExtra =
+                            new DetallePedido
+                            {
+                                PedidoId = pedido.Id,
+
+                                ProductoId = extra.Id,
+
+                                Cantidad =
+                                    cantidadExtra,
+
+                                PrecioUnitario =
+                                    extra.Precio,
+
+                                Subtotal =
+                                    extra.Precio *
+                                    cantidadExtra,
+
+                                // Relacionar este extra
+                                // con ESTA unidad específica
+                                DetallePadre =
+                                    detallePrincipal
+                            };
+
+                        _context.DetallesPedido.Add(
+                            detalleExtra);
+                    }
                 }
             }
             else
             {
-                // Producto nuevo dentro del pedido
-                detalle = new DetallePedido
-                {
-                    PedidoId = pedido.Id,
-                    ProductoId = producto.Id,
-                    Cantidad = dto.Cantidad,
-                    PrecioUnitario = producto.Precio,
-                    Observaciones = dto.Observaciones,
-                    Subtotal =
-                        producto.Precio *
-                        dto.Cantidad
-                };
+                /*
+                 * Producto normal:
+                 * Coca, papas, bebida, etc.
+                 *
+                 * Estos sí se pueden acumular.
+                 */
 
-                _context.DetallesPedido.Add(detalle);
+                if (tieneExtras)
+                {
+                    return BadRequest(
+                        $"El producto {producto.Nombre} no permite extras."
+                    );
+                }
+
+                var detalle =
+                    await _context.DetallesPedido
+                        .FirstOrDefaultAsync(d =>
+                            d.PedidoId == pedido.Id &&
+                            d.ProductoId == producto.Id &&
+                            d.DetallePadreId == null);
+
+                if (detalle != null)
+                {
+                    detalle.Cantidad +=
+                        dto.Cantidad;
+
+                    detalle.Subtotal =
+                        detalle.Cantidad *
+                        detalle.PrecioUnitario;
+
+                    if (!string.IsNullOrWhiteSpace(
+                        dto.Observaciones))
+                    {
+                        detalle.Observaciones =
+                            dto.Observaciones;
+                    }
+                }
+                else
+                {
+                    detalle =
+                        new DetallePedido
+                        {
+                            PedidoId = pedido.Id,
+
+                            ProductoId =
+                                producto.Id,
+
+                            Cantidad =
+                                dto.Cantidad,
+
+                            PrecioUnitario =
+                                producto.Precio,
+
+                            Observaciones =
+                                dto.Observaciones,
+
+                            Subtotal =
+                                producto.Precio *
+                                dto.Cantidad
+                        };
+
+                    _context.DetallesPedido.Add(
+                        detalle);
+                }
             }
 
+            // Primero guardar detalles y extras
             await _context.SaveChangesAsync();
 
-            // Recalcular total completo del pedido
-            pedido.Total = await _context.DetallesPedido
-                .Where(d => d.PedidoId == pedido.Id)
-                .SumAsync(d => d.Subtotal);
+            // Recalcular TOTAL incluyendo extras
+            pedido.Total =
+                await _context.DetallesPedido
+                    .Where(d =>
+                        d.PedidoId == pedido.Id)
+                    .SumAsync(d =>
+                        d.Subtotal);
 
             await _context.SaveChangesAsync();
 
@@ -264,16 +702,24 @@ public class PedidosController : ControllerBase
 
             return Ok(new
             {
-                mensaje = "Producto agregado correctamente.",
-                pedidoId = pedido.Id,
-                nuevoTotal = pedido.Total
+                mensaje =
+                    "Producto agregado correctamente.",
+
+                pedidoId =
+                    pedido.Id,
+
+                nuevoTotal =
+                    pedido.Total
             });
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
 
-            return StatusCode(500, ex.Message);
+            return StatusCode(
+                500,
+                $"Error al agregar el producto: {ex.Message}"
+            );
         }
     }
 
@@ -323,6 +769,7 @@ public class PedidosController : ControllerBase
                 total = p.Total,
                 fecha = p.Fecha,
                 codigoQR = p.CodigoQRPedido,
+                tipoPedido = p.TipoPedido,
                 numeroPedido = p.NumeroPedido,
 
                 cantidadProductos = p.Detalles.Sum(d => d.Cantidad)
@@ -341,15 +788,23 @@ public class PedidosController : ControllerBase
             .Include(p => p.Mesa)
             .Include(p => p.Cliente)
             .Include(p => p.Detalles)
-            .ThenInclude(d => d.Producto)
-            .FirstOrDefaultAsync(p => p.CodigoQRPedido == id);
+                .ThenInclude(d => d.Producto)
+            .FirstOrDefaultAsync(p =>
+                p.CodigoQRPedido == id);
+
         if (pedido == null)
             return NotFound();
+
         return Ok(new
         {
             id = pedido.Id,
-            restaurant = pedido.Restaurant?.Name,
-            mesa = pedido.Mesa?.Number,
+
+            restaurant =
+                pedido.Restaurant?.Name,
+
+            mesa =
+                pedido.Mesa?.Number,
+
             cliente = pedido.Cliente == null
                 ? null
                 : new
@@ -357,22 +812,77 @@ public class PedidosController : ControllerBase
                     id = pedido.Cliente.Id,
                     nombre = pedido.Cliente.NombreCompleto,
                     telefono = pedido.Cliente.Telefono,
+                    tipoPedido = pedido.TipoPedido,
                     direccion = pedido.Cliente.Direccion
                 },
-            estado = pedido.Estado,
-            total = pedido.Total,
-            numeroPedido = pedido.NumeroPedido,
-            fecha = pedido.Fecha,
-            codigoQR = pedido.CodigoQRPedido,
-            detalles = pedido.Detalles.Select(d => new
-            {
-                id = d.Id,
-                producto = d.Producto?.Nombre,
-                cantidad = d.Cantidad,
-                precioUnitario = d.PrecioUnitario,
-                subtotal = d.Subtotal,
-                observaciones = d.Observaciones
-            })
+
+            estado =
+                pedido.Estado,
+
+            total =
+                pedido.Total,
+
+            numeroPedido =
+                pedido.NumeroPedido,
+
+            fecha =
+                pedido.Fecha,
+
+            codigoQR =
+                pedido.CodigoQRPedido,
+
+            /*
+             * Solo devolvemos como productos principales
+             * los detalles que NO tienen padre.
+             */
+            detalles = pedido.Detalles
+                .Where(d =>
+                    d.DetallePadreId == null)
+                .Select(d => new
+                {
+                    id = d.Id,
+
+                    producto =
+                        d.Producto?.Nombre,
+
+                    cantidad =
+                        d.Cantidad,
+
+                    precioUnitario =
+                        d.PrecioUnitario,
+
+                    subtotal =
+                        d.Subtotal,
+
+                    observaciones =
+                        d.Observaciones,
+
+                    /*
+                     * Buscar todos los detalles cuyo
+                     * DetallePadreId apunte a ESTE producto.
+                     */
+                    extras = pedido.Detalles
+                        .Where(e =>
+                            e.DetallePadreId == d.Id)
+                        .Select(e => new
+                        {
+                            id = e.Id,
+
+                            producto =
+                                e.Producto?.Nombre,
+
+                            cantidad =
+                                e.Cantidad,
+
+                            precioUnitario =
+                                e.PrecioUnitario,
+
+                            subtotal =
+                                e.Subtotal
+                        })
+                        .ToList()
+                })
+                .ToList()
         });
     }
 
@@ -382,27 +892,34 @@ public class PedidosController : ControllerBase
     {
         var restaurantId = ObtenerRestaurantId();
         var esAdmin = User.IsInRole("Admin");
+
         var query = _context.Pedidos
             .Include(p => p.Mesa)
             .Include(p => p.Cliente)
             .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
             .AsQueryable();
+
         if (!esAdmin)
         {
-            query = query.Where(p => p.RestaurantId == restaurantId);
+            query = query.Where(
+                p => p.RestaurantId == restaurantId);
         }
+
         var pedidos = await query
             .Where(p =>
                 p.Estado == "Pendiente" ||
                 p.Estado == "Preparando")
             .OrderBy(p => p.Fecha)
             .ToListAsync();
+
         return Ok(
             pedidos.Select(p => new
             {
                 id = p.Id,
+
                 mesa = p.Mesa?.Number,
+
                 cliente = p.Cliente == null
                     ? null
                     : new
@@ -411,16 +928,44 @@ public class PedidosController : ControllerBase
                         telefono = p.Cliente.Telefono,
                         direccion = p.Cliente.Direccion
                     },
+
                 estado = p.Estado,
                 fecha = p.Fecha,
+                tipoPedido = p.TipoPedido,
                 total = p.Total,
                 numeroPedido = p.NumeroPedido,
-                detalles = p.Detalles.Select(d => new
-                {
-                    producto = d.Producto!.Nombre,
-                    cantidad = d.Cantidad,
-                    observaciones = d.Observaciones
-                })
+
+                detalles = p.Detalles
+                    .Where(d => d.DetallePadreId == null)
+                    .Select(d => new
+                    {
+                        id = d.Id,
+
+                        producto =
+                            d.Producto!.Nombre,
+
+                        cantidad =
+                            d.Cantidad,
+
+                        observaciones =
+                            d.Observaciones,
+
+                        extras = p.Detalles
+                            .Where(e =>
+                                e.DetallePadreId ==
+                                d.Id)
+                            .Select(e => new
+                            {
+                                id = e.Id,
+
+                                producto =
+                                    e.Producto!.Nombre,
+
+                                cantidad =
+                                    e.Cantidad
+                            })
+                            .ToList()
+                    })
             })
         );
     }
@@ -491,26 +1036,33 @@ public class PedidosController : ControllerBase
     {
         var restaurantId = ObtenerRestaurantId();
         var esAdmin = User.IsInRole("Admin");
+
         var query = _context.Pedidos
             .Include(p => p.Mesa)
             .Include(p => p.Cliente)
             .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
             .AsQueryable();
+
         if (!esAdmin)
         {
-            query = query.Where(p => p.RestaurantId == restaurantId);
+            query = query.Where(
+                p => p.RestaurantId == restaurantId
+            );
         }
+
         var pedidos = await query
             .Where(p => p.Estado == "Listo")
             .OrderBy(p => p.Fecha)
             .Select(p => new
             {
-                p.Id,
-                Mesa = p.Mesa != null
+                id = p.Id,
+
+                mesa = p.Mesa != null
                     ? p.Mesa.Number
                     : (int?)null,
-                Cliente = p.Cliente == null
+
+                cliente = p.Cliente == null
                     ? null
                     : new
                     {
@@ -518,17 +1070,66 @@ public class PedidosController : ControllerBase
                         telefono = p.Cliente.Telefono,
                         direccion = p.Cliente.Direccion
                     },
-                p.Total,
+
+                total = p.Total,
+
                 numeroPedido = p.NumeroPedido,
-                p.Fecha,
-                Detalles = p.Detalles.Select(d => new
-                {
-                    Producto = d.Producto!.Nombre,
-                    d.Cantidad,
-                    d.Observaciones
-                })
+
+                tipoPedido = p.TipoPedido,
+
+                fecha = p.Fecha,
+                
+
+                // Solo productos principales
+                detalles = p.Detalles
+                    .Where(d =>
+                        d.DetallePadreId == null)
+                    .Select(d => new
+                    {
+                        id = d.Id,
+
+                        producto =
+                            d.Producto!.Nombre,
+
+                        cantidad =
+                            d.Cantidad,
+
+                        precioUnitario =
+                            d.PrecioUnitario,
+
+                        subtotal =
+                            d.Subtotal,
+
+                        observaciones =
+                            d.Observaciones,
+
+                        // Extras asociados específicamente
+                        // a este producto principal
+                        extras = p.Detalles
+                            .Where(e =>
+                                e.DetallePadreId == d.Id)
+                            .Select(e => new
+                            {
+                                id = e.Id,
+
+                                producto =
+                                    e.Producto!.Nombre,
+
+                                cantidad =
+                                    e.Cantidad,
+
+                                precioUnitario =
+                                    e.PrecioUnitario,
+
+                                subtotal =
+                                    e.Subtotal
+                            })
+                            .ToList()
+                    })
+                    .ToList()
             })
             .ToListAsync();
+
         return Ok(pedidos);
     }
 
@@ -560,7 +1161,13 @@ public class PedidosController : ControllerBase
     public async Task<IActionResult> ObtenerCierreCaja()
     {
         var restaurantId = ObtenerRestaurantId();
-        var (inicio, fin) = FechaHelper.ObtenerRangoHoyCostaRica();
+
+        var (inicio, fin) =
+            FechaHelper.ObtenerRangoHoyCostaRica();
+
+        // =====================================================
+        // PEDIDOS TERMINADOS DEL DÍA
+        // =====================================================
 
         var pedidos = await _context.Pedidos
             .Where(p =>
@@ -570,16 +1177,46 @@ public class PedidosController : ControllerBase
                 p.Estado == "Terminado")
             .ToListAsync();
 
-        var cantidadPedidos = pedidos.Count;
-        var totalVentas = pedidos.Sum(p => p.Total);
+        // =====================================================
+        // RESUMEN GENERAL
+        // =====================================================
+
+        var cantidadPedidos =
+            pedidos.Count;
+
+        var totalVentas =
+            pedidos.Sum(p => p.Total);
+
+        // =====================================================
+        // 🪑 PEDIDOS DE MESA
+        // =====================================================
 
         var pedidosMesa = pedidos
-            .Where(p => p.MesaId != null)
+            .Where(p =>
+                p.TipoPedido == "Mesa")
             .ToList();
 
+        // =====================================================
+        // 🛵 PEDIDOS XPRESS
+        // =====================================================
+
         var pedidosXpress = pedidos
-            .Where(p => p.MesaId == null)
+            .Where(p =>
+                p.TipoPedido == "Xpress")
             .ToList();
+
+        // =====================================================
+        // 🥡 PEDIDOS PARA LLEVAR
+        // =====================================================
+
+        var pedidosLlevar = pedidos
+            .Where(p =>
+                p.TipoPedido == "Llevar")
+            .ToList();
+
+        // =====================================================
+        // RESPUESTA
+        // =====================================================
 
         return Ok(new
         {
@@ -587,20 +1224,39 @@ public class PedidosController : ControllerBase
 
             totalVentas,
 
-            ticketPromedio = cantidadPedidos > 0
-                ? totalVentas / cantidadPedidos
-                : 0,
+            ticketPromedio =
+                cantidadPedidos > 0
+                    ? totalVentas / cantidadPedidos
+                    : 0,
 
             mesa = new
             {
-                cantidad = pedidosMesa.Count,
-                total = pedidosMesa.Sum(p => p.Total)
+                cantidad =
+                    pedidosMesa.Count,
+
+                total =
+                    pedidosMesa.Sum(p =>
+                        p.Total)
             },
 
             xpress = new
             {
-                cantidad = pedidosXpress.Count,
-                total = pedidosXpress.Sum(p => p.Total)
+                cantidad =
+                    pedidosXpress.Count,
+
+                total =
+                    pedidosXpress.Sum(p =>
+                        p.Total)
+            },
+
+            llevar = new
+            {
+                cantidad =
+                    pedidosLlevar.Count,
+
+                total =
+                    pedidosLlevar.Sum(p =>
+                        p.Total)
             }
         });
     }

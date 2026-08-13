@@ -4,4 +4,8 @@
     public string? Descripcion { get; set; }
     public decimal Precio { get; set; }
     public bool Disponible { get; set; }
+
+    public int CategoriaId { get; set; }
+
+    public int? CategoriaExtrasId { get; set; }
 }

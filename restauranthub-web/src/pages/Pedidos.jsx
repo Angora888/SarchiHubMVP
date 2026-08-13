@@ -167,20 +167,56 @@ return (
 </h5>
 <div className="text-muted">
 
-{pedido.mesa ? (
+{pedido.tipoPedido === "Mesa" && (
     <>
         <span className="badge bg-primary mb-2">
             🪑 Mesa #{pedido.mesa}
         </span>
     </>
-) : (
+)}
+
+{pedido.tipoPedido === "Xpress" && (
     <>
         <span className="badge bg-success mb-2">
-            📞 Xpress
+            🛵 Xpress
         </span>
 
         <div className="fw-semibold">
             👤 {pedido.cliente?.nombre}
+        </div>
+
+        {pedido.cliente?.telefono && (
+            <div className="small text-muted">
+                📱 {pedido.cliente.telefono}
+            </div>
+        )}
+
+        {pedido.cliente?.direccion && (
+            <div className="small text-muted">
+                📍 {pedido.cliente.direccion}
+            </div>
+        )}
+    </>
+)}
+
+{pedido.tipoPedido === "Llevar" && (
+    <>
+        <span className="badge bg-warning text-dark mb-2">
+            🥡 Pasa a llevar
+        </span>
+
+        <div className="fw-semibold">
+            👤 {pedido.cliente?.nombre}
+        </div>
+
+        {pedido.cliente?.telefono && (
+            <div className="small text-muted">
+                📱 {pedido.cliente.telefono}
+            </div>
+        )}
+
+        <div className="small text-warning-emphasis fw-semibold">
+            🏪 Cliente recoge en el restaurante
         </div>
     </>
 )}
@@ -235,14 +271,17 @@ return (
 <div className="d-flex justify-content-between align-items-center">
 <strong className="fs-5">
 
-                                    ₡ {pedido.total}
+                                    ₡ {pedido.total.toLocaleString()}
 </strong>
 {!["Listo", "Terminado","Preparando"].includes(pedido.estado) && (
 <button
-       className="btn btn-outline-danger btn-sm"
-       onClick={() => eliminarPedido(pedido.id)}
+    className="btn btn-outline-danger btn-sm"
+    onClick={(e) => {
+        e.stopPropagation();
+        eliminarPedido(pedido.id);
+    }}
 >
-       🗑️
+    🗑️
 </button>
 )}
 <span className="text-success fw-semibold">
