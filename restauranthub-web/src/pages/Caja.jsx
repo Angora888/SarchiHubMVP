@@ -28,19 +28,17 @@ function Caja() {
         }
     };
 
-    const cobrarPedido = async (id) => {
-        if (!window.confirm("¿Confirmar que el cliente ya pagó?"))
-            return;
+const cobrarPedido = async (id) => {
+    try {
+        await api.put(`/Pedidos/${id}/terminar`);
+        await cargarPedidos();
+    }
+    catch (error) {
+        console.error(error);
+        alert("No fue posible terminar el pedido.");
+    }
+};
 
-        try {
-            await api.put(`/Pedidos/${id}/terminar`);
-            cargarPedidos();
-        }
-        catch (error) {
-            console.error(error);
-            alert("No fue posible terminar el pedido.");
-        }
-    };
 
     if (loading) {
         return (
