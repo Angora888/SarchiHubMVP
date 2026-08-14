@@ -437,6 +437,7 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPost("{id}/agregar-producto")]
+    [Authorize]
     public async Task<IActionResult> AgregarProducto(
         int id,
         AgregarProductoDto dto)

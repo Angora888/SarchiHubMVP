@@ -13,6 +13,7 @@ function PedidoCliente() {
     const [busqueda, setBusqueda] = useState("");
     const [cantidades, setCantidades] = useState({});
     const [agregando, setAgregando] = useState(false);
+	const estaAutenticado = !!localStorage.getItem("token");
 
     // =========================
     // MODAL EXTRAS
@@ -594,7 +595,7 @@ function PedidoCliente() {
                     {/* OLVIDASTE ALGO */}
                     {/* ========================= */}
 
-                    {pedido.estado !== "Terminado" && (
+                    {pedido.estado !== "Terminado" && estaAutenticado &&(
 
                         <div className="card border-0 shadow-sm mt-4">
 
