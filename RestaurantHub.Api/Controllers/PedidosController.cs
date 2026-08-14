@@ -151,14 +151,16 @@ public class PedidosController : ControllerBase
             // 🔢 NÚMERO CONSECUTIVO
             // =====================================================
 
-            var ultimoNumero =
-                await _context.Pedidos
-                    .Where(p =>
-                        p.RestaurantId ==
-                        restaurantId)
-                    .MaxAsync(p =>
-                        (int?)p.NumeroPedido)
-                    ?? 0;
+            var (inicio, fin) =
+                FechaHelper.ObtenerRangoHoyCostaRica();
+
+            var ultimoNumero = await _context.Pedidos
+                .Where(p =>
+                    p.RestaurantId == restaurantId &&
+                    p.Fecha >= inicio &&
+                    p.Fecha < fin)
+                .MaxAsync(p =>
+                    (int?)p.NumeroPedido) ?? 0;
 
             // =====================================================
             // CREAR PEDIDO
