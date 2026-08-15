@@ -86,6 +86,32 @@ public class DashboardController : ControllerBase
             var fin = inicio.AddDays(1);
             return (inicio, fin);
         }
+
+        public static (DateTime inicio, DateTime fin)
+   ObtenerRangoFechaCostaRica(DateOnly fecha)
+        {
+            var zonaCostaRica =
+                TimeZoneInfo.FindSystemTimeZoneById(
+                    "America/Costa_Rica");
+            var inicioLocal =
+                fecha.ToDateTime(
+                    TimeOnly.MinValue,
+                    DateTimeKind.Unspecified);
+            var finLocal =
+                inicioLocal.AddDays(1);
+            var inicioUtc =
+                TimeZoneInfo.ConvertTimeToUtc(
+                    inicioLocal,
+                    zonaCostaRica);
+            var finUtc =
+                TimeZoneInfo.ConvertTimeToUtc(
+                    finLocal,
+                    zonaCostaRica);
+            return (
+                inicioUtc,
+                finUtc
+            );
+        }
     }
 
     private int ObtenerRestaurantId()

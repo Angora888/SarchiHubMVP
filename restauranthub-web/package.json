@@ -13,6 +13,7 @@
     "axios": "^1.19.0",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
+    "jspdf-autotable": "^5.0.8",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-qr-code": "^2.2.0",

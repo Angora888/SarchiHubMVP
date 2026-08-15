@@ -895,80 +895,106 @@ public class PedidosController : ControllerBase
     {
         var restaurantId = ObtenerRestaurantId();
         var esAdmin = User.IsInRole("Admin");
-
+        // ==========================================
+        // RANGO DEL DÍA ACTUAL EN COSTA RICA
+        // ==========================================
+        var (inicio, fin) =
+            FechaHelper.ObtenerRangoHoyCostaRica();
         var query = _context.Pedidos
             .Include(p => p.Mesa)
             .Include(p => p.Cliente)
             .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
             .AsQueryable();
-
+        // ==========================================
+        // SEGURIDAD POR RESTAURANTE
+        // ==========================================
         if (!esAdmin)
         {
             query = query.Where(
-                p => p.RestaurantId == restaurantId);
+                p => p.RestaurantId == restaurantId
+            );
         }
-
+        // ==========================================
+        // SOLO PEDIDOS ACTIVOS DE HOY
+        // ==========================================
         var pedidos = await query
             .Where(p =>
-                p.Estado == "Pendiente" ||
-                p.Estado == "Preparando")
+                p.Fecha >= inicio &&
+                p.Fecha < fin &&
+                (
+                    p.Estado == "Pendiente" ||
+                    p.Estado == "Preparando"
+                )
+            )
             .OrderBy(p => p.Fecha)
             .ToListAsync();
-
+        // ==========================================
+        // RESPUESTA
+        // ==========================================
         return Ok(
             pedidos.Select(p => new
             {
                 id = p.Id,
-
                 mesa = p.Mesa?.Number,
-
                 cliente = p.Cliente == null
                     ? null
                     : new
                     {
-                        nombre = p.Cliente.NombreCompleto,
-                        telefono = p.Cliente.Telefono,
-                        direccion = p.Cliente.Direccion
+                        nombre =
+                            p.Cliente.NombreCompleto,
+                        telefono =
+                            p.Cliente.Telefono,
+                        direccion =
+                            p.Cliente.Direccion
                     },
-
-                estado = p.Estado,
-                fecha = p.Fecha,
-                tipoPedido = p.TipoPedido,
-                total = p.Total,
-                numeroPedido = p.NumeroPedido,
-
+                estado =
+                    p.Estado,
+                fecha =
+                    p.Fecha,
+                tipoPedido =
+                    p.TipoPedido,
+                total =
+                    p.Total,
+                numeroPedido =
+                    p.NumeroPedido,
+                // ==================================
+                // PRODUCTOS PRINCIPALES
+                // ==================================
                 detalles = p.Detalles
-                    .Where(d => d.DetallePadreId == null)
+                    .Where(d =>
+                        d.DetallePadreId == null
+                    )
                     .Select(d => new
                     {
-                        id = d.Id,
-
+                        id =
+                            d.Id,
                         producto =
                             d.Producto!.Nombre,
-
                         cantidad =
                             d.Cantidad,
-
                         observaciones =
                             d.Observaciones,
-
+                        // ==========================
+                        // EXTRAS DEL PRODUCTO
+                        // ==========================
                         extras = p.Detalles
                             .Where(e =>
                                 e.DetallePadreId ==
-                                d.Id)
+                                d.Id
+                            )
                             .Select(e => new
                             {
-                                id = e.Id,
-
+                                id =
+                                    e.Id,
                                 producto =
                                     e.Producto!.Nombre,
-
                                 cantidad =
                                     e.Cantidad
                             })
                             .ToList()
                     })
+                    .ToList()
             })
         );
     }
@@ -1039,91 +1065,91 @@ public class PedidosController : ControllerBase
     {
         var restaurantId = ObtenerRestaurantId();
         var esAdmin = User.IsInRole("Admin");
-
+        // Rango del día actual en Costa Rica
+        var (inicio, fin) =
+            FechaHelper.ObtenerRangoHoyCostaRica();
         var query = _context.Pedidos
             .Include(p => p.Mesa)
             .Include(p => p.Cliente)
             .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
             .AsQueryable();
-
         if (!esAdmin)
         {
             query = query.Where(
                 p => p.RestaurantId == restaurantId
             );
         }
-
         var pedidos = await query
-            .Where(p => p.Estado == "Listo")
+            // Solo pedidos LISTOS del día actual
+            .Where(p =>
+                p.Estado == "Listo" &&
+                p.Fecha >= inicio &&
+                p.Fecha < fin
+            )
             .OrderBy(p => p.Fecha)
             .Select(p => new
             {
                 id = p.Id,
-
                 mesa = p.Mesa != null
                     ? p.Mesa.Number
                     : (int?)null,
-
                 cliente = p.Cliente == null
                     ? null
                     : new
                     {
-                        nombre = p.Cliente.NombreCompleto,
-                        telefono = p.Cliente.Telefono,
-                        direccion = p.Cliente.Direccion
+                        nombre =
+                            p.Cliente.NombreCompleto,
+                        telefono =
+                            p.Cliente.Telefono,
+                        direccion =
+                            p.Cliente.Direccion
                     },
-
                 total = p.Total,
-
-                numeroPedido = p.NumeroPedido,
-
-                tipoPedido = p.TipoPedido,
-
-                fecha = p.Fecha,
-                
-
-                // Solo productos principales
+                numeroPedido =
+                    p.NumeroPedido,
+                tipoPedido =
+                    p.TipoPedido,
+                fecha =
+                    p.Fecha,
+                // =========================
+                // PRODUCTOS PRINCIPALES
+                // =========================
                 detalles = p.Detalles
                     .Where(d =>
-                        d.DetallePadreId == null)
+                        d.DetallePadreId == null
+                    )
                     .Select(d => new
                     {
                         id = d.Id,
-
                         producto =
                             d.Producto!.Nombre,
-
                         cantidad =
                             d.Cantidad,
-
                         precioUnitario =
                             d.PrecioUnitario,
-
                         subtotal =
                             d.Subtotal,
-
                         observaciones =
                             d.Observaciones,
-
-                        // Extras asociados específicamente
-                        // a este producto principal
+                        // =========================
+                        // EXTRAS
+                        // =========================
                         extras = p.Detalles
                             .Where(e =>
-                                e.DetallePadreId == d.Id)
+                                e.DetallePadreId ==
+                                d.Id
+                            )
                             .Select(e => new
                             {
-                                id = e.Id,
-
+                                id =
+                                    e.Id,
                                 producto =
                                     e.Producto!.Nombre,
-
                                 cantidad =
                                     e.Cantidad,
-
                                 precioUnitario =
                                     e.PrecioUnitario,
-
                                 subtotal =
                                     e.Subtotal
                             })
@@ -1132,7 +1158,6 @@ public class PedidosController : ControllerBase
                     .ToList()
             })
             .ToListAsync();
-
         return Ok(pedidos);
     }
 
@@ -1264,14 +1289,230 @@ public class PedidosController : ControllerBase
         });
     }
 
+    [HttpGet("reporte-diario")]
+    [Authorize]
+    public async Task<IActionResult> ObtenerReporteDiario(
+   [FromQuery] DateOnly fecha)
+    {
+        var restaurantId =
+            ObtenerRestaurantId();
+        var (inicio, fin) =
+            FechaHelper.ObtenerRangoFechaCostaRica(
+                fecha);
+        // ==========================================
+        // PEDIDOS TERMINADOS DEL DÍA
+        // ==========================================
+        var pedidos =
+            await _context.Pedidos
+                .Include(p =>
+                    p.Mesa)
+                .Include(p =>
+                    p.Detalles)
+                    .ThenInclude(d =>
+                        d.Producto)
+                .Where(p =>
+                    p.RestaurantId ==
+                        restaurantId &&
+                    p.Fecha >= inicio &&
+                    p.Fecha < fin &&
+                    p.Estado ==
+                        "Terminado")
+                .OrderBy(p =>
+                    p.Fecha)
+                .ToListAsync();
+        // ==========================================
+        // RESUMEN GENERAL
+        // ==========================================
+        var cantidadPedidos =
+            pedidos.Count;
+        var totalVentas =
+            pedidos.Sum(p =>
+                p.Total);
+        var ticketPromedio =
+            cantidadPedidos > 0
+                ? totalVentas /
+                    cantidadPedidos
+                : 0;
+        // ==========================================
+        // TIPOS DE PEDIDO
+        // ==========================================
+        var pedidosMesa =
+            pedidos
+                .Where(p =>
+                    p.TipoPedido ==
+                        "Mesa")
+                .ToList();
+        var pedidosXpress =
+            pedidos
+                .Where(p =>
+                    p.TipoPedido ==
+                        "Xpress")
+                .ToList();
+        var pedidosLlevar =
+            pedidos
+                .Where(p =>
+                    p.TipoPedido ==
+                        "Llevar")
+                .ToList();
+        decimal CalcularPorcentaje(
+            List<Pedido> lista)
+        {
+            var total =
+                lista.Sum(p =>
+                    p.Total);
+            if (totalVentas <= 0)
+                return 0;
+            return Math.Round(
+                total /
+                totalVentas *
+                100,
+                1);
+        }
+        // ==========================================
+        // DETALLE DE PEDIDOS
+        // ==========================================
+        var detallePedidos =
+            pedidos.Select(p =>
+            {
+                var detallesPrincipales =
+                    p.Detalles
+                        .Where(d =>
+                            d.DetallePadreId ==
+                                null)
+                        .ToList();
+                var extras =
+                    p.Detalles
+                        .Where(d =>
+                            d.DetallePadreId !=
+                                null)
+                        .ToList();
+                return new
+                {
+                    id =
+                        p.Id,
+                    numeroPedido =
+                        p.NumeroPedido,
+                    fecha =
+                        p.Fecha,
+                    tipoPedido =
+                        p.TipoPedido,
+                    mesa =
+                        p.Mesa != null
+                            ? p.Mesa.Number
+                            : (int?)null,
+                    cantidadProductos =
+                        detallesPrincipales
+                            .Sum(d =>
+                                d.Cantidad),
+                    cantidadExtras =
+                        extras.Sum(d =>
+                            d.Cantidad),
+                    total =
+                        p.Total
+                };
+            })
+            .ToList();
+        // ==========================================
+        // PRODUCTOS PRINCIPALES VENDIDOS
+        // ==========================================
+        /*
+         * Importante:
+         *
+         * Solo contamos DetallePadreId == null.
+         *
+         * De esta manera:
+         * Queso, tocino, jalapeño, etc.
+         * NO inflan el ranking de productos.
+         */
+        var productosVendidos =
+            pedidos
+                .SelectMany(p =>
+                    p.Detalles)
+                .Where(d =>
+                    d.DetallePadreId ==
+                        null)
+                .GroupBy(d => new
+                {
+                    d.ProductoId,
+                    Nombre =
+                        d.Producto != null
+                            ? d.Producto.Nombre
+                            : ""
+                })
+                .Select(g => new
+                {
+                    productoId =
+                        g.Key.ProductoId,
+                    nombre =
+                        g.Key.Nombre,
+                    unidades =
+                        g.Sum(d =>
+                            d.Cantidad),
+                    monto =
+                        g.Sum(d =>
+                            d.Subtotal)
+                })
+                .OrderByDescending(x =>
+                    x.unidades)
+                .ThenByDescending(x =>
+                    x.monto)
+                .ToList();
+        // ==========================================
+        // RESPUESTA
+        // ==========================================
+        return Ok(new
+        {
+            fecha =
+                fecha.ToString(
+                    "yyyy-MM-dd"),
+            cantidadPedidos,
+            totalVentas,
+            ticketPromedio,
+            tiposPedido = new
+            {
+                mesa = new
+                {
+                    cantidad =
+                        pedidosMesa.Count,
+                    porcentaje =
+                        CalcularPorcentaje(
+                            pedidosMesa),
+                    total =
+                        pedidosMesa.Sum(p =>
+                            p.Total)
+                },
+                xpress = new
+                {
+                    cantidad =
+                        pedidosXpress.Count,
+                    porcentaje =
+                        CalcularPorcentaje(
+                            pedidosXpress),
+                    total =
+                        pedidosXpress.Sum(p =>
+                            p.Total)
+                },
+                llevar = new
+                {
+                    cantidad =
+                        pedidosLlevar.Count,
+                    porcentaje =
+                        CalcularPorcentaje(
+                            pedidosLlevar),
+                    total =
+                        pedidosLlevar.Sum(p =>
+                            p.Total)
+                }
+            },
+            pedidos =
+                detallePedidos,
+            productos =
+                productosVendidos
+        });
+    }
+
     private int ObtenerRestaurantId()
     {
-        Console.WriteLine("===== CLAIMS DEL USUARIO =====");
-        foreach (var claim in User.Claims)
-        {
-            Console.WriteLine($"{claim.Type} = {claim.Value}");
-        }
-        Console.WriteLine("==============================");
         if (!User.Identity?.IsAuthenticated ?? true)
         {
             throw new UnauthorizedAccessException("El usuario no está autenticado.");

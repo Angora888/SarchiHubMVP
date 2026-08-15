@@ -1,26 +1,71 @@
-import { useEffect, useState } from "react";
+import {
+    useEffect,
+    useRef,
+    useState
+} from "react";
+
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 function PedidoXpress() {
+
     const navigate = useNavigate();
 
-    const [telefono, setTelefono] = useState("");
-    const [cliente, setCliente] = useState(null);
-    const [nombre, setNombre] = useState("");
-    const [direccion, setDireccion] = useState("");
-    const [tipoPedido, setTipoPedido] = useState("Xpress");
+    // =========================
+    // CLIENTE
+    // =========================
 
-    const [productos, setProductos] = useState([]);
-    const [carrito, setCarrito] = useState([]);
-    const [busqueda, setBusqueda] = useState("");
+    const [telefono, setTelefono] =
+        useState("");
 
-    const [buscandoCliente, setBuscandoCliente] = useState(false);
-    const [guardandoCliente, setGuardandoCliente] = useState(false);
-    const [guardandoPedido, setGuardandoPedido] = useState(false);
+    const [cliente, setCliente] =
+        useState(null);
+
+    const [nombre, setNombre] =
+        useState("");
+
+    const [direccion, setDireccion] =
+        useState("");
+
+    const [tipoPedido, setTipoPedido] =
+        useState("Xpress");
 
     // =========================
-    // Modal extras
+    // PRODUCTOS / CARRITO
+    // =========================
+
+    const [productos, setProductos] =
+        useState([]);
+
+    const [carrito, setCarrito] =
+        useState([]);
+
+    const [busqueda, setBusqueda] =
+        useState("");
+
+    // =========================
+    // ESTADOS UI
+    // =========================
+
+    const [buscandoCliente, setBuscandoCliente] =
+        useState(false);
+
+    const [guardandoCliente, setGuardandoCliente] =
+        useState(false);
+
+    const [guardandoPedido, setGuardandoPedido] =
+        useState(false);
+
+    /*
+     * Candado real contra doble ejecución.
+     *
+     * No depende del re-render de React.
+     */
+    const creandoPedidoRef =
+        useRef(false);
+
+    // =========================
+    // MODAL EXTRAS
     // =========================
 
     const [productoSeleccionado, setProductoSeleccionado] =
@@ -30,7 +75,7 @@ function PedidoXpress() {
         useState([]);
 
     // =========================
-    // Cargar productos
+    // CARGAR PRODUCTOS
     // =========================
 
     useEffect(() => {
@@ -38,13 +83,20 @@ function PedidoXpress() {
     }, []);
 
     const cargarProductos = async () => {
-        try {
-            const respuesta =
-                await api.get("/Productos/productos-xpress");
 
-            setProductos(respuesta.data);
+        try {
+
+            const respuesta =
+                await api.get(
+                    "/Productos/productos-xpress"
+                );
+
+            setProductos(
+                respuesta.data
+            );
         }
         catch (error) {
+
             console.error(error);
 
             alert(
@@ -54,12 +106,42 @@ function PedidoXpress() {
     };
 
     // =========================
-    // Buscar cliente
+    // CAMBIAR TELÉFONO
+    // =========================
+
+    /*
+     * IMPORTANTE:
+     *
+     * Si habían buscado un cliente y luego
+     * escriben otro teléfono, eliminamos
+     * inmediatamente la referencia al
+     * cliente anterior.
+     *
+     * Esto evita reutilizar accidentalmente
+     * el ClienteId anterior.
+     */
+    const cambiarTelefono = (valor) => {
+
+        setTelefono(valor);
+
+        setCliente(null);
+
+        setNombre("");
+
+        setDireccion("");
+    };
+
+    // =========================
+    // BUSCAR CLIENTE
     // =========================
 
     const buscarCliente = async () => {
 
-        if (!telefono.trim()) {
+        const telefonoBusqueda =
+            telefono.trim();
+
+        if (!telefonoBusqueda) {
+
             alert(
                 "Ingrese un número de teléfono."
             );
@@ -68,24 +150,27 @@ function PedidoXpress() {
         }
 
         try {
+
             setBuscandoCliente(true);
 
             const respuesta =
                 await api.get(
-                    `/Clientes/cliente/${telefono}`
+                    `/Clientes/cliente/${telefonoBusqueda}`
                 );
 
             const encontrado =
                 respuesta.data;
 
-            setCliente(encontrado);
+            setCliente(
+                encontrado
+            );
 
             setNombre(
-                encontrado.nombreCompleto
+                encontrado.nombreCompleto ?? ""
             );
 
             setDireccion(
-                encontrado.direccion
+                encontrado.direccion ?? ""
             );
         }
         catch (error) {
@@ -93,9 +178,11 @@ function PedidoXpress() {
             if (
                 error.response?.status === 404
             ) {
+
                 setCliente(null);
 
                 setNombre("");
+
                 setDireccion("");
 
                 alert(
@@ -103,6 +190,7 @@ function PedidoXpress() {
                 );
             }
             else {
+
                 console.error(error);
 
                 alert(
@@ -111,124 +199,160 @@ function PedidoXpress() {
             }
         }
         finally {
+
             setBuscandoCliente(false);
         }
     };
 
     // =========================
-    // Guardar cliente
+    // GUARDAR CLIENTE
     // =========================
 
     const guardarCliente = async () => {
 
         if (!telefono.trim()) {
-            alert("Ingrese el teléfono.");
+
+            alert(
+                "Ingrese el teléfono."
+            );
+
             return null;
         }
 
         if (!nombre.trim()) {
-            alert("Ingrese el nombre.");
+
+            alert(
+                "Ingrese el nombre."
+            );
+
             return null;
         }
 
-        // Solo Xpress requiere dirección
+        /*
+         * Solo Xpress requiere dirección.
+         */
         if (
             tipoPedido === "Xpress" &&
             !direccion.trim()
         ) {
-            alert("Ingrese la dirección de entrega.");
+
+            alert(
+                "Ingrese la dirección de entrega."
+            );
+
             return null;
         }
 
         try {
+
             setGuardandoCliente(true);
 
             const respuesta =
                 await api.post(
                     "/Clientes/cliente",
                     {
-                        telefono,
-                        nombreCompleto: nombre,
-                        direccion: direccion.trim()
+                        telefono:
+                            telefono.trim(),
+
+                        nombreCompleto:
+                            nombre.trim(),
+
+                        direccion:
+                            direccion.trim()
                     }
                 );
 
             const nuevoCliente =
                 respuesta.data;
 
-            setCliente(nuevoCliente);
+            setCliente(
+                nuevoCliente
+            );
 
             return nuevoCliente;
         }
         catch (error) {
+
             console.error(error);
 
             alert(
+                error.response?.data ||
                 "No fue posible guardar el cliente."
             );
 
             return null;
         }
         finally {
+
             setGuardandoCliente(false);
         }
     };
 
     // =========================
-    // Actualizar cliente existente
+    // ACTUALIZAR CLIENTE
     // =========================
 
-    const actualizarClienteExistente = async () => {
+    const actualizarClienteExistente =
+        async () => {
 
-        if (!cliente)
-            return cliente;
+            if (!cliente)
+                return null;
 
-        try {
-            const clienteActualizado = {
-                id: cliente.id,
-                telefono,
-                nombreCompleto: nombre,
-                direccion: direccion.trim(),
-                latitud: cliente.latitud ?? null,
-                longitud: cliente.longitud ?? null
-            };
+            try {
 
-            await api.put(
-                `/Clientes/${cliente.id}`,
-                clienteActualizado
-            );
+                const clienteActualizado = {
 
-            const actualizado = {
-                ...cliente,
-                ...clienteActualizado
-            };
+                    id:
+                        cliente.id,
 
-            setCliente(actualizado);
+                    telefono:
+                        telefono.trim(),
 
-            return actualizado;
-        }
-        catch (error) {
-            console.error(error);
+                    nombreCompleto:
+                        nombre.trim(),
 
-            alert(
-                "No fue posible actualizar los datos del cliente."
-            );
+                    direccion:
+                        direccion.trim(),
 
-            return null;
-        }
-    };
+                    latitud:
+                        cliente.latitud ?? null,
+
+                    longitud:
+                        cliente.longitud ?? null
+                };
+
+                await api.put(
+                    `/Clientes/${cliente.id}`,
+                    clienteActualizado
+                );
+
+                const actualizado = {
+                    ...cliente,
+                    ...clienteActualizado
+                };
+
+                setCliente(
+                    actualizado
+                );
+
+                return actualizado;
+            }
+            catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "No fue posible actualizar los datos del cliente."
+                );
+
+                return null;
+            }
+        };
 
     // =========================
-    // Categorías de extras
+    // CATEGORÍAS DE EXTRAS
     // =========================
 
-    /*
-     * Buscamos todos los CategoriaExtrasId
-     * configurados en productos.
-     *
-     * Las categorías que aparezcan aquí
-     * no se mostrarán como productos normales.
-     */
     const categoriasExtrasIds =
         new Set(
             productos
@@ -237,10 +361,15 @@ function PedidoXpress() {
                         p.categoriaExtrasId
                 )
                 .filter(
-                    id => id != null
+                    id =>
+                        id != null
                 )
         );
 
+    /*
+     * Productos utilizados exclusivamente
+     * como extras no aparecen en el menú.
+     */
     const productosVisibles =
         productos.filter(
             p =>
@@ -250,7 +379,7 @@ function PedidoXpress() {
         );
 
     // =========================
-    // Extras disponibles
+    // EXTRAS DISPONIBLES
     // =========================
 
     const extrasDisponibles =
@@ -258,12 +387,13 @@ function PedidoXpress() {
             ? productos.filter(
                 p =>
                     p.categoriaId ===
-                    productoSeleccionado.categoriaExtrasId
+                    productoSeleccionado
+                        .categoriaExtrasId
             )
             : [];
 
     // =========================
-    // Abrir modal extras
+    // MODAL EXTRAS
     // =========================
 
     const abrirExtras = (producto) => {
@@ -277,14 +407,12 @@ function PedidoXpress() {
 
     const cerrarExtras = () => {
 
-        setProductoSeleccionado(null);
+        setProductoSeleccionado(
+            null
+        );
 
         setExtrasSeleccionados([]);
     };
-
-    // =========================
-    // Seleccionar extra
-    // =========================
 
     const seleccionarExtra = (extra) => {
 
@@ -299,6 +427,7 @@ function PedidoXpress() {
                     );
 
                 if (existe) {
+
                     return actual.filter(
                         e =>
                             e.id !==
@@ -315,93 +444,102 @@ function PedidoXpress() {
     };
 
     // =========================
-    // Agregar producto normal
+    // AGREGAR PRODUCTO NORMAL
     // =========================
 
     const agregarProductoNormal =
         (producto) => {
 
-            setCarrito(actual => {
+            setCarrito(
+                actual => {
 
-                const existente =
-                    actual.find(
-                        p =>
-                            p.productoId ===
-                                producto.id &&
-                            !p.esPersonalizado
-                    );
+                    const existente =
+                        actual.find(
+                            p =>
+                                p.productoId ===
+                                    producto.id &&
+                                !p.esPersonalizado
+                        );
 
-                if (existente) {
+                    if (existente) {
 
-                    return actual.map(
-                        p =>
-                            p.productoId ===
-                                producto.id &&
-                            !p.esPersonalizado
-                                ? {
-                                    ...p,
-                                    cantidad:
-                                        p.cantidad + 1
-                                }
-                                : p
-                    );
-                }
+                        return actual.map(
+                            p =>
+                                p.productoId ===
+                                    producto.id &&
+                                !p.esPersonalizado
 
-                return [
-                    ...actual,
-                    {
-                        lineaId:
-                            crypto.randomUUID(),
+                                    ? {
+                                        ...p,
 
-                        productoId:
-                            producto.id,
+                                        cantidad:
+                                            p.cantidad + 1
+                                    }
 
-                        nombre:
-                            producto.nombre,
-
-                        precio:
-                            producto.precio,
-
-                        cantidad: 1,
-
-                        observaciones: "",
-
-                        extras: [],
-
-                        esPersonalizado:
-                            false
+                                    : p
+                        );
                     }
-                ];
-            });
-        };
 
-    // =========================
-    // Agregar producto
-    // =========================
+                    return [
+                        ...actual,
 
-    const agregarProducto =
-        (producto) => {
+                        {
+                            lineaId:
+                                crypto.randomUUID(),
 
-            /*
-             * Si permite extras,
-             * primero configuramos la unidad.
-             */
-            if (
-                producto.categoriaExtrasId != null
-            ) {
-                abrirExtras(producto);
+                            productoId:
+                                producto.id,
 
-                return;
-            }
+                            nombre:
+                                producto.nombre,
 
-            agregarProductoNormal(
-                producto
+                            precio:
+                                producto.precio,
+
+                            cantidad:
+                                1,
+
+                            observaciones:
+                                "",
+
+                            extras:
+                                [],
+
+                            esPersonalizado:
+                                false
+                        }
+                    ];
+                }
             );
         };
 
     // =========================
-    // Confirmar producto
-    // personalizado
+    // AGREGAR PRODUCTO
+    // =========================
+
+    const agregarProducto = (
+        producto
+    ) => {
+
+        if (
+            producto.categoriaExtrasId != null
+        ) {
+
+            abrirExtras(
+                producto
+            );
+
+            return;
+        }
+
+        agregarProductoNormal(
+            producto
+        );
+    };
+
+    // =========================
+    // CONFIRMAR PRODUCTO
+    // CON EXTRAS
     // =========================
 
     const confirmarProductoConExtras =
@@ -424,15 +562,19 @@ function PedidoXpress() {
                 precio:
                     productoSeleccionado.precio,
 
-                cantidad: 1,
+                cantidad:
+                    1,
 
-                observaciones: "",
+                observaciones:
+                    "",
 
-                esPersonalizado: true,
+                esPersonalizado:
+                    true,
 
                 extras:
                     extrasSeleccionados.map(
                         extra => ({
+
                             productoId:
                                 extra.id,
 
@@ -442,7 +584,8 @@ function PedidoXpress() {
                             precio:
                                 extra.precio,
 
-                            cantidad: 1
+                            cantidad:
+                                1
                         })
                     )
             };
@@ -458,44 +601,47 @@ function PedidoXpress() {
         };
 
     // =========================
-    // Cambiar cantidad
-    // producto normal
+    // CAMBIAR CANTIDAD
     // =========================
 
-    const cambiarCantidad =
-        (lineaId, cantidad) => {
+    const cambiarCantidad = (
+        lineaId,
+        cantidad
+    ) => {
 
-            if (cantidad <= 0) {
-
-                setCarrito(
-                    actual =>
-                        actual.filter(
-                            p =>
-                                p.lineaId !==
-                                lineaId
-                        )
-                );
-
-                return;
-            }
+        if (cantidad <= 0) {
 
             setCarrito(
                 actual =>
-                    actual.map(
+                    actual.filter(
                         p =>
-                            p.lineaId ===
+                            p.lineaId !==
                             lineaId
-                                ? {
-                                    ...p,
-                                    cantidad
-                                }
-                                : p
                     )
             );
-        };
+
+            return;
+        }
+
+        setCarrito(
+            actual =>
+                actual.map(
+                    p =>
+                        p.lineaId ===
+                            lineaId
+
+                            ? {
+                                ...p,
+                                cantidad
+                            }
+
+                            : p
+                )
+        );
+    };
 
     // =========================
-    // Eliminar personalizado
+    // ELIMINAR LÍNEA
     // =========================
 
     const eliminarLinea =
@@ -512,38 +658,49 @@ function PedidoXpress() {
         };
 
     // =========================
-    // Observaciones
+    // OBSERVACIONES
     // =========================
 
-    const cambiarObservaciones =
-        (lineaId, observaciones) => {
+    const cambiarObservaciones = (
+        lineaId,
+        observaciones
+    ) => {
 
-            setCarrito(
-                actual =>
-                    actual.map(
-                        p =>
-                            p.lineaId ===
+        setCarrito(
+            actual =>
+                actual.map(
+                    p =>
+                        p.lineaId ===
                             lineaId
-                                ? {
-                                    ...p,
-                                    observaciones
-                                }
-                                : p
-                    )
-            );
-        };
+
+                            ? {
+                                ...p,
+                                observaciones
+                            }
+
+                            : p
+                )
+        );
+    };
 
     // =========================
-    // Total
+    // TOTAL
     // =========================
 
     const total =
         carrito.reduce(
-            (suma, producto) => {
+            (
+                suma,
+                producto
+            ) => {
 
                 const totalProducto =
-                    producto.precio *
-                    producto.cantidad;
+                    Number(
+                        producto.precio ?? 0
+                    ) *
+                    Number(
+                        producto.cantidad ?? 0
+                    );
 
                 const totalExtras =
                     producto.extras?.reduce(
@@ -551,11 +708,19 @@ function PedidoXpress() {
                             sumaExtras,
                             extra
                         ) =>
+
                             sumaExtras +
+
                             (
-                                extra.precio *
-                                extra.cantidad
+                                Number(
+                                    extra.precio ?? 0
+                                ) *
+
+                                Number(
+                                    extra.cantidad ?? 0
+                                )
                             ),
+
                         0
                     ) ?? 0;
 
@@ -565,16 +730,31 @@ function PedidoXpress() {
                     totalExtras
                 );
             },
+
             0
         );
 
     // =========================
-    // Crear pedido
+    // CREAR PEDIDO
     // =========================
 
     const crearPedido = async () => {
 
+        /*
+         * Candado contra doble toque.
+         */
+        if (
+            creandoPedidoRef.current
+        ) {
+            return;
+        }
+
+        // =========================
+        // VALIDACIONES
+        // =========================
+
         if (!telefono.trim()) {
+
             alert(
                 "Ingrese el teléfono del cliente."
             );
@@ -583,6 +763,7 @@ function PedidoXpress() {
         }
 
         if (!nombre.trim()) {
+
             alert(
                 "Ingrese el nombre del cliente."
             );
@@ -590,11 +771,11 @@ function PedidoXpress() {
             return;
         }
 
-        // Dirección obligatoria únicamente para Xpress
         if (
             tipoPedido === "Xpress" &&
             !direccion.trim()
         ) {
+
             alert(
                 "Ingrese la dirección de entrega."
             );
@@ -602,7 +783,10 @@ function PedidoXpress() {
             return;
         }
 
-        if (carrito.length === 0) {
+        if (
+            carrito.length === 0
+        ) {
+
             alert(
                 "Debe agregar al menos un producto."
             );
@@ -610,11 +794,47 @@ function PedidoXpress() {
             return;
         }
 
+        /*
+         * Desde este punto solamente una
+         * ejecución puede continuar.
+         */
+        creandoPedidoRef.current =
+            true;
+
+        setGuardandoPedido(
+            true
+        );
+
         try {
-            setGuardandoPedido(true);
 
             let clienteActual =
                 cliente;
+
+            // =========================
+            // SEGURIDAD CLIENTE
+            // =========================
+
+            /*
+             * Si por alguna razón React todavía
+             * tuviese un cliente anterior cuya
+             * identificación telefónica no
+             * coincide, lo descartamos.
+             */
+            if (
+                clienteActual &&
+                String(
+                    clienteActual.telefono ?? ""
+                ).trim() !==
+                telefono.trim()
+            ) {
+
+                clienteActual =
+                    null;
+
+                setCliente(
+                    null
+                );
+            }
 
             // =========================
             // CLIENTE NUEVO
@@ -636,17 +856,24 @@ function PedidoXpress() {
             else {
 
                 const cambioNombre =
-                    nombre !==
-                    clienteActual.nombreCompleto;
+                    nombre.trim() !==
+                    (
+                        clienteActual
+                            .nombreCompleto ?? ""
+                    ).trim();
 
                 const cambioDireccion =
                     direccion.trim() !==
-                    (clienteActual.direccion ?? "").trim();
+                    (
+                        clienteActual
+                            .direccion ?? ""
+                    ).trim();
 
                 if (
                     cambioNombre ||
                     cambioDireccion
                 ) {
+
                     clienteActual =
                         await actualizarClienteExistente();
 
@@ -656,14 +883,15 @@ function PedidoXpress() {
             }
 
             // =========================
-            // PEDIDO
+            // ARMAR PEDIDO
             // =========================
 
             const dto = {
 
                 tipoPedido,
 
-                mesaId: null,
+                mesaId:
+                    null,
 
                 clienteId:
                     clienteActual.id,
@@ -684,6 +912,7 @@ function PedidoXpress() {
                             extras:
                                 p.extras?.map(
                                     extra => ({
+
                                         productoId:
                                             extra.productoId,
 
@@ -696,9 +925,21 @@ function PedidoXpress() {
             };
 
             console.log(
-                tipoPedido === "Llevar"
-                    ? "Pedido para llevar:"
-                    : "Pedido Xpress:"
+                "Cliente del pedido:",
+                {
+                    id:
+                        clienteActual.id,
+
+                    telefono:
+                        clienteActual.telefono,
+
+                    nombre:
+                        clienteActual.nombreCompleto
+                }
+            );
+
+            console.log(
+                "Pedido enviado:"
             );
 
             console.log(
@@ -708,6 +949,10 @@ function PedidoXpress() {
                     2
                 )
             );
+
+            // =========================
+            // CREAR PEDIDO
+            // =========================
 
             const respuesta =
                 await api.post(
@@ -720,19 +965,33 @@ function PedidoXpress() {
             );
 
             // =========================
-            // LIMPIAR FORMULARIO
+            // LIMPIAR TODO
             // =========================
 
             setTelefono("");
             setCliente(null);
             setNombre("");
             setDireccion("");
-            setTipoPedido("Xpress");
-            setCarrito([]);
 
-            navigate("/pedidos");
+            setTipoPedido(
+                "Xpress"
+            );
+
+            setCarrito([]);
+            setBusqueda("");
+
+            cerrarExtras();
+
+            // =========================
+            // VOLVER A PEDIDOS
+            // =========================
+
+            navigate(
+                "/pedidos"
+            );
         }
         catch (error) {
+
             console.error(error);
 
             alert(
@@ -741,12 +1000,21 @@ function PedidoXpress() {
             );
         }
         finally {
-            setGuardandoPedido(false);
+
+            /*
+             * Liberamos ambos bloqueos.
+             */
+            creandoPedidoRef.current =
+                false;
+
+            setGuardandoPedido(
+                false
+            );
         }
     };
 
     // =========================
-    // Filtrar productos
+    // FILTRAR PRODUCTOS
     // =========================
 
     const productosFiltrados =
@@ -759,16 +1027,25 @@ function PedidoXpress() {
                         .trim();
 
                 return (
+
                     p.nombre
                         ?.toLowerCase()
-                        .includes(texto) ||
+                        .includes(
+                            texto
+                        ) ||
 
                     p.categoria
                         ?.toLowerCase()
-                        .includes(texto)
+                        .includes(
+                            texto
+                        )
                 );
             }
         );
+
+    // =========================
+    // UI
+    // =========================
 
     return (
 
@@ -791,9 +1068,12 @@ function PedidoXpress() {
                 </div>
 
                 <button
+                    type="button"
                     className="btn btn-outline-secondary"
                     onClick={() =>
-                        navigate("/pedidos")
+                        navigate(
+                            "/pedidos"
+                        )
                     }
                 >
                     ← Pedidos
@@ -801,7 +1081,9 @@ function PedidoXpress() {
 
             </div>
 
+            {/* ========================= */}
             {/* CLIENTE */}
+            {/* ========================= */}
 
             <div className="card shadow-sm border-0 mb-4">
 
@@ -817,6 +1099,8 @@ function PedidoXpress() {
 
                     <div className="row g-3">
 
+                        {/* TELÉFONO */}
+
                         <div className="col-md-5">
 
                             <label className="form-label">
@@ -829,16 +1113,19 @@ function PedidoXpress() {
                                     type="text"
                                     className="form-control"
                                     placeholder="Ej. 88888888"
-                                    value={telefono}
+                                    value={
+                                        telefono
+                                    }
                                     onChange={
                                         e =>
-                                            setTelefono(
+                                            cambiarTelefono(
                                                 e.target.value
                                             )
                                     }
                                 />
 
                                 <button
+                                    type="button"
                                     className="btn btn-success"
                                     onClick={
                                         buscarCliente
@@ -847,14 +1134,18 @@ function PedidoXpress() {
                                         buscandoCliente
                                     }
                                 >
-                                    {buscandoCliente
-                                        ? "Buscando..."
-                                        : "🔍 Buscar"}
+                                    {
+                                        buscandoCliente
+                                            ? "Buscando..."
+                                            : "🔍 Buscar"
+                                    }
                                 </button>
 
                             </div>
 
                         </div>
+
+                        {/* RESULTADO CLIENTE */}
 
                         <div className="col-md-7">
 
@@ -887,13 +1178,17 @@ function PedidoXpress() {
                             {!cliente &&
                                 telefono && (
 
-                                    <div className="alert alert-warning mb-0">
-                                        🆕 Cliente nuevo
-                                    </div>
+                                <div className="alert alert-warning mb-0">
 
-                                )}
+                                    🆕 Cliente nuevo
+
+                                </div>
+
+                            )}
 
                         </div>
+
+                        {/* NOMBRE */}
 
                         <div className="col-md-5">
 
@@ -903,7 +1198,9 @@ function PedidoXpress() {
 
                             <input
                                 className="form-control"
-                                value={nombre}
+                                value={
+                                    nombre
+                                }
                                 onChange={
                                     e =>
                                         setNombre(
@@ -914,6 +1211,8 @@ function PedidoXpress() {
                             />
 
                         </div>
+
+                        {/* TIPO PEDIDO */}
 
                         <div className="col-12">
 
@@ -928,14 +1227,20 @@ function PedidoXpress() {
                                     <button
                                         type="button"
                                         className={
-                                            tipoPedido === "Xpress"
+                                            tipoPedido ===
+                                                "Xpress"
+
                                                 ? "btn btn-success w-100 p-3"
+
                                                 : "btn btn-outline-success w-100 p-3"
                                         }
                                         onClick={() =>
-                                            setTipoPedido("Xpress")
+                                            setTipoPedido(
+                                                "Xpress"
+                                            )
                                         }
                                     >
+
                                         <div className="fs-5">
                                             🛵 Envío Xpress
                                         </div>
@@ -943,6 +1248,7 @@ function PedidoXpress() {
                                         <small>
                                             Se entrega al cliente
                                         </small>
+
                                     </button>
 
                                 </div>
@@ -952,14 +1258,20 @@ function PedidoXpress() {
                                     <button
                                         type="button"
                                         className={
-                                            tipoPedido === "Llevar"
+                                            tipoPedido ===
+                                                "Llevar"
+
                                                 ? "btn btn-warning w-100 p-3"
+
                                                 : "btn btn-outline-warning w-100 p-3"
                                         }
                                         onClick={() =>
-                                            setTipoPedido("Llevar")
+                                            setTipoPedido(
+                                                "Llevar"
+                                            )
                                         }
                                     >
+
                                         <div className="fs-5">
                                             🥡 Pasa a llevar
                                         </div>
@@ -967,6 +1279,7 @@ function PedidoXpress() {
                                         <small>
                                             El cliente viene a recoger
                                         </small>
+
                                     </button>
 
                                 </div>
@@ -975,21 +1288,28 @@ function PedidoXpress() {
 
                         </div>
 
+                        {/* DIRECCIÓN */}
+
                         {tipoPedido === "Xpress" ? (
 
                             <div className="col-12">
 
                                 <label className="form-label">
+
                                     Dirección de entrega
+
                                     <span className="text-danger ms-1">
                                         *
                                     </span>
+
                                 </label>
 
                                 <textarea
                                     className="form-control"
                                     rows="3"
-                                    value={direccion}
+                                    value={
+                                        direccion
+                                    }
                                     onChange={
                                         e =>
                                             setDireccion(
@@ -1012,15 +1332,16 @@ function PedidoXpress() {
                                     </div>
 
                                     <div>
-                                        El cliente pasará al restaurante
-                                        a recoger el pedido.
+                                        El cliente pasará al restaurante a recoger el pedido.
                                     </div>
 
                                     {direccion && (
 
                                         <small className="d-block mt-2 text-muted">
+
                                             La dirección guardada del cliente se conserva
                                             para futuros pedidos Xpress.
+
                                         </small>
 
                                     )}
@@ -1036,6 +1357,10 @@ function PedidoXpress() {
                 </div>
 
             </div>
+
+            {/* ========================= */}
+            {/* PRODUCTOS + PEDIDO */}
+            {/* ========================= */}
 
             <div className="row">
 
@@ -1068,7 +1393,9 @@ function PedidoXpress() {
                             <input
                                 className="form-control mb-3"
                                 placeholder="🔍 Buscar producto..."
-                                value={busqueda}
+                                value={
+                                    busqueda
+                                }
                                 onChange={
                                     e =>
                                         setBusqueda(
@@ -1084,7 +1411,9 @@ function PedidoXpress() {
 
                                         <div
                                             className="col-md-6"
-                                            key={producto.id}
+                                            key={
+                                                producto.id
+                                            }
                                         >
 
                                             <button
@@ -1107,7 +1436,8 @@ function PedidoXpress() {
 
                                                 <span className="text-success">
                                                     ₡ {
-                                                        producto.precio.toLocaleString()
+                                                        producto.precio
+                                                            .toLocaleString()
                                                     }
                                                 </span>
 
@@ -1138,13 +1468,16 @@ function PedidoXpress() {
 
                             </div>
 
-                            {productosFiltrados.length === 0 && (
+                            {
+                                productosFiltrados.length ===
+                                    0 && (
 
-                                <p className="text-center text-muted mt-4">
-                                    No se encontraron productos.
-                                </p>
+                                    <p className="text-center text-muted mt-4">
+                                        No se encontraron productos.
+                                    </p>
 
-                            )}
+                                )
+                            }
 
                         </div>
 
@@ -1152,7 +1485,7 @@ function PedidoXpress() {
 
                 </div>
 
-                {/* PEDIDO */}
+                {/* CARRITO */}
 
                 <div className="col-lg-5 mt-4 mt-lg-0">
 
@@ -1174,7 +1507,8 @@ function PedidoXpress() {
 
                                     <div
                                         style={{
-                                            fontSize: "3rem"
+                                            fontSize:
+                                                "3rem"
                                         }}
                                     >
                                         🛒
@@ -1188,183 +1522,201 @@ function PedidoXpress() {
 
                             ) : (
 
-                                carrito.map(producto => {
+                                carrito.map(
+                                    producto => {
 
-                                    const totalExtras =
-                                        producto.extras?.reduce(
-                                            (
-                                                suma,
-                                                extra
-                                            ) =>
-                                                suma +
-                                                extra.precio *
-                                                extra.cantidad,
-                                            0
-                                        ) ?? 0;
+                                        const totalExtras =
+                                            producto.extras
+                                                ?.reduce(
+                                                    (
+                                                        suma,
+                                                        extra
+                                                    ) =>
 
-                                    const subtotal =
-                                        producto.precio *
-                                        producto.cantidad +
-                                        totalExtras;
+                                                        suma +
+                                                        extra.precio *
+                                                        extra.cantidad,
 
-                                    return (
+                                                    0
+                                                ) ?? 0;
 
-                                        <div
-                                            key={
-                                                producto.lineaId
-                                            }
-                                            className="border-bottom pb-3 mb-3"
-                                        >
+                                        const subtotal =
+                                            producto.precio *
+                                            producto.cantidad +
+                                            totalExtras;
 
-                                            <div className="d-flex justify-content-between">
+                                        return (
 
-                                                <strong>
-                                                    {
-                                                        producto.nombre
-                                                    }
-                                                </strong>
+                                            <div
+                                                key={
+                                                    producto.lineaId
+                                                }
+                                                className="border-bottom pb-3 mb-3"
+                                            >
 
-                                                <span className="text-success fw-bold">
-                                                    ₡ {
-                                                        subtotal.toLocaleString()
-                                                    }
-                                                </span>
+                                                <div className="d-flex justify-content-between">
 
-                                            </div>
+                                                    <strong>
+                                                        {
+                                                            producto.nombre
+                                                        }
+                                                    </strong>
 
-                                            {/* EXTRAS */}
+                                                    <span className="text-success fw-bold">
 
-                                            {producto.extras?.length > 0 && (
+                                                        ₡ {
+                                                            subtotal
+                                                                .toLocaleString()
+                                                        }
 
-                                                <div className="ms-3 mt-2">
-
-                                                    {producto.extras.map(
-                                                        extra => (
-
-                                                            <div
-                                                                key={
-                                                                    extra.productoId
-                                                                }
-                                                                className="small text-success"
-                                                            >
-                                                                ➕ {
-                                                                    extra.nombre
-                                                                }
-
-                                                                <span className="ms-2">
-                                                                    ₡ {
-                                                                        extra.precio.toLocaleString()
-                                                                    }
-                                                                </span>
-
-                                                            </div>
-
-                                                        )
-                                                    )}
+                                                    </span>
 
                                                 </div>
 
-                                            )}
+                                                {/* EXTRAS */}
 
-{/* CANTIDAD Y ELIMINAR */}
+                                                {producto.extras?.length > 0 && (
 
-{!producto.esPersonalizado ? (
+                                                    <div className="ms-3 mt-2">
 
-    <div className="d-flex align-items-center justify-content-between mt-2">
+                                                        {producto.extras.map(
+                                                            extra => (
 
-        <div className="d-flex align-items-center">
+                                                                <div
+                                                                    key={
+                                                                        extra.productoId
+                                                                    }
+                                                                    className="small text-success"
+                                                                >
 
-            <button
-                type="button"
-                className="btn btn-outline-secondary btn-sm"
-                onClick={() =>
-                    cambiarCantidad(
-                        producto.lineaId,
-                        producto.cantidad - 1
-                    )
-                }
-            >
-                −
-            </button>
+                                                                    ➕ {
+                                                                        extra.nombre
+                                                                    }
 
-            <span className="mx-3 fw-bold">
-                {producto.cantidad}
-            </span>
+                                                                    <span className="ms-2">
 
-            <button
-                type="button"
-                className="btn btn-outline-success btn-sm"
-                onClick={() =>
-                    cambiarCantidad(
-                        producto.lineaId,
-                        producto.cantidad + 1
-                    )
-                }
-            >
-                +
-            </button>
+                                                                        ₡ {
+                                                                            extra.precio
+                                                                                .toLocaleString()
+                                                                        }
 
-        </div>
+                                                                    </span>
 
-        <button
-            type="button"
-            className="btn btn-outline-danger btn-sm"
-            onClick={() =>
-                eliminarLinea(
-                    producto.lineaId
-                )
-            }
-        >
-            🗑️ Eliminar
-        </button>
+                                                                </div>
 
-    </div>
+                                                            )
+                                                        )}
 
-) : (
+                                                    </div>
 
-    <div className="d-flex align-items-center justify-content-between mt-2">
+                                                )}
 
-        <span className="badge bg-secondary">
-            x1
-        </span>
+                                                {/* CANTIDAD */}
 
-        <button
-            type="button"
-            className="btn btn-outline-danger btn-sm"
-            onClick={() =>
-                eliminarLinea(
-                    producto.lineaId
-                )
-            }
-        >
-            🗑️ Eliminar
-        </button>
+                                                {!producto.esPersonalizado ? (
 
-    </div>
+                                                    <div className="d-flex align-items-center justify-content-between mt-2">
 
-)}
+                                                        <div className="d-flex align-items-center">
 
-                                            <input
-                                                className="form-control form-control-sm mt-2"
-                                                placeholder="Observaciones..."
-                                                value={
-                                                    producto.observaciones
-                                                }
-                                                onChange={
-                                                    e =>
-                                                        cambiarObservaciones(
-                                                            producto.lineaId,
-                                                            e.target.value
-                                                        )
-                                                }
-                                            />
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-outline-secondary btn-sm"
+                                                                onClick={() =>
+                                                                    cambiarCantidad(
+                                                                        producto.lineaId,
+                                                                        producto.cantidad - 1
+                                                                    )
+                                                                }
+                                                            >
+                                                                −
+                                                            </button>
 
-                                        </div>
+                                                            <span className="mx-3 fw-bold">
+                                                                {
+                                                                    producto.cantidad
+                                                                }
+                                                            </span>
 
-                                    );
-                                })
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-outline-success btn-sm"
+                                                                onClick={() =>
+                                                                    cambiarCantidad(
+                                                                        producto.lineaId,
+                                                                        producto.cantidad + 1
+                                                                    )
+                                                                }
+                                                            >
+                                                                +
+                                                            </button>
+
+                                                        </div>
+
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-outline-danger btn-sm"
+                                                            onClick={() =>
+                                                                eliminarLinea(
+                                                                    producto.lineaId
+                                                                )
+                                                            }
+                                                        >
+                                                            🗑️ Eliminar
+                                                        </button>
+
+                                                    </div>
+
+                                                ) : (
+
+                                                    <div className="d-flex align-items-center justify-content-between mt-2">
+
+                                                        <span className="badge bg-secondary">
+                                                            x1
+                                                        </span>
+
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-outline-danger btn-sm"
+                                                            onClick={() =>
+                                                                eliminarLinea(
+                                                                    producto.lineaId
+                                                                )
+                                                            }
+                                                        >
+                                                            🗑️ Eliminar
+                                                        </button>
+
+                                                    </div>
+
+                                                )}
+
+                                                {/* OBSERVACIÓN */}
+
+                                                <input
+                                                    className="form-control form-control-sm mt-2"
+                                                    placeholder="Observaciones..."
+                                                    value={
+                                                        producto.observaciones
+                                                    }
+                                                    onChange={
+                                                        e =>
+                                                            cambiarObservaciones(
+                                                                producto.lineaId,
+                                                                e.target.value
+                                                            )
+                                                    }
+                                                />
+
+                                            </div>
+
+                                        );
+                                    }
+                                )
 
                             )}
+
+                            {/* TOTAL */}
 
                             <div className="d-flex justify-content-between border-top pt-3">
 
@@ -1373,17 +1725,26 @@ function PedidoXpress() {
                                 </strong>
 
                                 <strong className="text-success fs-4">
+
                                     ₡ {
-                                        total.toLocaleString()
+                                        total
+                                            .toLocaleString()
                                     }
+
                                 </strong>
 
                             </div>
 
+                            {/* CREAR */}
+
                             <button
+                                type="button"
                                 className={
-                                    tipoPedido === "Llevar"
+                                    tipoPedido ===
+                                        "Llevar"
+
                                         ? "btn btn-warning btn-lg w-100 mt-3"
+
                                         : "btn btn-success btn-lg w-100 mt-3"
                                 }
                                 onClick={
@@ -1391,14 +1752,24 @@ function PedidoXpress() {
                                 }
                                 disabled={
                                     guardandoPedido ||
+                                    guardandoCliente ||
                                     carrito.length === 0
                                 }
                             >
-                                {guardandoPedido
-                                    ? "Creando pedido..."
-                                    : tipoPedido === "Llevar"
-                                        ? "🥡 Crear Pedido para Llevar"
-                                        : "🛵 Crear Pedido Xpress"}
+
+                                {
+                                    guardandoPedido
+
+                                        ? "⏳ Creando pedido..."
+
+                                        : tipoPedido ===
+                                            "Llevar"
+
+                                            ? "🥡 Crear Pedido para Llevar"
+
+                                            : "🛵 Crear Pedido Xpress"
+                                }
+
                             </button>
 
                         </div>
@@ -1433,9 +1804,12 @@ function PedidoXpress() {
                                 <div>
 
                                     <h5 className="modal-title">
+
                                         {
-                                            productoSeleccionado.nombre
+                                            productoSeleccionado
+                                                .nombre
                                         }
+
                                     </h5>
 
                                     <small className="text-muted">
@@ -1456,31 +1830,41 @@ function PedidoXpress() {
 
                             <div className="modal-body">
 
-                                {extrasDisponibles.length === 0 && (
+                                {
+                                    extrasDisponibles.length ===
+                                        0 && (
 
                                     <p className="text-muted">
+
                                         No hay extras disponibles.
+
                                     </p>
 
-                                )}
+                                )
+                                }
 
                                 {extrasDisponibles.map(
                                     extra => {
 
                                         const seleccionado =
-                                            extrasSeleccionados.some(
-                                                e =>
-                                                    e.id ===
-                                                    extra.id
-                                            );
+                                            extrasSeleccionados
+                                                .some(
+                                                    e =>
+                                                        e.id ===
+                                                        extra.id
+                                                );
 
                                         return (
 
-                                            <div
+                                            <label
                                                 key={
                                                     extra.id
                                                 }
                                                 className="d-flex justify-content-between align-items-center border-bottom py-3"
+                                                style={{
+                                                    cursor:
+                                                        "pointer"
+                                                }}
                                             >
 
                                                 <div>
@@ -1492,9 +1876,12 @@ function PedidoXpress() {
                                                     </strong>
 
                                                     <div className="text-muted">
+
                                                         + ₡ {
-                                                            extra.precio.toLocaleString()
+                                                            extra.precio
+                                                                .toLocaleString()
                                                         }
+
                                                     </div>
 
                                                 </div>
@@ -1512,7 +1899,7 @@ function PedidoXpress() {
                                                     }
                                                 />
 
-                                            </div>
+                                            </label>
 
                                         );
                                     }
@@ -1523,6 +1910,7 @@ function PedidoXpress() {
                             <div className="modal-footer">
 
                                 <button
+                                    type="button"
                                     className="btn btn-secondary"
                                     onClick={
                                         cerrarExtras
@@ -1532,6 +1920,7 @@ function PedidoXpress() {
                                 </button>
 
                                 <button
+                                    type="button"
                                     className="btn btn-success"
                                     onClick={
                                         confirmarProductoConExtras

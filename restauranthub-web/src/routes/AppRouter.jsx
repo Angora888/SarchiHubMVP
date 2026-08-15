@@ -23,6 +23,7 @@ import MesaForm from "../pages/MesaForm";
 import MenuRestaurant from "../pages/RestaurantMenu";
 import PedidoXpress from "../pages/PedidoXpress"
 import CierreCaja from "../pages/CierreCaja"
+import Reportes from "../pages/Reportes"
 
 function AppRouter() {
    return (
@@ -56,6 +57,7 @@ function AppRouter() {
 <Route path="/mesas/nuevo" element={<MesaForm />}/>
 <Route path="/dashboard/pedido-xpress" element={<PedidoXpress />} />
 <Route path="/cierre-caja" element={<CierreCaja />} />
+<Route path="/reportes" element={<Reportes />} />
 
 </Route>
 </Route>
