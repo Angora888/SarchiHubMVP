@@ -78,38 +78,76 @@ public class DashboardController : ControllerBase
 
     public static class FechaHelper
     {
-        public static (DateTime Inicio, DateTime Fin) ObtenerRangoHoyCostaRica()
+        private static TimeZoneInfo ObtenerZonaCostaRica()
         {
-            var zona = TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time");
-            var hoyCR = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zona).Date;
-            var inicio = TimeZoneInfo.ConvertTimeToUtc(hoyCR, zona);
-            var fin = inicio.AddDays(1);
-            return (inicio, fin);
+            // Azure/Linux
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(
+                    "America/Costa_Rica"
+                );
+            }
+            catch
+            {
+                // Windows
+                return TimeZoneInfo.FindSystemTimeZoneById(
+                    "Central America Standard Time"
+                );
+            }
         }
-
         public static (DateTime inicio, DateTime fin)
-   ObtenerRangoFechaCostaRica(DateOnly fecha)
+            ObtenerRangoFechaCostaRica(DateOnly fecha)
         {
             var zonaCostaRica =
-                TimeZoneInfo.FindSystemTimeZoneById(
-                    "America/Costa_Rica");
+                ObtenerZonaCostaRica();
+            // 00:00 del día seleccionado
+            // SIN zona horaria todavía
             var inicioLocal =
-                fecha.ToDateTime(
-                    TimeOnly.MinValue,
-                    DateTimeKind.Unspecified);
+                DateTime.SpecifyKind(
+                    fecha.ToDateTime(
+                        TimeOnly.MinValue
+                    ),
+                    DateTimeKind.Unspecified
+                );
+            // 00:00 del día siguiente
             var finLocal =
-                inicioLocal.AddDays(1);
+                DateTime.SpecifyKind(
+                    inicioLocal.AddDays(1),
+                    DateTimeKind.Unspecified
+                );
+            // Convertimos EXPLÍCITAMENTE
+            // Costa Rica -> UTC
             var inicioUtc =
                 TimeZoneInfo.ConvertTimeToUtc(
                     inicioLocal,
-                    zonaCostaRica);
+                    zonaCostaRica
+                );
             var finUtc =
                 TimeZoneInfo.ConvertTimeToUtc(
                     finLocal,
-                    zonaCostaRica);
+                    zonaCostaRica
+                );
             return (
                 inicioUtc,
                 finUtc
+            );
+        }
+        public static (DateTime inicio, DateTime fin)
+            ObtenerRangoHoyCostaRica()
+        {
+            var zonaCostaRica =
+                ObtenerZonaCostaRica();
+            var ahoraCostaRica =
+                TimeZoneInfo.ConvertTimeFromUtc(
+                    DateTime.UtcNow,
+                    zonaCostaRica
+                );
+            var fecha =
+                DateOnly.FromDateTime(
+                    ahoraCostaRica
+                );
+            return ObtenerRangoFechaCostaRica(
+                fecha
             );
         }
     }
