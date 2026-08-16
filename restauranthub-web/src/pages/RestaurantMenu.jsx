@@ -1444,26 +1444,12 @@ function PublicMenu() {
 
                                     </div>
 
-                                    <button
-                                        type="button"
-                                        className="btn btn-success btn-lg w-100"
-                                        disabled={
-                                            enviando
-                                        }
-                                        onClick={
-                                            crearPedido
-                                        }
-                                    >
-
-                                        {
-                                            enviando
-
-                                                ? "⏳ Enviando pedido..."
-
-                                                : "🥡 Confirmar Pedido"
-                                        }
-
-                                    </button>
+<button
+   className="btn btn-secondary btn-lg w-100"
+   disabled
+>
+   ⏸️ Pedidos en línea temporalmente pausados
+</button>
 
                                 </div>
 
