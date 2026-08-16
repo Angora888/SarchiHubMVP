@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -93,6 +94,55 @@ public class MenuController : ControllerBase
 
         });
 
+    }
+
+    [HttpGet("publico/restaurante/{restaurantId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ObtenerMenuPublicoRestaurante(
+   int restaurantId)
+    {
+        var restaurant = await _context.Restaurants
+            .FirstOrDefaultAsync(r =>
+                r.Id == restaurantId &&
+                r.Active);
+        if (restaurant == null)
+        {
+            return NotFound(
+                "Restaurante no encontrado."
+            );
+        }
+        var productos = await _context.Producto
+            .Where(p =>
+                p.RestaurantId == restaurantId &&
+                p.Disponible)
+            .Select(p => new
+            {
+                id = p.Id,
+                nombre = p.Nombre,
+                descripcion = p.Descripcion,
+                precio = p.Precio,
+                categoriaId =
+                    p.CategoriaId,
+                categoria =
+                    p.Categoria != null
+                        ? p.Categoria.Name
+                        : "",
+                categoriaExtrasId =
+                    p.CategoriaExtrasId
+            })
+            .OrderBy(p => p.categoria)
+            .ThenBy(p => p.nombre)
+            .ToListAsync();
+        return Ok(new
+        {
+            restaurant = new
+            {
+                id = restaurant.Id,
+                name = restaurant.Name,
+                phone = restaurant.Phone
+            },
+            productos
+        });
     }
 
     [HttpGet("restaurant/{restaurantId}")]
