@@ -86,42 +86,45 @@ const colorCocina = (cantidad) => {
     ruta="/caja"
 
 />
+{(rol === "Admin" || rol === "Cliente") && (
+<>
 <StatCard
-   titulo="Categorías"
-   valor={datos.categorias}
-   icono="bi bi-people-fill"
-   color="bg-soft-green text-white"
-   ruta="/categorias"
-/>
+           titulo="Categorías"
+           valor={datos.categorias}
+           icono="bi bi-people-fill"
+           color="bg-soft-green text-white"
+           ruta="/categorias"
+       />
 <StatCard
-   titulo="Productos"
-   valor={datos.productos}
-   icono="bi bi-basket-fill"
-   color="bg-success text-white"
-   ruta="/productos"
-/>
+           titulo="Productos"
+           valor={datos.productos}
+           icono="bi bi-basket-fill"
+           color="bg-success text-white"
+           ruta="/productos"
+       />
 <StatCard
-   titulo="Mesas"
-   valor={datos.mesas}
-   icono="bi bi-grid-3x3-gap-fill"
-   color="bg-primary text-white"
-   ruta="/mesas"
-/>
+           titulo="Mesas"
+           valor={datos.mesas}
+           icono="bi bi-grid-3x3-gap-fill"
+           color="bg-primary text-white"
+           ruta="/mesas"
+       />
 <StatCard
-    titulo="Cierre de Caja"
-    valor="→"
-    icono="bi bi-cash-coin"
-    color="bg-success-subtle text-success"
-    ruta="/cierre-caja"
-/>
+           titulo="Cierre de Caja"
+           valor="→"
+           icono="bi bi-cash-coin"
+           color="bg-success-subtle text-success"
+           ruta="/cierre-caja"
+       />
 <StatCard
-
-    titulo="Directorio"
-    valor="→"
-    icono="bi bi-building"
-    color="bg-info text-white"
-    ruta="/clientes"
-/>
+           titulo="Directorio"
+           valor="→"
+           icono="bi bi-building"
+           color="bg-info text-white"
+           ruta="/clientes"
+       />
+</>
+)}
 
 {rol === "Admin" && (
 <>

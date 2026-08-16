@@ -802,6 +802,8 @@ public class PedidosController : ControllerBase
         {
             id = pedido.Id,
 
+            tipoPedido = pedido.TipoPedido,
+
             restaurant =
                 pedido.Restaurant?.Name,
 

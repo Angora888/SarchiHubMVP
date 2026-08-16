@@ -120,89 +120,90 @@ function PedidoXpress() {
      * Esto evita reutilizar accidentalmente
      * el ClienteId anterior.
      */
-    const cambiarTelefono = (valor) => {
-
-        setTelefono(valor);
-
-        setCliente(null);
-
-        setNombre("");
-
-        setDireccion("");
-    };
+const cambiarTelefono = (valor) => {
+   // Dejar únicamente números
+   let numeros =
+       valor.replace(/\D/g, "");
+   // Si pegaron +506XXXXXXXX
+   // nos quedamos con los últimos 8 dígitos
+   if (numeros.length > 8) {
+       numeros =
+           numeros.slice(-8);
+   }
+   setTelefono(numeros);
+   // Invalidamos cualquier cliente anterior
+   setCliente(null);
+   setNombre("");
+   setDireccion("");
+};
 
     // =========================
     // BUSCAR CLIENTE
     // =========================
 
-    const buscarCliente = async () => {
+const buscarCliente = async (
+   telefonoBuscar = telefono
+) => {
+   const telefonoBusqueda =
+       telefonoBuscar.trim();
+   if (telefonoBusqueda.length !== 8)
+       return;
+   try {
+       setBuscandoCliente(true);
+       const respuesta =
+           await api.get(
+               `/Clientes/cliente/${telefonoBusqueda}`
+           );
+       const encontrado =
+           respuesta.data;
+       setCliente(encontrado);
+       setNombre(
+           encontrado.nombreCompleto ?? ""
+       );
+       setDireccion(
+           encontrado.direccion ?? ""
+       );
+   }
+   catch (error) {
+       if (
+           error.response?.status === 404
+       ) {
+           setCliente(null);
+           setNombre("");
+           setDireccion("");
+           // Yo NO pondría alert aquí.
+           // Como la búsqueda ahora es automática,
+           // mejor simplemente mostrar
+           // "Cliente nuevo" en pantalla.
+       }
+       else {
+           console.error(error);
+           alert(
+               "No fue posible buscar el cliente."
+           );
+       }
+   }
+   finally {
+       setBuscandoCliente(false);
+   }
+};
 
-        const telefonoBusqueda =
-            telefono.trim();
-
-        if (!telefonoBusqueda) {
-
-            alert(
-                "Ingrese un número de teléfono."
-            );
-
-            return;
-        }
-
-        try {
-
-            setBuscandoCliente(true);
-
-            const respuesta =
-                await api.get(
-                    `/Clientes/cliente/${telefonoBusqueda}`
-                );
-
-            const encontrado =
-                respuesta.data;
-
-            setCliente(
-                encontrado
-            );
-
-            setNombre(
-                encontrado.nombreCompleto ?? ""
-            );
-
-            setDireccion(
-                encontrado.direccion ?? ""
-            );
-        }
-        catch (error) {
-
-            if (
-                error.response?.status === 404
-            ) {
-
-                setCliente(null);
-
-                setNombre("");
-
-                setDireccion("");
-
-                alert(
-                    "Cliente no encontrado. Complete sus datos para registrarlo."
-                );
-            }
-            else {
-
-                console.error(error);
-
-                alert(
-                    "No fue posible buscar el cliente."
-                );
-            }
-        }
-        finally {
-
-            setBuscandoCliente(false);
-        }
-    };
+const manejarCambioTelefono = (
+   valor
+) => {
+   let numeros =
+       valor.replace(/\D/g, "");
+   if (numeros.length > 8) {
+       numeros =
+           numeros.slice(-8);
+   }
+   cambiarTelefono(numeros);
+   // Al completar los 8 dígitos,
+   // buscar automáticamente.
+   if (numeros.length === 8) {
+       buscarCliente(numeros);
+   }
+};
 
     // =========================
     // GUARDAR CLIENTE
@@ -1099,51 +1100,61 @@ function PedidoXpress() {
 
                     <div className="row g-3">
 
-                        {/* TELÉFONO */}
+{/* TELÉFONO */}
 
-                        <div className="col-md-5">
+<div className="col-md-5">
 
-                            <label className="form-label">
-                                Teléfono
-                            </label>
+    <label className="form-label">
+        Teléfono
+    </label>
 
-                            <div className="input-group">
+    <div className="input-group">
 
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Ej. 88888888"
-                                    value={
-                                        telefono
-                                    }
-                                    onChange={
-                                        e =>
-                                            cambiarTelefono(
-                                                e.target.value
-                                            )
-                                    }
-                                />
+        <span
+            className="input-group-text"
+            style={{
+                fontSize: "1.3rem"
+            }}
+        >
+            🇨🇷
+        </span>
 
-                                <button
-                                    type="button"
-                                    className="btn btn-success"
-                                    onClick={
-                                        buscarCliente
-                                    }
-                                    disabled={
-                                        buscandoCliente
-                                    }
-                                >
-                                    {
-                                        buscandoCliente
-                                            ? "Buscando..."
-                                            : "🔍 Buscar"
-                                    }
-                                </button>
+        <input
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength="8"
+            className="form-control"
+            placeholder="60663487"
+            value={telefono}
+            onChange={
+                e =>
+                    manejarCambioTelefono(
+                        e.target.value
+                    )
+            }
+        />
 
-                            </div>
+        {buscandoCliente && (
 
-                        </div>
+            <span className="input-group-text">
+
+                <span
+                    className="spinner-border spinner-border-sm text-success"
+                    role="status"
+                />
+
+            </span>
+
+        )}
+
+    </div>
+
+    <div className="form-text">
+        Número de Costa Rica, 8 dígitos.
+    </div>
+
+</div>
 
                         {/* RESULTADO CLIENTE */}
 

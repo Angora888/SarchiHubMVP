@@ -400,27 +400,51 @@ function PedidoCliente() {
 
                     <h5 className="text-center text-muted">
 
-                        {pedido.mesa ? (
-
-                            <>
-                                <span className="badge bg-primary mb-2">
-                                    🪑 Mesa #{pedido.mesa}
-                                </span>
-                            </>
-
-                        ) : (
-
-                            <>
-                                <span className="badge bg-success mb-2">
-                                    📞 Xpress
-                                </span>
-
-                                <div className="fw-semibold">
-                                    👤 {pedido.cliente?.nombre}
-                                </div>
-                            </>
-
-                        )}
+{pedido.tipoPedido === "Mesa" && (
+<>
+<span className="badge bg-primary mb-2">
+           🪑 Mesa #{pedido.mesa}
+</span>
+</>
+)}
+{pedido.tipoPedido === "Xpress" && (
+<>
+<span className="badge bg-success mb-2">
+           🛵 Xpress
+</span>
+<div className="fw-semibold">
+           👤 {pedido.cliente?.nombre}
+</div>
+       {pedido.cliente?.telefono && (
+<div className="small text-muted">
+               📱 {pedido.cliente.telefono}
+</div>
+       )}
+       {pedido.cliente?.direccion && (
+<div className="small text-muted">
+               📍 {pedido.cliente.direccion}
+</div>
+       )}
+</>
+)}
+{pedido.tipoPedido === "Llevar" && (
+<>
+<span className="badge bg-warning text-dark mb-2">
+           🥡 Pasa a llevar
+</span>
+<div className="fw-semibold">
+           👤 {pedido.cliente?.nombre}
+</div>
+       {pedido.cliente?.telefono && (
+<div className="small text-muted">
+               📱 {pedido.cliente.telefono}
+</div>
+       )}
+<div className="small text-warning-emphasis fw-semibold mt-1">
+           🏪 Cliente recoge en el restaurante
+</div>
+</>
+)}
 
                     </h5>
 
