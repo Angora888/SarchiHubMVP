@@ -1723,7 +1723,13 @@ const dto = {
 
                             </div>
 
-                            <div className="modal-body">
+<div
+   className="modal-body"
+   style={{
+       maxHeight: "60vh",
+       overflowY: "auto"
+   }}
+>
 
                                 {extrasDisponibles.length === 0 && (
 
@@ -1803,33 +1809,32 @@ const dto = {
 
                             </div>
 
-                            <div className="modal-footer">
-
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={
-                                        cerrarExtras
-                                    }
-                                >
-
-                                    Cancelar
-
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className="btn btn-success"
-                                    onClick={
-                                        confirmarProductoConExtras
-                                    }
-                                >
-
-                                    Agregar al pedido
-
-                                </button>
-
-                            </div>
+<div
+   className="modal-footer bg-white border-top"
+   style={{
+       position: "sticky",
+       bottom: 0,
+       zIndex: 10
+   }}
+>
+<button
+       type="button"
+       className="btn btn-outline-secondary"
+       onClick={cerrarExtras}
+>
+       Cancelar
+</button>
+<button
+   type="button"
+   className="btn btn-success flex-grow-1"
+   onClick={confirmarProductoConExtras}
+>
+   ✅ Agregar al pedido
+   {extrasSeleccionados.length > 0 &&
+       ` (${extrasSeleccionados.length} extras)`
+   }
+</button>
+</div>
 
                         </div>
 
