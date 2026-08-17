@@ -12,7 +12,7 @@ import api from "../services/api";
 
 function MenuPublico() {
 
-    const { restaurantId } =
+    const { id } =
         useParams();
 
     // =========================
@@ -106,7 +106,7 @@ function MenuPublico() {
 
     useEffect(() => {
         cargarMenu();
-    }, [restaurantId]);
+    }, [id]);
 
     const cargarMenu = async () => {
 
@@ -116,7 +116,7 @@ function MenuPublico() {
 
             const respuesta =
                 await api.get(
-                    `/Menu/publico/restaurante/${restaurantId}`
+                    `/Menu/publico/restaurante/${id}`
                 );
 
             setRestaurant(
@@ -782,7 +782,7 @@ function MenuPublico() {
 
                 restaurantId:
                     Number(
-                        restaurantId
+                        id
                     ),
 
                 nombre:
