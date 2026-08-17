@@ -123,6 +123,16 @@ const colorCocina = (cantidad) => {
            color="bg-info text-white"
            ruta="/clientes"
        />
+	   <StatCard
+   titulo={
+<span className="text-white">
+           Reportes
+</span>
+   }
+   icono="bi bi-bar-chart-line-fill"
+   color="bg-dark text-white"
+   ruta="/reportes"
+/>
 </>
 )}
 
@@ -141,16 +151,6 @@ const colorCocina = (cantidad) => {
    icono="bi bi-people-fill"
    color="bg-danger text-white"
    ruta="/restaurantes"
-/>}
-{<StatCard
-   titulo={
-<span className="text-white">
-           Reportes
-</span>
-   }
-   icono="bi bi-bar-chart-line-fill"
-   color="bg-dark text-white"
-   ruta="/reportes"
 />}
 </>
 )}
