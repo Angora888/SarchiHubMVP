@@ -38,7 +38,12 @@ public class RestaurantHubContext : DbContext
 
         modelBuilder.Entity<Restaurant>()
             .Property(r => r.PublicId)
-            .HasMaxLength(100);
+            .HasMaxLength(100)
+            .IsRequired();
+
+        modelBuilder.Entity<Restaurant>()
+            .HasIndex(r => r.PublicId)
+            .IsUnique();
 
         modelBuilder.Entity<Restaurant>()
             .Property(r => r.PermitirPedidosOnline)

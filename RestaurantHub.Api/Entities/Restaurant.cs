@@ -22,7 +22,7 @@ public class Restaurant
 
     // 🌐 Identificador público para URL
     // Ejemplo: /restaurants/potters
-    public string? PublicId { get; set; } = "";
+    public string PublicId { get; set; } = "";
 
     // 🟢 Control para aceptar pedidos en línea
     public bool PermitirPedidosOnline { get; set; } = true;
