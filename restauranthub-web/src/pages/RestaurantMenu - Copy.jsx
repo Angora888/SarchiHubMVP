@@ -10,9 +10,9 @@ import {
 
 import api from "../services/api";
 
-function MenuPublico() {
+function PublicMenu() {
 
-    const { restaurantId } =
+    const { id } =
         useParams();
 
     // =========================
@@ -31,10 +31,8 @@ function MenuPublico() {
     const [busqueda, setBusqueda] =
         useState("");
 
-    const [
-        categoriaSeleccionada,
-        setCategoriaSeleccionada
-    ] = useState("Todos");
+    const [categoriaSeleccionada, setCategoriaSeleccionada] =
+        useState("Todos");
 
     // =========================
     // CARRITO
@@ -42,21 +40,6 @@ function MenuPublico() {
 
     const [carrito, setCarrito] =
         useState([]);
-
-    /*
-     * Referencia al carrito real.
-     */
-    const carritoRef =
-        useRef(null);
-
-    /*
-     * Controla si el carrito
-     * está visible en pantalla.
-     */
-    const [
-        carritoVisible,
-        setCarritoVisible
-    ] = useState(false);
 
     // =========================
     // CLIENTE
@@ -86,16 +69,15 @@ function MenuPublico() {
     // PEDIDO CREADO
     // =========================
 
-    const [
-        pedidoCreado,
-        setPedidoCreado
-    ] = useState(null);
+    const [pedidoCreado, setPedidoCreado] =
+        useState(null);
 
     const [enviando, setEnviando] =
         useState(false);
 
     /*
-     * Candado contra doble toque.
+     * Candado real contra doble toque
+     * en móvil.
      */
     const creandoRef =
         useRef(false);
@@ -106,17 +88,16 @@ function MenuPublico() {
 
     useEffect(() => {
         cargarMenu();
-    }, [restaurantId]);
+    }, [id]);
 
     const cargarMenu = async () => {
 
         try {
 
             setLoading(true);
-
             const respuesta =
                 await api.get(
-                    `/Menu/publico/restaurante/${restaurantId}`
+                    `/Menu/publico/restaurante/${id}`
                 );
 
             setRestaurant(
@@ -142,66 +123,6 @@ function MenuPublico() {
     };
 
     // =========================
-    // OBSERVAR CARRITO
-    // =========================
-
-    useEffect(() => {
-
-        const elemento =
-            carritoRef.current;
-
-        if (!elemento)
-            return;
-
-        const observer =
-            new IntersectionObserver(
-                entries => {
-
-                    const entry =
-                        entries[0];
-
-                    setCarritoVisible(
-                        entry.isIntersecting
-                    );
-                },
-                {
-                    /*
-                     * Lo consideramos visible
-                     * cuando al menos 20%
-                     * del carrito está en pantalla.
-                     */
-                    threshold: 0.2
-                }
-            );
-
-        observer.observe(
-            elemento
-        );
-
-        return () => {
-
-            observer.disconnect();
-        };
-
-    }, [
-        loading,
-        carrito.length
-    ]);
-
-    // =========================
-    // IR AL CARRITO
-    // =========================
-
-    const irAlCarrito = () => {
-
-        carritoRef.current
-            ?.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-    };
-
-    // =========================
     // TELEFONO
     // =========================
 
@@ -217,15 +138,16 @@ function MenuPublico() {
 
         /*
          * Si pegan:
+         *
          * +506 6066-2375
          *
-         * dejamos:
+         * nos quedamos con:
+         *
          * 60662375
          */
         if (
             numeros.length > 8
         ) {
-
             numeros =
                 numeros.slice(-8);
         }
@@ -253,7 +175,7 @@ function MenuPublico() {
         );
 
     /*
-     * No mostramos extras
+     * No mostramos los extras
      * como productos normales.
      */
     const productosVisibles =
@@ -265,7 +187,7 @@ function MenuPublico() {
         );
 
     // =========================
-    // CATEGORIAS MENU
+    // CATEGORIAS DEL MENU
     // =========================
 
     const categorias = [
@@ -344,7 +266,7 @@ function MenuPublico() {
             : [];
 
     // =========================
-    // ABRIR / CERRAR EXTRAS
+    // ABRIR EXTRAS
     // =========================
 
     const abrirExtras = (
@@ -370,10 +292,6 @@ function MenuPublico() {
             []
         );
     };
-
-    // =========================
-    // SELECCIONAR EXTRA
-    // =========================
 
     const seleccionarExtra = (
         extra
@@ -437,7 +355,8 @@ function MenuPublico() {
                                         ...p,
 
                                         cantidad:
-                                            p.cantidad + 1
+                                            p.cantidad +
+                                            1
                                     }
 
                                     : p
@@ -691,12 +610,12 @@ function MenuPublico() {
                                 (
                                     Number(
                                         extra.precio ??
-                                            0
+                                        0
                                     ) *
 
                                     Number(
                                         extra.cantidad ??
-                                            0
+                                        0
                                     )
                                 ),
 
@@ -782,7 +701,7 @@ function MenuPublico() {
 
                 restaurantId:
                     Number(
-                        restaurantId
+                        id
                     ),
 
                 nombre:
@@ -875,6 +794,11 @@ function MenuPublico() {
                         ""
                     );
 
+            /*
+             * Si el restaurante tiene
+             * guardado únicamente
+             * el número nacional.
+             */
             if (
                 numero.length === 8
             ) {
@@ -967,7 +891,6 @@ function MenuPublico() {
                                     </div>
 
                                     <h1 className="fw-bold">
-
                                         #
                                         {
                                             pedidoCreado
@@ -978,7 +901,6 @@ function MenuPublico() {
                                                     "0"
                                                 )
                                         }
-
                                     </h1>
 
                                     <div className="text-muted">
@@ -1206,16 +1128,9 @@ function MenuPublico() {
 
                 </div>
 
-                {/* ========================= */}
-                {/* CARRITO REAL */}
-                {/* ========================= */}
+                {/* CARRITO */}
 
-                <div
-                    ref={
-                        carritoRef
-                    }
-                    className="col-lg-5 mt-4 mt-lg-0"
-                >
+                <div className="col-lg-5 mt-4 mt-lg-0">
 
                     <div
                         className="card shadow border-0 rounded-4"
@@ -1256,14 +1171,7 @@ function MenuPublico() {
 
                                 <div className="text-center text-muted py-4">
 
-                                    <div
-                                        style={{
-                                            fontSize:
-                                                "2.5rem"
-                                        }}
-                                    >
-                                        🛒
-                                    </div>
+                                    🛒
 
                                     <p className="mb-0 mt-2">
 
@@ -1398,7 +1306,9 @@ function MenuPublico() {
                                                                 )
                                                             }
                                                         >
+
                                                             🗑️
+
                                                         </button>
 
                                                     </div>
@@ -1408,9 +1318,7 @@ function MenuPublico() {
                                                     <div className="d-flex justify-content-between mt-2">
 
                                                         <span className="badge bg-secondary">
-
                                                             x1
-
                                                         </span>
 
                                                         <button
@@ -1536,26 +1444,12 @@ function MenuPublico() {
 
                                     </div>
 
-                                    <button
-                                        type="button"
-                                        className="btn btn-success btn-lg w-100"
-                                        disabled={
-                                            enviando
-                                        }
-                                        onClick={
-                                            crearPedido
-                                        }
-                                    >
-
-                                        {
-                                            enviando
-
-                                                ? "⏳ Enviando pedido..."
-
-                                                : "🥡 Confirmar Pedido"
-                                        }
-
-                                    </button>
+<button
+   className="btn btn-secondary btn-lg w-100"
+   disabled
+>
+   ⏸️ Pedidos en línea temporalmente pausados
+</button>
 
                                 </div>
 
@@ -1568,100 +1462,6 @@ function MenuPublico() {
                 </div>
 
             </div>
-
-            {/* ========================= */}
-            {/* CARRITO FLOTANTE */}
-            {/* ========================= */}
-
-            {
-                carrito.length > 0 &&
-                !carritoVisible && (
-
-                <button
-                    type="button"
-                    onClick={
-                        irAlCarrito
-                    }
-                    className="btn btn-success shadow-lg position-fixed"
-                    style={{
-                        bottom:
-                            "22px",
-
-                        left:
-                            "50%",
-
-                        transform:
-                            "translateX(-50%)",
-
-                        zIndex:
-                            1040,
-
-                        borderRadius:
-                            "50px",
-
-                        padding:
-                            "12px 22px",
-
-                        minWidth:
-                            "250px",
-
-                        maxWidth:
-                            "90vw"
-                    }}
-                >
-
-                    <div className="d-flex align-items-center justify-content-center gap-2">
-
-                        <span
-                            style={{
-                                fontSize:
-                                    "1.4rem"
-                            }}
-                        >
-
-                            🛒
-
-                        </span>
-
-                        <div className="text-start">
-
-                            <div className="fw-bold">
-
-                                {
-                                    cantidadArticulos
-                                }{" "}
-
-                                {
-                                    cantidadArticulos ===
-                                        1
-
-                                        ? "producto"
-
-                                        : "productos"
-                                }
-
-                                {" "}·{" "}
-
-                                ₡{
-                                    total
-                                        .toLocaleString()
-                                }
-
-                            </div>
-
-                            <small>
-
-                                Ir al carrito ↓
-
-                            </small>
-
-                        </div>
-
-                    </div>
-
-                </button>
-
-            )}
 
             {/* ========================= */}
             {/* MODAL EXTRAS */}
@@ -1714,16 +1514,6 @@ function MenuPublico() {
                             </div>
 
                             <div className="modal-body">
-
-                                {extrasDisponibles.length === 0 && (
-
-                                    <div className="text-muted">
-
-                                        No hay extras disponibles.
-
-                                    </div>
-
-                                )}
 
                                 {extrasDisponibles.map(
                                     extra => {
@@ -1833,4 +1623,4 @@ function MenuPublico() {
     );
 }
 
-export default MenuPublico;
+export default PublicMenu;
