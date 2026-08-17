@@ -16,13 +16,32 @@ function Dashboard() {
    pedidos: 0,
    usuarios: 0
 });
+const [permitirPedidosOnline, setPermitirPedidosOnline] =
+    useState(false);
+
+const [guardandoPedidosOnline, setGuardandoPedidosOnline] =
+    useState(false);
+
+const [configuracionCargada, setConfiguracionCargada] =
+    useState(false);
+	
+	
+	
 useEffect(() => {
-   cargarDashboard();
-      const intervalo = setInterval(() => {
-       cargarDashboard();
-   }, 5000);
-   return () => clearInterval(intervalo);
+    cargarDashboard();
+
+    if (rol === "Admin" || rol === "Cliente") {
+        cargarConfiguracion();
+    }
+
+    const intervalo = setInterval(() => {
+        cargarDashboard();
+    }, 5000);
+
+    return () => clearInterval(intervalo);
 }, []);
+
+
 const cargarDashboard = async () => {
    try {
        const respuesta = await api.get("/Dashboard");
@@ -31,6 +50,60 @@ const cargarDashboard = async () => {
    catch (error) {
        console.error(error);
    }
+};
+
+const cargarConfiguracion = async () => {
+    try {
+        const respuesta =
+            await api.get(
+                "/Restaurants/configuracion"
+            );
+
+        setPermitirPedidosOnline(
+            respuesta.data.permitirPedidosOnline
+        );
+
+        setConfiguracionCargada(true);
+    }
+    catch (error) {
+        console.error(
+            "Error cargando configuración:",
+            error
+        );
+    }
+};
+
+const cambiarPedidosOnline = async (nuevoEstado) => {
+
+    if (guardandoPedidosOnline)
+        return;
+
+    try {
+        setGuardandoPedidosOnline(true);
+
+        await api.put(
+            "/Restaurants/configuracion/pedidos-online",
+            {
+                permitirPedidosOnline:
+                    nuevoEstado
+            }
+        );
+
+        setPermitirPedidosOnline(
+            nuevoEstado
+        );
+    }
+    catch (error) {
+        console.error(error);
+
+        alert(
+            error.response?.data ||
+            "No fue posible actualizar los pedidos en línea."
+        );
+    }
+    finally {
+        setGuardandoPedidosOnline(false);
+    }
 };
 
 const colorCocina = (cantidad) => {
@@ -53,6 +126,82 @@ const colorCocina = (cantidad) => {
 <h2 className="mb-4">
                Dashboard
 </h2>
+{(rol === "Admin" || rol === "Cliente") && configuracionCargada && (
+
+    <div className="card shadow-sm border-0 rounded-4 mb-4">
+
+        <div className="card-body p-4">
+
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+
+                <div>
+
+                    <h5 className="fw-bold mb-1">
+                        🌐 Pedidos en línea
+                    </h5>
+
+                    <p className="text-muted mb-2">
+                        Controla si tus clientes pueden realizar
+                        pedidos desde el menú público.
+                    </p>
+
+                    {permitirPedidosOnline ? (
+
+                        <span className="badge bg-success">
+                            🟢 Recibiendo pedidos
+                        </span>
+
+                    ) : (
+
+                        <span className="badge bg-secondary">
+                            ⏸️ Pedidos pausados
+                        </span>
+
+                    )}
+
+                </div>
+
+                <div className="form-check form-switch">
+
+                    <input
+                        className="form-check-input"
+                        type="checkbox"
+                        role="switch"
+
+                        checked={
+                            permitirPedidosOnline
+                        }
+
+                        disabled={
+                            guardandoPedidosOnline
+                        }
+
+                        onChange={
+                            e =>
+                                cambiarPedidosOnline(
+                                    e.target.checked
+                                )
+                        }
+
+                        style={{
+                            width: "4rem",
+                            height: "2rem",
+                            cursor:
+                                guardandoPedidosOnline
+                                    ? "not-allowed"
+                                    : "pointer"
+                        }}
+                    />
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+)}
 <div className="row">
 <StatCard
     titulo="Pedidos Xpress"

@@ -49,7 +49,7 @@ function RestaurantCard({ restaurant }) {
 </div>
 <div className="card-footer bg-white border-0">
 <Link
-                       to={`/menu/restaurant/${restaurant.id}`}
+                       to={`/menu/restaurant/${restaurant.publicId}`}
                        className="btn btn-success w-100 fw-bold"
                        style={{
                            borderRadius: "10px"

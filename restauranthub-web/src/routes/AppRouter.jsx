@@ -33,7 +33,7 @@ function AppRouter() {
 <Route path="/" element={<Home />} />
 <Route path="/login" element={<Login />} />
 <Route path="/menu/:codigoQr" element={<MenuPublico />}/>
-<Route path="/menu/restaurant/:id" element={<MenuRestaurant />}/>
+<Route path="/menu/restaurant/:publicId" element={<MenuRestaurant />}/>
 <Route path="/pedido/:id" element={<PedidoCliente />}/>
 
                {/* Protegidas */}

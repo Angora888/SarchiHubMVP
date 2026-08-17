@@ -66,6 +66,85 @@ public class RestaurantsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPut("configuracion/pedidos-online")]
+    [Authorize]
+    public async Task<IActionResult> ActualizarPedidosOnline(
+    [FromBody] ActualizarPedidosOnlineDto dto)
+    {
+        var restaurantId = ObtenerRestaurantId();
+
+        var restaurant = await _context.Restaurants
+            .FirstOrDefaultAsync(r =>
+                r.Id == restaurantId);
+
+        if (restaurant == null)
+        {
+            return NotFound(
+                "Restaurante no encontrado."
+            );
+        }
+
+        restaurant.PermitirPedidosOnline =
+            dto.PermitirPedidosOnline;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            restaurant.Id,
+            restaurant.PublicId,
+            restaurant.Name,
+            restaurant.PermitirPedidosOnline
+        });
+    }
+
+    [HttpGet("configuracion")]
+    [Authorize]
+    public async Task<IActionResult> ObtenerConfiguracion()
+    {
+        var restaurantId = ObtenerRestaurantId();
+
+        var restaurant = await _context.Restaurants
+            .Where(r => r.Id == restaurantId)
+            .Select(r => new
+            {
+                r.Id,
+                r.PublicId,
+                r.Name,
+                r.PermitirPedidosOnline
+            })
+            .FirstOrDefaultAsync();
+
+        if (restaurant == null)
+        {
+            return NotFound(
+                "Restaurante no encontrado."
+            );
+        }
+
+        return Ok(restaurant);
+    }
+
+    private int ObtenerRestaurantId()
+    {
+        if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            throw new UnauthorizedAccessException("El usuario no está autenticado.");
+        }
+        var claimRestaurant = User.FindFirst("RestaurantId");
+        if (claimRestaurant == null)
+        {
+            throw new UnauthorizedAccessException(
+                "El token no contiene el claim RestaurantId.");
+        }
+        if (!int.TryParse(claimRestaurant.Value, out var restaurantId))
+        {
+            throw new Exception(
+                $"RestaurantId inválido: {claimRestaurant.Value}");
+        }
+        return restaurantId;
+    }
+
     private bool RestaurantExists(int id)
     {
         return _context.Restaurants.Any(e => e.Id == id);

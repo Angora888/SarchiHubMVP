@@ -10,10 +10,10 @@ import {
 
 import api from "../services/api";
 
-function MenuPublico() {
+function PublicMenu() {
 
-    const { id } =
-        useParams();
+const { publicId } =
+    useParams();
 
     // =========================
     // RESTAURANTE / PRODUCTOS
@@ -104,9 +104,9 @@ function MenuPublico() {
     // CARGAR MENU
     // =========================
 
-    useEffect(() => {
-        cargarMenu();
-    }, [id]);
+useEffect(() => {
+    cargarMenu();
+}, [publicId]);
 
     const cargarMenu = async () => {
 
@@ -114,10 +114,10 @@ function MenuPublico() {
 
             setLoading(true);
 
-            const respuesta =
-                await api.get(
-                    `/Menu/publico/restaurante/${id}`
-                );
+const respuesta =
+    await api.get(
+        `/Menu/publico/restaurante/${publicId}`
+    );
 
             setRestaurant(
                 respuesta.data.restaurant
@@ -778,46 +778,43 @@ function MenuPublico() {
 
         try {
 
-            const dto = {
+const dto = {
 
-                restaurantId:
-                    Number(
-                        id
-                    ),
+    publicId,
 
-                nombre:
-                    nombre.trim(),
+    nombre:
+        nombre.trim(),
 
-                telefono,
+    telefono,
 
-                productos:
-                    carrito.map(
-                        producto => ({
+    productos:
+        carrito.map(
+            producto => ({
 
-                            productoId:
-                                producto.productoId,
+                productoId:
+                    producto.productoId,
 
-                            cantidad:
-                                producto.cantidad,
+                cantidad:
+                    producto.cantidad,
 
-                            observaciones:
-                                producto.observaciones,
+                observaciones:
+                    producto.observaciones,
 
-                            extras:
-                                producto.extras
-                                    ?.map(
-                                        extra => ({
+                extras:
+                    producto.extras
+                        ?.map(
+                            extra => ({
 
-                                            productoId:
-                                                extra.productoId,
+                                productoId:
+                                    extra.productoId,
 
-                                            cantidad:
-                                                extra.cantidad
-                                        })
-                                    ) ?? []
-                        })
-                    )
-            };
+                                cantidad:
+                                    extra.cantidad
+                            })
+                        ) ?? []
+            })
+        )
+};
 
             const respuesta =
                 await api.post(
@@ -1056,11 +1053,20 @@ function MenuPublico() {
 
                 </h1>
 
-                <p className="text-muted">
+{restaurant?.permitirPedidosOnline ? (
 
-                    Ordena aquí y pasa a recoger.
+    <div className="alert alert-success">
+        🟢 Estamos recibiendo pedidos en línea
+    </div>
 
-                </p>
+) : (
+
+    <div className="alert alert-warning">
+        ⏸️ Pedidos en línea temporalmente pausados.
+        Puedes consultar nuestro menú.
+    </div>
+
+)}
 
             </div>
 
@@ -1536,12 +1542,30 @@ function MenuPublico() {
 
                                     </div>
 
-<button
-   className="btn btn-secondary btn-lg w-100"
-   disabled
->
-   ⏸️ Pedidos en línea temporalmente pausados
-</button>
+{restaurant?.permitirPedidosOnline ? (
+
+    <button
+        type="button"
+        className="btn btn-success btn-lg w-100"
+        onClick={crearPedido}
+        disabled={enviando}
+    >
+        {enviando
+            ? "Enviando pedido..."
+            : "✅ Realizar pedido"}
+    </button>
+
+) : (
+
+    <button
+        type="button"
+        className="btn btn-secondary btn-lg w-100"
+        disabled
+    >
+        ⏸️ Pedidos en línea temporalmente pausados
+    </button>
+
+)}
 
                                 </div>
 
@@ -1819,4 +1843,4 @@ function MenuPublico() {
     );
 }
 
-export default MenuPublico;
+export default PublicMenu;

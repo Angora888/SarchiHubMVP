@@ -425,7 +425,7 @@ public class PedidosController : ControllerBase
             // =========================
             // VALIDACIONES
             // =========================
-            if (dto.RestaurantId <= 0)
+            if (string.IsNullOrWhiteSpace(dto.PublicId))
             {
                 return BadRequest(
                     "Restaurante inválido."
@@ -467,20 +467,36 @@ public class PedidosController : ControllerBase
             // =========================
             // RESTAURANTE
             // =========================
+
+            var publicId = dto.PublicId
+                .Trim()
+                .ToLowerInvariant();
+
             var restaurant =
                 await _context.Restaurants
                     .FirstOrDefaultAsync(r =>
-                        r.Id == dto.RestaurantId &&
-                        r.Active
-                    );
+                        r.PublicId == publicId &&
+                        r.Active);
+
             if (restaurant == null)
             {
                 return NotFound(
                     "Restaurante no encontrado."
                 );
             }
-            var restaurantId =
-                restaurant.Id;
+
+            // El restaurante existe, pero decidió
+            // pausar temporalmente pedidos online.
+            if (!restaurant.PermitirPedidosOnline)
+            {
+                return Conflict(
+                    "El restaurante no está recibiendo pedidos en línea en este momento."
+                );
+            }
+
+            // Desde este punto trabajamos únicamente
+            // con el Id interno del restaurante.
+            var restaurantId = restaurant.Id;
             // =========================
             // CLIENTE
             // =========================

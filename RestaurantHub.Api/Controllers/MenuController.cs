@@ -96,24 +96,21 @@ public class MenuController : ControllerBase
 
     }
 
-    [HttpGet("publico/restaurante/{restaurantId}")]
+    [HttpGet("publico/restaurante/{publicId}")]
     [AllowAnonymous]
-    public async Task<IActionResult> ObtenerMenuPublicoRestaurante(
-   int restaurantId)
+    public async Task<IActionResult> ObtenerMenuPublicoRestaurante(string publicId)
     {
         var restaurant = await _context.Restaurants
             .FirstOrDefaultAsync(r =>
-                r.Id == restaurantId &&
+                r.PublicId == publicId &&
                 r.Active);
         if (restaurant == null)
         {
-            return NotFound(
-                "Restaurante no encontrado."
-            );
+            return NotFound("Restaurante no encontrado.");
         }
         var productos = await _context.Producto
             .Where(p =>
-                p.RestaurantId == restaurantId &&
+                p.RestaurantId == restaurant.Id &&
                 p.Disponible)
             .Select(p => new
             {
@@ -121,14 +118,11 @@ public class MenuController : ControllerBase
                 nombre = p.Nombre,
                 descripcion = p.Descripcion,
                 precio = p.Precio,
-                categoriaId =
-                    p.CategoriaId,
-                categoria =
-                    p.Categoria != null
-                        ? p.Categoria.Name
-                        : "",
-                categoriaExtrasId =
-                    p.CategoriaExtrasId
+                categoriaId = p.CategoriaId,
+                categoria = p.Categoria != null
+                    ? p.Categoria.Name
+                    : "",
+                categoriaExtrasId = p.CategoriaExtrasId
             })
             .OrderBy(p => p.categoria)
             .ThenBy(p => p.nombre)
@@ -138,23 +132,29 @@ public class MenuController : ControllerBase
             restaurant = new
             {
                 id = restaurant.Id,
+                publicId = restaurant.PublicId,
                 name = restaurant.Name,
-                phone = restaurant.Phone
+                phone = restaurant.Phone,
+                permitirPedidosOnline = restaurant.PermitirPedidosOnline
             },
             productos
         });
     }
 
-    [HttpGet("restaurant/{restaurantId}")]
-    public async Task<IActionResult> ObtenerMenuPublico(int restaurantId)
+    [HttpGet("restaurant/{publicId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ObtenerMenuPublico(string publicId)
     {
         var restaurant = await _context.Restaurants
-            //api controller 
-            .FirstOrDefaultAsync(r => r.Id == restaurantId);
+            .FirstOrDefaultAsync(r =>
+                r.PublicId == publicId &&
+                r.Active);
         if (restaurant == null)
-            return NotFound();
+        {
+            return NotFound("Restaurante no encontrado.");
+        }
         var categorias = await _context.Categoria
-            .Where(c => c.RestaurantId == restaurantId)
+            .Where(c => c.RestaurantId == restaurant.Id)
             .OrderBy(c => c.Name)
             .Select(c => new
             {
@@ -178,9 +178,12 @@ public class MenuController : ControllerBase
             restaurant = new
             {
                 restaurant.Id,
+                restaurant.PublicId,
                 restaurant.Name,
                 restaurant.Description,
-                restaurant.ImageUrl
+                restaurant.ImageUrl,
+                restaurant.Phone,
+                restaurant.PermitirPedidosOnline
             },
             categorias
         });
