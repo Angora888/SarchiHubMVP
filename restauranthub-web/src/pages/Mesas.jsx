@@ -237,13 +237,6 @@ mesa.id === id
 >
                                        Código QR
 </th>
-<th
-                                       style={{
-                                           width: "120px"
-                                       }}
->
-                                       Activa
-</th>
 </tr>
 </thead>
 <tbody>
@@ -298,33 +291,6 @@ mesa.id,
 <i className="bi bi-qr-code me-1"></i>
                                                    Ver
 </button>
-</td>
-                                           {/* ACTIVA */}
-<td>
-<div className="form-check form-switch">
-<input
-                                                       className="form-check-input"
-                                                       type="checkbox"
-                                                       checked={
-                                                           mesa.activa
-                                                       }
-                                                       onChange={
-                                                           e => {
-                                                               const activa =
-                                                                   e.target.checked;
-                                                               cambiarValor(
-mesa.id,
-                                                                   "activa",
-                                                                   activa
-                                                               );
-                                                               guardarMesa({
-                                                                   ...mesa,
-                                                                   activa
-                                                               });
-                                                           }
-                                                       }
-                                                   />
-</div>
 </td>
 </tr>
                                    )
