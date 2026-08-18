@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 function Productos() {
     const [productos, setProductos] = useState([]);
     const [categorias, setCategorias] = useState([]);
+	const { toast, showToast, hideToast} = useToast();
     const [busqueda, setBusqueda] = useState("");
 
     const navigate = useNavigate();
@@ -20,6 +23,10 @@ function Productos() {
             setProductos(respuesta.data);
         } catch (error) {
             console.error(error);
+			showToast(
+			   "No fue posible cargar los productos.",
+			   "error"
+			);
         }
     };
 
@@ -29,6 +36,10 @@ function Productos() {
             setCategorias(respuesta.data);
         } catch (error) {
             console.error(error);
+			showToast(
+   "No fue posible cargar las categorias.",
+   "error"
+);
         }
     };
 
@@ -66,11 +77,11 @@ function Productos() {
             console.log("Producto guardado");
         } catch (error) {
             console.error(error);
-
-            alert(
-                error.response?.data ||
-                "Error al guardar el producto."
-            );
+			
+			showToast(
+			   "Error al guardar el producto." || error.response?.data,
+			   "error"
+			);
         }
     };
 
@@ -328,7 +339,12 @@ function Productos() {
                 </div>
 
             </div>
-
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
         </div>
     );
 }

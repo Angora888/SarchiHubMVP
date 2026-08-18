@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import StatCard from "../components/StatCard";
 import "../styles/dashboard.css";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 
 
@@ -25,7 +27,11 @@ const [guardandoPedidosOnline, setGuardandoPedidosOnline] =
 const [configuracionCargada, setConfiguracionCargada] =
     useState(false);
 	
-	
+	const {
+   toast,
+   showToast,
+   hideToast
+} = useToast();
 	
 useEffect(() => {
     cargarDashboard();
@@ -96,10 +102,10 @@ const cambiarPedidosOnline = async (nuevoEstado) => {
     catch (error) {
         console.error(error);
 
-        alert(
-            error.response?.data ||
-            "No fue posible actualizar los pedidos en línea."
-        );
+		showToast(
+		   "No fue posible actualizar los pedidos en línea.",
+		   "error"
+		);
     }
     finally {
         setGuardandoPedidosOnline(false);
@@ -305,8 +311,13 @@ const colorCocina = (cantidad) => {
 </div>
 	   }
 </div>
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
 </>
-
    );
 }
 export default Dashboard;

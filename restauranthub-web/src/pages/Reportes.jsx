@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 function Reportes() {
    const navigate = useNavigate();
    const obtenerFechaHoy = () => {
@@ -22,6 +24,11 @@ function Reportes() {
        useState(null);
    const [loading, setLoading] =
        useState(true);
+	   const {
+   toast,
+   showToast,
+   hideToast
+} = useToast();
    // =========================
    // CARGAR REPORTE
    // =========================
@@ -41,10 +48,11 @@ function Reportes() {
        }
        catch (error) {
            console.error(error);
-           alert(
-               error.response?.data ||
-               "No fue posible cargar el reporte."
-           );
+		   
+		   showToast(
+   "No fue posible cargar el reporte.",
+   "error"
+);
            setReporte(null);
        }
        finally {
@@ -65,7 +73,10 @@ function Reportes() {
    
    const generarPDF = () => {
    if (!reporte) {
-       alert("No hay información para generar el reporte.");
+	   showToast(
+   "No hay información para generar el reporte.",
+   "error"
+);
        return;
    }
    const doc = new jsPDF();
@@ -940,6 +951,12 @@ pedido.id
 </div>
 </>
            )}
+		   <AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
 </div>
    );
 }

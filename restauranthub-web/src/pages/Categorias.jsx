@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 function Categorias() {
 	const [categorias, setCategorias] = useState([]);
    const [busqueda, setBusqueda] = useState("");
    const [mostrarModal, setMostrarModal] = useState(false);
+   const { toast, showToast, hideToast} = useToast();
 const [nuevaCategoria, setNuevaCategoria] = useState("");
 	      const navigate = useNavigate();
    useEffect(() => {
@@ -17,6 +20,10 @@ const [nuevaCategoria, setNuevaCategoria] = useState("");
 		setCategorias(respuesta.data);
        } catch (error) {
            console.error(error);
+		   showToast(
+			   "Error al cargar las categorias",
+			   "error"
+			);
        }
    };
    const guardarCategoria = async (categorias) => {
@@ -25,6 +32,10 @@ const [nuevaCategoria, setNuevaCategoria] = useState("");
        console.log("Categoria guardada");
    } catch (error) {
        console.error(error);
+	   showToast(
+		   "No fue posible actualizar la categoria",
+		   "error"
+		);
    }
 };
 const categoriasFiltradas =
@@ -59,6 +70,10 @@ const crearCategoria = async () => {
        cargarCategorias();
    } catch (error) {
        console.error(error);
+	   showToast(
+		   "No fue posible crear la nueva categoria",
+		   "error"
+		);
    }
 };
 	
@@ -181,6 +196,12 @@ mostrarModal &&
 </div>
 </div>
 }
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
 </div>
 
 );

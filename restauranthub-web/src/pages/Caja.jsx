@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 function Caja() {
     const [pedidos, setPedidos] = useState([]);
@@ -27,6 +29,12 @@ function Caja() {
             setLoading(false);
         }
     };
+	
+	const {
+   toast,
+   showToast,
+   hideToast
+} = useToast();
 
 const cobrarPedido = async (id) => {
     try {
@@ -35,7 +43,10 @@ const cobrarPedido = async (id) => {
     }
     catch (error) {
         console.error(error);
-        alert("No fue posible terminar el pedido.");
+		showToast(
+			   "No fue posible terminar el pedido.",
+			   "error"
+			);
     }
 };
 
@@ -255,7 +266,12 @@ const cobrarPedido = async (id) => {
                 ))}
 
             </div>
-
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
         </div>
     );
 }

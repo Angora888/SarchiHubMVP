@@ -6,6 +6,8 @@ import {
 
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 function PedidoXpress() {
 
@@ -73,6 +75,12 @@ function PedidoXpress() {
 
     const [extrasSeleccionados, setExtrasSeleccionados] =
         useState([]);
+		
+		const {
+		   toast,
+		   showToast,
+		   hideToast
+		} = useToast();
 
     // =========================
     // CARGAR PRODUCTOS
@@ -98,10 +106,11 @@ function PedidoXpress() {
         catch (error) {
 
             console.error(error);
-
-            alert(
-                "No fue posible cargar los productos."
-            );
+			
+			showToast(
+			   "No fue posible cargar los productos.",
+			   "error"
+			);
         }
     };
 
@@ -178,9 +187,11 @@ const buscarCliente = async (
        }
        else {
            console.error(error);
-           alert(
-               "No fue posible buscar el cliente."
-           );
+
+		   showToast(
+			   "No fue posible buscar el cliente.",
+			   "error"
+			);
        }
    }
    finally {
@@ -213,18 +224,21 @@ const manejarCambioTelefono = (
 
         if (!telefono.trim()) {
 
-            alert(
-                "Ingrese el teléfono."
-            );
+			showToast(
+				   "Ingrese el teléfono.",
+				   "error"
+				);
 
             return null;
         }
 
         if (!nombre.trim()) {
 
-            alert(
-                "Ingrese el nombre."
-            );
+			
+			showToast(
+				   "Ingrese el nombre.",
+				   "error"
+				);
 
             return null;
         }
@@ -237,9 +251,11 @@ const manejarCambioTelefono = (
             !direccion.trim()
         ) {
 
-            alert(
-                "Ingrese la dirección de entrega."
-            );
+			
+			showToast(
+				   "Ingrese la dirección de entrega.",
+				   "error"
+				);
 
             return null;
         }
@@ -276,10 +292,11 @@ const manejarCambioTelefono = (
 
             console.error(error);
 
-            alert(
-                error.response?.data ||
-                "No fue posible guardar el cliente."
-            );
+			
+			showToast(
+				   error.response?.data || "No fue posible guardar el cliente.",
+				   "error"
+				);
 
             return null;
         }
@@ -342,9 +359,10 @@ const manejarCambioTelefono = (
 
                 console.error(error);
 
-                alert(
-                    "No fue posible actualizar los datos del cliente."
-                );
+				showToast(
+				   "No fue posible actualizar los datos del cliente.",
+				   "error"
+				);
 
                 return null;
             }
@@ -756,18 +774,21 @@ const manejarCambioTelefono = (
 
         if (!telefono.trim()) {
 
-            alert(
-                "Ingrese el teléfono del cliente."
-            );
+			showToast(
+			   "Ingrese el teléfono del cliente.",
+			   "error"
+			);
 
             return;
         }
 
         if (!nombre.trim()) {
 
-            alert(
-                "Ingrese el nombre del cliente."
-            );
+
+			showToast(
+			   "Ingrese el nombre del cliente.",
+			   "error"
+			);
 
             return;
         }
@@ -777,9 +798,10 @@ const manejarCambioTelefono = (
             !direccion.trim()
         ) {
 
-            alert(
-                "Ingrese la dirección de entrega."
-            );
+			showToast(
+			   "Ingrese la dirección de entrega.",
+			   "error"
+			);
 
             return;
         }
@@ -788,9 +810,10 @@ const manejarCambioTelefono = (
             carrito.length === 0
         ) {
 
-            alert(
-                "Debe agregar al menos un producto."
-            );
+			showToast(
+			   "Debe agregar al menos un producto.",
+			   "error"
+			);
 
             return;
         }
@@ -961,9 +984,10 @@ const manejarCambioTelefono = (
                     dto
                 );
 
-            alert(
-                `Pedido #${respuesta.data.numeroPedido} creado correctamente.`
-            );
+			showToast(
+			   `Pedido #${respuesta.data.numeroPedido} creado correctamente.`,
+			   "success"
+			);
 
             // =========================
             // LIMPIAR TODO
@@ -995,10 +1019,10 @@ const manejarCambioTelefono = (
 
             console.error(error);
 
-            alert(
-                error.response?.data ||
-                "No fue posible crear el pedido."
-            );
+			showToast(
+			   error.response?.data || "No fue posible crear el pedido.",
+			   "error"
+			);
         }
         finally {
 
@@ -1949,7 +1973,12 @@ const manejarCambioTelefono = (
                 </div>
 
             )}
-
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
         </div>
     );
 }

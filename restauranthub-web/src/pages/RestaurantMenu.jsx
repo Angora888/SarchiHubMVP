@@ -9,12 +9,14 @@ import {
 } from "react-router-dom";
 
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 function PublicMenu() {
 
 const { publicId } =
     useParams();
-
+const { toast, showToast, hideToast} = useToast();
     // =========================
     // RESTAURANTE / PRODUCTOS
     // =========================
@@ -131,9 +133,10 @@ const respuesta =
 
             console.error(error);
 
-            alert(
-                "No fue posible cargar el menú."
-            );
+			showToast(
+   "No fue posible cargar el menú.",
+   "error"
+);
         }
         finally {
 
@@ -739,10 +742,11 @@ const respuesta =
         if (
             !nombre.trim()
         ) {
-
-            alert(
-                "Ingrese su nombre."
-            );
+			
+			showToast(
+   "Ingrese el nombre.",
+   "error"
+);
 
             return;
         }
@@ -751,9 +755,10 @@ const respuesta =
             telefono.length !== 8
         ) {
 
-            alert(
-                "Ingrese un teléfono de 8 dígitos."
-            );
+			showToast(
+   "Ingrese un teléfono de 8 dígitos.",
+   "error"
+);
 
             return;
         }
@@ -761,10 +766,11 @@ const respuesta =
         if (
             carrito.length === 0
         ) {
-
-            alert(
-                "Agregue al menos un producto."
-            );
+			
+						showToast(
+   "Agregue al menos un producto.",
+   "error"
+);
 
             return;
         }
@@ -832,10 +838,11 @@ const dto = {
 
             console.error(error);
 
-            alert(
-                error.response?.data ||
-                "No fue posible enviar el pedido."
-            );
+	
+	showToast(
+			   "No fue posible enviar el pedido.",
+			   "error"
+			);
         }
         finally {
 
@@ -1843,7 +1850,12 @@ const dto = {
                 </div>
 
             )}
-
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
         </div>
     );
 }

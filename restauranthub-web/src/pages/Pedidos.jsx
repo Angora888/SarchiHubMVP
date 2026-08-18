@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
+
 function Pedidos() {
    const [pedidos, setPedidos] = useState([]);
    const navigate = useNavigate();
@@ -16,6 +19,12 @@ function Pedidos() {
        }, 3000);
        return () => clearInterval(intervalo);
    }, []);
+   
+		   const {
+		   toast,
+		   showToast,
+		   hideToast
+		} = useToast();
    // =========================
    // CARGAR PEDIDOS
    // =========================
@@ -56,10 +65,11 @@ function Pedidos() {
        }
        catch (error) {
            console.error(error);
-           alert(
-               error.response?.data ||
-               "No fue posible eliminar el pedido."
-           );
+
+		   showToast(
+			   error.response?.data || "No fue posible eliminar el pedido.",
+			   "error"
+			);
        }
        finally {
            setEliminando(false);
@@ -545,6 +555,12 @@ function Pedidos() {
 </div>
 </div>
            )}
+		   <AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
 </div>
    );
 }

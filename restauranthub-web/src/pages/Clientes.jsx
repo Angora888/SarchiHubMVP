@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import Header from "../components/Header";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
+
 function Cliente() {
    const telefonoRef = useRef(null);
    const [telefono, setTelefono] = useState("");
@@ -13,6 +16,7 @@ function Cliente() {
        longitud: null
    });
    const [modoNuevo, setModoNuevo] = useState(false);
+   const { toast, showToast, hideToast} = useToast();
    const [mensaje, setMensaje] = useState("");
    useEffect(() => {
        telefonoRef.current?.focus();
@@ -58,7 +62,11 @@ function Cliente() {
            limpiarFormulario();
        }
        catch (error) {
-           alert(error.response?.data);
+
+		   showToast(
+			   "No fue posible guardar el Cliente"  ||  error.response?.data,
+			   "error"
+			);
        }
    };
    const obtenerUbicacion = () => {
@@ -195,6 +203,12 @@ onChange={(e) => {
                        )}
 </div>
 </div>
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
 </div>
 </>
    );

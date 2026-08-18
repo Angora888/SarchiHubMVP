@@ -1,12 +1,15 @@
 import { useState } from "react";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
    import { useLocation, useNavigate } from "react-router-dom";
 function Login() {
    const [correo, setCorreo] = useState("");
    const navigate = useNavigate();
    const [password, setPassword] = useState("");
-
+   
+   const { toast, showToast, hideToast } = useToast();
 
 const location = useLocation();
 const from = location.state?.from?.pathname || "/dashboard";
@@ -19,13 +22,17 @@ const from = location.state?.from?.pathname || "/dashboard";
            localStorage.setItem("token", respuesta.data.token);
 		   localStorage.setItem("usuario", respuesta.data.usuario);
 		   		   localStorage.setItem("rol", respuesta.data.rol);
-           //alert("Bienvenido " + respuesta.data.usuario);
+				   
 		   navigate(from, { replace: true });
            console.log(respuesta.data);
        }
        catch (error) {
-           alert("Correo o contraseña incorrectos.");
+
            console.error(error);
+		   showToast(
+			   "Correo o contraseña incorrectos.",
+			   "error"
+			);
        }
    };
    return (
@@ -68,6 +75,12 @@ const from = location.state?.from?.pathname || "/dashboard";
 </div>
 </div>
 </div>
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
 </div>
    );
 }

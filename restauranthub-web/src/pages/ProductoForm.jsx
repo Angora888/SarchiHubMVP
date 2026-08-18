@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 function ProductoForm() {
     const navigate = useNavigate();
@@ -14,6 +16,12 @@ function ProductoForm() {
         disponible: true,
         imagenUrl: ""
     });
+	
+	const {
+   toast,
+   showToast,
+   hideToast
+} = useToast();
 
     const [categorias, setCategorias] = useState([]);
 
@@ -28,6 +36,10 @@ function ProductoForm() {
         }
         catch (error) {
             console.error(error);
+			showToast(
+   "No fue posible cargar las categorias.",
+   "error"
+);
         }
     };
 
@@ -66,10 +78,10 @@ function ProductoForm() {
         catch (error) {
             console.error(error);
 
-            alert(
-                error.response?.data ||
-                "Error al guardar el producto."
-            );
+			showToast(
+   "Error al guardar el producto.",
+   "error"
+);
         }
     };
 
@@ -227,7 +239,12 @@ function ProductoForm() {
 
                 </div>
             </div>
-
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
         </div>
     );
 }

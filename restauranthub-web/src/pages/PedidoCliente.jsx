@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 function PedidoCliente() {
     const { id } = useParams();
@@ -14,6 +16,11 @@ function PedidoCliente() {
     const [cantidades, setCantidades] = useState({});
     const [agregando, setAgregando] = useState(false);
 	const estaAutenticado = !!localStorage.getItem("token");
+	const {
+			   toast,
+			   showToast,
+			   hideToast
+			} = useToast();
 
     // =========================
     // MODAL EXTRAS
@@ -95,10 +102,10 @@ function PedidoCliente() {
         catch (error) {
             console.error(error);
 
-            alert(
-                error.response?.data ||
-                "No fue posible cargar los productos."
-            );
+			showToast(
+			   error.response?.data || "No fue posible cargar los productos.",
+			   "error"
+			);
         }
     };
 
@@ -250,17 +257,18 @@ function PedidoCliente() {
 
                 await cargarPedido();
 
-                alert(
-                    "Producto agregado al pedido. 😄"
-                );
+				showToast(
+				   "Producto agregado al pedido. 😄",
+				   "success"
+				);
             }
             catch (error) {
                 console.error(error);
 
-                alert(
-                    error.response?.data ||
-                    "No fue posible agregar el producto."
-                );
+				showToast(
+				   error.response?.data || "No fue posible agregar el producto.",
+				   "error"
+				);
             }
             finally {
                 setAgregando(false);
@@ -336,17 +344,18 @@ function PedidoCliente() {
 
                 await cargarPedido();
 
-                alert(
-                    "Producto agregado al pedido. 😄"
-                );
+				showToast(
+				   "Producto agregado al pedido. 😄",
+				   "success"
+				);
             }
             catch (error) {
                 console.error(error);
 
-                alert(
-                    error.response?.data ||
-                    "No fue posible agregar el producto."
-                );
+				showToast(
+				   error.response?.data || "No fue posible agregar el producto.",
+				   "error"
+				);
             }
             finally {
                 setAgregando(false);
@@ -972,7 +981,12 @@ function PedidoCliente() {
                 </div>
 
             )}
-
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
         </div>
     );
 }

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 function Cocina() {
     const [pedidos, setPedidos] = useState([]);
@@ -14,6 +16,12 @@ function Cocina() {
 
         return () => clearInterval(intervalo);
     }, []);
+	
+	const {
+   toast,
+   showToast,
+   hideToast
+} = useToast();
 
     const cargarPedidos = async () => {
         try {
@@ -35,7 +43,10 @@ function Cocina() {
         }
         catch (error) {
             console.error(error);
-            alert("No fue posible iniciar el pedido.");
+			showToast(
+			   "No fue posible iniciar el pedido.",
+			   "error"
+			);
         }
     };
 
@@ -46,7 +57,11 @@ function Cocina() {
         }
         catch (error) {
             console.error(error);
-            alert("No fue posible marcar el pedido como listo.");
+			
+			showToast(
+			   "No fue posible marcar el pedido como listo.",
+			   "error"
+			);
         }
     };
 
@@ -497,7 +512,12 @@ function Cocina() {
                 </div>
 
             </div>
-
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
         </div>
     );
 }

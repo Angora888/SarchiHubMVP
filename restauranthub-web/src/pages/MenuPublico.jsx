@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 function MenuPublico() {
     const { codigoQr } = useParams();
@@ -9,6 +11,7 @@ function MenuPublico() {
     const [restaurant, setRestaurant] = useState(null);
     const [mesa, setMesa] = useState(null);
     const [productos, setProductos] = useState([]);
+	const { toast, showToast, hideToast} = useToast();
     const [loading, setLoading] = useState(true);
 
     const [categoriaSeleccionada, setCategoriaSeleccionada] =
@@ -51,6 +54,10 @@ function MenuPublico() {
         }
         catch (error) {
             console.error(error);
+			showToast(
+   "No fue posible caragar el Menu.",
+   "error"
+);
         }
         finally {
             setLoading(false);
@@ -437,9 +444,10 @@ const total = productos.reduce(
         if (
             productosPedido.length === 0
         ) {
-            alert(
-                "Seleccione al menos un producto."
-            );
+			showToast(
+   "Seleccione al menos un producto.",
+   "error"
+);
             return;
         }
 
@@ -477,10 +485,11 @@ const pedido = {
 
             console.error(error);
             console.log(error.response);
-
-            alert(
-                "No fue posible enviar el pedido."
-            );
+			
+			showToast(
+   "No fue posible enviar el pedido.",
+   "error"
+);
         }
     };
 
@@ -963,7 +972,12 @@ const pedido = {
     </div>
 
 )}
-
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
         </div>
     );
 }

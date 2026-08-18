@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import AppToast from "../components/AppToast";
+import useToast from "../hooks/useToast";
 
 function CierreCaja() {
     const navigate = useNavigate();
 
     const [resumen, setResumen] = useState(null);
+	const { toast, showToast, hideToast} = useToast();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,9 +25,10 @@ function CierreCaja() {
         catch (error) {
             console.error(error);
 
-            alert(
-                "No fue posible cargar el cierre de caja."
-            );
+			showToast(
+   "No fue posible cargar el cierre de caja.",
+   "error"
+);
         }
         finally {
             setLoading(false);
@@ -255,7 +259,12 @@ function CierreCaja() {
                 </div>
 
             </div>
-
+<AppToast
+   show={toast.show}
+   message={toast.message}
+   type={toast.type}
+   onClose={hideToast}
+/>
         </div>
     );
 }
