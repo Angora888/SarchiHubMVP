@@ -55,7 +55,7 @@ function MenuPublico() {
         catch (error) {
             console.error(error);
 			showToast(
-   "No fue posible caragar el Menu.",
+   "No fue posible cargar el Menu.",
    "error"
 );
         }

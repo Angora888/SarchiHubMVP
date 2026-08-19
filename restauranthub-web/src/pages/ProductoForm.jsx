@@ -37,7 +37,7 @@ function ProductoForm() {
         catch (error) {
             console.error(error);
 			showToast(
-   "No fue posible cargar las categorias.",
+   error.response?.data || "No fue posible cargar las categorias.",
    "error"
 );
         }
@@ -79,7 +79,7 @@ function ProductoForm() {
             console.error(error);
 
 			showToast(
-   "Error al guardar el producto.",
+   error.response?.data || "Error al guardar el producto.",
    "error"
 );
         }

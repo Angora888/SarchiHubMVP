@@ -50,7 +50,7 @@ function Reportes() {
            console.error(error);
 		   
 		   showToast(
-   "No fue posible cargar el reporte.",
+   error.response?.data || "No fue posible cargar el reporte.",
    "error"
 );
            setReporte(null);

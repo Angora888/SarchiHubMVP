@@ -73,7 +73,7 @@ const cargarConfiguracion = async () => {
     }
     catch (error) {
         console.error(
-            "Error cargando configuración:",
+            error.response?.data || "Error cargando configuración:",
             error
         );
     }
@@ -103,7 +103,7 @@ const cambiarPedidosOnline = async (nuevoEstado) => {
         console.error(error);
 
 		showToast(
-		   "No fue posible actualizar los pedidos en línea.",
+		   error.response?.data || "No fue posible actualizar los pedidos en línea.",
 		   "error"
 		);
     }

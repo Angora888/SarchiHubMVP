@@ -1,9 +1,9 @@
-﻿namespace RestaurantHub.Api.DTOs
+﻿namespace RestaurantHub.Api.DTOs;
+
+public class MesaUpdateDto
 {
-    public class MesaUpdateDto
-    {
-        public int Number { get; set; }
-        public int RestaurantId { get; set; }
-        public string Status { get; set; } = "";
-    }
+    public int Number { get; set; }
+
+    public string Status { get; set; } =
+        "Disponible";
 }

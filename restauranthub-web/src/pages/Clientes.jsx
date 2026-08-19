@@ -64,7 +64,7 @@ function Cliente() {
        catch (error) {
 
 		   showToast(
-			   "No fue posible guardar el Cliente"  ||  error.response?.data,
+			   error.response?.data || "No fue posible guardar el Cliente" ,
 			   "error"
 			);
        }
