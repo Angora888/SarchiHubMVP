@@ -1868,6 +1868,301 @@ public class PedidosController : ControllerBase
         });
     }
 
+    [HttpGet("reporte-mensual")]
+    [Authorize]
+    public async Task<IActionResult> ObtenerReporteMensual(
+    int anio,
+    int mes)
+    {
+        if (mes < 1 || mes > 12)
+        {
+            return BadRequest(
+                "El mes debe estar entre 1 y 12."
+            );
+        }
+
+        if (anio < 2020 || anio > 2100)
+        {
+            return BadRequest(
+                "El año no es válido."
+            );
+        }
+
+        var restaurantId =
+            ObtenerRestaurantId();
+
+        var primerDia =
+            new DateOnly(
+                anio,
+                mes,
+                1
+            );
+
+        var siguienteMes =
+            primerDia.AddMonths(1);
+
+        var (inicio, _) =
+            FechaHelper.ObtenerRangoFechaCostaRica(
+                primerDia
+            );
+
+        var (fin, _) =
+            FechaHelper.ObtenerRangoFechaCostaRica(
+                siguienteMes
+            );
+
+        // ==========================================
+        // PEDIDOS DEL MES
+        // ==========================================
+
+        var pedidos =
+            await _context.Pedidos
+                .Where(p =>
+                    p.RestaurantId == restaurantId &&
+                    p.Fecha >= inicio &&
+                    p.Fecha < fin &&
+                    p.Estado == "Terminado"
+                )
+                .Include(p => p.Cliente)
+                .Include(p => p.Mesa)
+                .ToListAsync();
+
+        var cantidadPedidos =
+            pedidos.Count;
+
+        var totalVentas =
+            pedidos.Sum(p => p.Total);
+
+        var ticketPromedio =
+            cantidadPedidos > 0
+                ? totalVentas / cantidadPedidos
+                : 0;
+
+        // ==========================================
+        // TIPOS DE PEDIDO
+        // ==========================================
+
+        var pedidosMesa =
+            pedidos
+                .Where(p =>
+                    p.TipoPedido == "Mesa")
+                .ToList();
+
+        var pedidosXpress =
+            pedidos
+                .Where(p =>
+                    p.TipoPedido == "Xpress")
+                .ToList();
+
+        var pedidosLlevar =
+            pedidos
+                .Where(p =>
+                    p.TipoPedido == "Llevar")
+                .ToList();
+
+        decimal Porcentaje(int cantidad)
+        {
+            if (cantidadPedidos == 0)
+                return 0;
+
+            return Math.Round(
+                (decimal)cantidad /
+                cantidadPedidos * 100,
+                1
+            );
+        }
+
+        // ==========================================
+        // VENTAS POR DÍA
+        // ==========================================
+
+        var ventasPorDia =
+            pedidos
+                .GroupBy(p =>
+                    FechaCostaRica(p.Fecha)
+                        .Date
+                )
+                .Select(g => new
+                {
+                    fecha =
+                        g.Key,
+
+                    pedidos =
+                        g.Count(),
+
+                    total =
+                        g.Sum(p => p.Total)
+                })
+                .OrderBy(x => x.fecha)
+                .ToList();
+
+        var mejorDia =
+            ventasPorDia
+                .OrderByDescending(x =>
+                    x.total)
+                .FirstOrDefault();
+
+        // ==========================================
+        // PRODUCTOS
+        // ==========================================
+
+        var pedidoIds =
+            pedidos
+                .Select(p => p.Id)
+                .ToList();
+
+        var productos =
+            await _context.DetallesPedido
+
+                .Where(d =>
+                    pedidoIds.Contains(
+                        d.PedidoId
+                    ) &&
+                    d.DetallePadreId == null
+                )
+
+                .Include(d => d.Producto)
+
+                .GroupBy(d => new
+                {
+                    d.ProductoId,
+                    Nombre =
+                        d.Producto != null
+                            ? d.Producto.Nombre
+                            : ""
+                })
+
+                .Select(g => new
+                {
+                    productoId =
+                        g.Key.ProductoId,
+
+                    nombre =
+                        g.Key.Nombre,
+
+                    unidades =
+                        g.Sum(d =>
+                            d.Cantidad),
+
+                    monto =
+                        g.Sum(d =>
+                            d.Subtotal)
+                })
+
+                .OrderByDescending(x =>
+                    x.unidades)
+
+                .Take(5)
+
+                .ToListAsync();
+
+        // ==========================================
+        // CLIENTES
+        // ==========================================
+
+        var pedidosConCliente =
+            pedidos
+                .Where(p =>
+                    p.ClienteId.HasValue)
+                .ToList();
+
+        var clientesUnicos =
+            pedidosConCliente
+                .Select(p =>
+                    p.ClienteId!.Value)
+                .Distinct()
+                .Count();
+
+        var clientesRecurrentes =
+            pedidosConCliente
+                .GroupBy(p =>
+                    p.ClienteId)
+                .Count(g =>
+                    g.Count() > 1);
+
+        // ==========================================
+        // RESPUESTA
+        // ==========================================
+
+        return Ok(new
+        {
+            anio,
+            mes,
+
+            totalVentas,
+
+            cantidadPedidos,
+
+            ticketPromedio,
+
+            mejorDia,
+
+            ventasPorDia,
+
+            tiposPedido = new
+            {
+                mesa = new
+                {
+                    cantidad =
+                        pedidosMesa.Count,
+
+                    porcentaje =
+                        Porcentaje(
+                            pedidosMesa.Count
+                        ),
+
+                    total =
+                        pedidosMesa.Sum(
+                            p => p.Total
+                        )
+                },
+
+                xpress = new
+                {
+                    cantidad =
+                        pedidosXpress.Count,
+
+                    porcentaje =
+                        Porcentaje(
+                            pedidosXpress.Count
+                        ),
+
+                    total =
+                        pedidosXpress.Sum(
+                            p => p.Total
+                        )
+                },
+
+                llevar = new
+                {
+                    cantidad =
+                        pedidosLlevar.Count,
+
+                    porcentaje =
+                        Porcentaje(
+                            pedidosLlevar.Count
+                        ),
+
+                    total =
+                        pedidosLlevar.Sum(
+                            p => p.Total
+                        )
+                }
+            },
+
+            productos,
+
+            clientes = new
+            {
+                unicos =
+                    clientesUnicos,
+
+                recurrentes =
+                    clientesRecurrentes
+            }
+        });
+    }
+
     private int ObtenerRestaurantId()
     {
         if (!User.Identity?.IsAuthenticated ?? true)
@@ -1886,5 +2181,34 @@ public class PedidosController : ControllerBase
                 $"RestaurantId inválido: {claimRestaurant.Value}");
         }
         return restaurantId;
+    }
+
+    private DateTime FechaCostaRica(
+    DateTime fechaUtc)
+    {
+        TimeZoneInfo zona;
+
+        try
+        {
+            zona =
+                TimeZoneInfo.FindSystemTimeZoneById(
+                    "America/Costa_Rica"
+                );
+        }
+        catch
+        {
+            zona =
+                TimeZoneInfo.FindSystemTimeZoneById(
+                    "Central America Standard Time"
+                );
+        }
+
+        return TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.SpecifyKind(
+                fechaUtc,
+                DateTimeKind.Utc
+            ),
+            zona
+        );
     }
 }
