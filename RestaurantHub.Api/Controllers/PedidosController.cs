@@ -2163,6 +2163,276 @@ public class PedidosController : ControllerBase
         });
     }
 
+    [HttpPost("venta-rapida")]
+    [Authorize]
+    public async Task<IActionResult> CrearVentaRapida(
+    CrearVentaRapidaDto dto)
+    {
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            if (
+                dto.Productos == null ||
+                !dto.Productos.Any()
+            )
+            {
+                return BadRequest(
+                    "Debe agregar al menos un producto."
+                );
+            }
+
+            var restaurantId =
+                ObtenerRestaurantId();
+
+            // ==========================================
+            // NÚMERO DEL PEDIDO
+            // ==========================================
+
+            var (inicio, fin) =
+                FechaHelper.ObtenerRangoHoyCostaRica();
+
+            var ultimoNumero =
+                await _context.Pedidos
+                    .Where(p =>
+                        p.RestaurantId == restaurantId &&
+                        p.Fecha >= inicio &&
+                        p.Fecha < fin
+                    )
+                    .MaxAsync(p =>
+                        (int?)p.NumeroPedido
+                    ) ?? 0;
+
+            // ==========================================
+            // CREAR VENTA
+            // ==========================================
+
+            var pedido = new Pedido
+            {
+                RestaurantId = restaurantId,
+
+                MesaId = null,
+
+                ClienteId = null,
+
+                TipoPedido = "Llevar",
+
+                Fecha = DateTime.UtcNow,
+
+                // Venta ya realizada.
+                Estado = "Terminado",
+
+                Total = 0,
+
+                NumeroPedido =
+                    ultimoNumero + 1,
+
+                CodigoQRPedido =
+                    Guid.NewGuid().ToString()
+            };
+
+            _context.Pedidos.Add(pedido);
+
+            decimal total = 0;
+
+            // ==========================================
+            // PRODUCTOS
+            // ==========================================
+
+            foreach (var item in dto.Productos)
+            {
+                if (item.Cantidad <= 0)
+                {
+                    return BadRequest(
+                        "La cantidad debe ser mayor que cero."
+                    );
+                }
+
+                var producto =
+                    await _context.Producto
+                        .FirstOrDefaultAsync(p =>
+                            p.Id == item.ProductoId &&
+                            p.RestaurantId == restaurantId
+                        );
+
+                if (producto == null)
+                {
+                    return BadRequest(
+                        $"El producto {item.ProductoId} no existe para este restaurante."
+                    );
+                }
+
+                if (!producto.Disponible)
+                {
+                    return BadRequest(
+                        $"{producto.Nombre} no está disponible."
+                    );
+                }
+
+                var subtotal =
+                    producto.Precio *
+                    item.Cantidad;
+
+                total += subtotal;
+
+                var detallePrincipal =
+                    new DetallePedido
+                    {
+                        Pedido = pedido,
+
+                        ProductoId =
+                            producto.Id,
+
+                        Cantidad =
+                            item.Cantidad,
+
+                        PrecioUnitario =
+                            producto.Precio,
+
+                        Observaciones =
+                            item.Observaciones,
+
+                        Subtotal =
+                            subtotal
+                    };
+
+                _context.DetallesPedido.Add(
+                    detallePrincipal
+                );
+
+                // ======================================
+                // EXTRAS
+                // ======================================
+
+                if (
+                    item.Extras != null &&
+                    item.Extras.Any()
+                )
+                {
+                    if (
+                        !producto.CategoriaExtrasId
+                            .HasValue
+                    )
+                    {
+                        return BadRequest(
+                            $"{producto.Nombre} no permite extras."
+                        );
+                    }
+
+                    foreach (
+                        var extraDto
+                        in item.Extras
+                    )
+                    {
+                        var extra =
+                            await _context.Producto
+                                .FirstOrDefaultAsync(p =>
+                                    p.Id ==
+                                        extraDto.ProductoId &&
+                                    p.RestaurantId ==
+                                        restaurantId
+                                );
+
+                        if (extra == null)
+                        {
+                            return BadRequest(
+                                $"El extra {extraDto.ProductoId} no existe."
+                            );
+                        }
+
+                        if (!extra.Disponible)
+                        {
+                            return BadRequest(
+                                $"{extra.Nombre} no está disponible."
+                            );
+                        }
+
+                        if (
+                            extra.CategoriaId !=
+                            producto.CategoriaExtrasId.Value
+                        )
+                        {
+                            return BadRequest(
+                                $"{extra.Nombre} no es un extra válido para {producto.Nombre}."
+                            );
+                        }
+
+                        var cantidadExtra =
+                            extraDto.Cantidad <= 0
+                                ? 1
+                                : extraDto.Cantidad;
+
+                        var subtotalExtra =
+                            extra.Precio *
+                            cantidadExtra;
+
+                        total += subtotalExtra;
+
+                        var detalleExtra =
+                            new DetallePedido
+                            {
+                                Pedido =
+                                    pedido,
+
+                                ProductoId =
+                                    extra.Id,
+
+                                Cantidad =
+                                    cantidadExtra,
+
+                                PrecioUnitario =
+                                    extra.Precio,
+
+                                Subtotal =
+                                    subtotalExtra,
+
+                                DetallePadre =
+                                    detallePrincipal
+                            };
+
+                        _context.DetallesPedido.Add(
+                            detalleExtra
+                        );
+                    }
+                }
+            }
+
+            pedido.Total = total;
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return Ok(new
+            {
+                pedidoId =
+                    pedido.Id,
+
+                numeroPedido =
+                    pedido.NumeroPedido,
+
+                total =
+                    pedido.Total,
+
+                estado =
+                    pedido.Estado,
+
+                tipoPedido =
+                    pedido.TipoPedido
+            });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+
+            return StatusCode(
+                500,
+                $"Error al registrar la venta: {ex.Message}"
+            );
+        }
+    }
+
     private int ObtenerRestaurantId()
     {
         if (!User.Identity?.IsAuthenticated ?? true)

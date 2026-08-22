@@ -24,6 +24,7 @@ import MenuRestaurant from "../pages/RestaurantMenu";
 import PedidoXpress from "../pages/PedidoXpress"
 import CierreCaja from "../pages/CierreCaja"
 import Reportes from "../pages/Reportes"
+import VentaRapida from "../pages/VentaRapida";
 
 function AppRouter() {
    return (
@@ -58,7 +59,7 @@ function AppRouter() {
 <Route path="/dashboard/pedido-xpress" element={<PedidoXpress />} />
 <Route path="/cierre-caja" element={<CierreCaja />} />
 <Route path="/reportes" element={<Reportes />} />
-
+<Route path="/venta-rapida" element={<VentaRapida />}/>
 </Route>
 </Route>
 </Routes>

@@ -216,6 +216,12 @@ const colorCocina = (cantidad) => {
     ruta="/dashboard/pedido-xpress"
 />
 <StatCard
+    titulo="Venta rápida"
+    icono="bi bi-lightning-charge-fill"
+    color="bg-warning text-dark"
+    ruta="/venta-rapida"
+/>
+<StatCard
    titulo="Pedidos"
    valor={datos.pedidos}
    icono="bi bi-receipt"
