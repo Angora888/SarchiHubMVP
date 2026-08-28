@@ -9,6 +9,7 @@ import Usuarios from "../pages/Usuarios";
 import Cliente from "../pages/Clientes";
 import ProductoForm from "../pages/ProductoForm";
 import MainLayout from "../layouts/MainLayout";
+import PublicMenuLayout from "../layouts/PublicMenuLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import RestaurantForm from "../pages/RestaurantForm";
 import Restaurants from "../pages/Restaurants";
@@ -33,8 +34,10 @@ function AppRouter() {
                {/* Públicas */}
 <Route path="/" element={<Home />} />
 <Route path="/login" element={<Login />} />
+<Route element={<PublicMenuLayout />}>
 <Route path="/menu/:codigoQr" element={<MenuPublico />}/>
 <Route path="/menu/restaurant/:publicId" element={<MenuRestaurant />}/>
+</Route>
 <Route path="/pedido/:id" element={<PedidoCliente />}/>
 
                {/* Protegidas */}
