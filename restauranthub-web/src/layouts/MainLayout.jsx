@@ -38,7 +38,7 @@ function MainLayout() {
                         <i className="bi bi-shop-window"></i>
                     </div>
                     <div className="app-brand-text">
-                        <strong>SarchiHub</strong>
+                        <strong>Sin Filas</strong>
                         <span>Restaurant OS</span>
                     </div>
                 </div>
@@ -114,7 +114,7 @@ function MainLayout() {
                         </button>
 
                         <div>
-                            <div className="app-topbar-title">SarchiHub</div>
+                            <div className="app-topbar-title">Sin Filas</div>
                             <div className="app-topbar-subtitle">Gestión del restaurante</div>
                         </div>
                     </div>
