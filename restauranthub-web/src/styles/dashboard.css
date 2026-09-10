@@ -1,28 +1,226 @@
-.stat-card{
-   transition:all .25s ease;
-}
-.stat-card:hover{
-   transform:translateY(-8px);
-   box-shadow:0 .8rem 2rem rgba(0,0,0,.18)!important;
-}
-.bg-orange{
-   background: #fd7e14 !important;
-color: white !important
+.dashboard-page {
+    color: #1f2937;
 }
 
-.bg-soft-green{
-   background:#198754 !important;
-   color:#fff;
+.dashboard-header {
+    margin-bottom: 24px;
 }
-.bg-soft-green{
-   background:#4CAF50 !important;
-   color:white !important;
+
+.dashboard-eyebrow {
+    margin-bottom: 6px;
+    color: #16a34a;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
-.bg-soft-gray{
-   background:#6b7280 !important;
-   color:#fff;
+
+.dashboard-title {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
 }
-.bg-soft-cyan{
-   background:#06b6d4 !important;
-   color:#fff;
+
+.dashboard-subtitle {
+    max-width: 680px;
+    margin: 8px 0 0;
+    color: #6b7280;
+    font-size: 0.98rem;
+}
+
+.dashboard-section {
+    margin-top: 28px;
+}
+
+.dashboard-section-heading {
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.dashboard-section-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.dashboard-section-note {
+    color: #9ca3af;
+    font-size: 0.78rem;
+}
+
+.online-orders-card {
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.online-orders-card .card-body {
+    padding: 22px;
+}
+
+.online-orders-icon {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: #ecfdf3;
+    color: #15803d;
+    font-size: 1.25rem;
+}
+
+.online-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.online-status.active {
+    color: #166534;
+    background: #dcfce7;
+}
+
+.online-status.paused {
+    color: #475569;
+    background: #e2e8f0;
+}
+
+.online-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.dashboard-switch {
+    width: 3.5rem !important;
+    height: 1.8rem;
+    cursor: pointer;
+}
+
+.stat-card {
+    min-height: 158px;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #fff;
+    color: #1f2937;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.stat-card:hover:not(:disabled) {
+    transform: translateY(-4px);
+    border-color: #d1d5db;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.09);
+}
+
+.stat-card:disabled {
+    cursor: default;
+}
+
+.stat-card-content {
+    min-height: 158px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.stat-card-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+}
+
+.stat-card-title {
+    color: #6b7280;
+    font-size: 0.87rem;
+    font-weight: 700;
+}
+
+.stat-card-value {
+    margin-top: 8px;
+    color: #111827;
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.stat-card-link {
+    margin-top: auto;
+    padding-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: #9ca3af;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.stat-card-icon {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    font-size: 1.15rem;
+}
+
+.bg-orange {
+    background: #fff7ed !important;
+    color: #ea580c !important;
+}
+
+.bg-soft-green {
+    background: #ecfdf3 !important;
+    color: #15803d !important;
+}
+
+.bg-soft-gray {
+    background: #f3f4f6 !important;
+    color: #4b5563 !important;
+}
+
+.bg-soft-cyan {
+    background: #ecfeff !important;
+    color: #0891b2 !important;
+}
+
+@media (max-width: 575.98px) {
+    .dashboard-header {
+        margin-bottom: 18px;
+    }
+
+    .dashboard-title {
+        font-size: 1.75rem;
+    }
+
+    .online-orders-card .card-body {
+        padding: 18px;
+    }
+
+    .stat-card,
+    .stat-card-content {
+        min-height: 138px;
+    }
+
+    .stat-card-content {
+        padding: 18px;
+    }
 }
