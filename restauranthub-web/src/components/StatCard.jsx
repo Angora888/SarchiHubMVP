@@ -1,38 +1,41 @@
 import { useNavigate } from "react-router-dom";
+
 function StatCard({ titulo, valor, icono, color, ruta }) {
-   const navigate = useNavigate();
-   return (
-<div className="col-md-3 mb-4">
-<div
-               className={`card stat-card border-0 shadow ${color}`}
-               role="button"
-               onClick={() => ruta && navigate(ruta)}
-               style={{
-                   cursor: "pointer",
-                   transition: "all .25s ease"
-               }}
->
-<div className="card-body">
-<div className="d-flex justify-content-between align-items-center">
-<div>
-<h6 className="text-muted">
-                               {titulo}
-</h6>
-<h2 className="fw-bold">
-                               {valor}
-</h2>
-</div>
-<i
-                           className={icono}
-                           style={{
-                               fontSize: "3.2rem",
-                               opacity: .35
-                           }}
-></i>
-</div>
-</div>
-</div>
-</div>
-   );
+    const navigate = useNavigate();
+
+    return (
+        <div className="col-12 col-sm-6 col-xl-3 mb-3">
+            <button
+                type="button"
+                className="stat-card w-100 text-start"
+                onClick={() => ruta && navigate(ruta)}
+                disabled={!ruta}
+            >
+                <div className="stat-card-content">
+                    <div className="stat-card-copy">
+                        <div className="stat-card-title">
+                            {titulo}
+                        </div>
+
+                        {valor !== undefined && valor !== null && (
+                            <div className="stat-card-value">
+                                {valor}
+                            </div>
+                        )}
+
+                        <div className="stat-card-link">
+                            Abrir
+                            <i className="bi bi-arrow-right-short"></i>
+                        </div>
+                    </div>
+
+                    <div className={`stat-card-icon ${color || "bg-light text-dark"}`}>
+                        <i className={icono}></i>
+                    </div>
+                </div>
+            </button>
+        </div>
+    );
 }
+
 export default StatCard;
