@@ -27,7 +27,6 @@ function Mesas() {
         setMostrarQR
     ] = useState(false);
 
-    // Mesa pendiente de liberar
     const [
         mesaLiberar,
         setMesaLiberar
@@ -44,26 +43,13 @@ function Mesas() {
         cargarMesas();
     }, []);
 
-    // ==========================================
-    // CARGAR MESAS
-    // ==========================================
-
     const cargarMesas = async () => {
-
         try {
-
-            const respuesta =
-                await api.get("/Mesas/admin");
-
+            const respuesta = await api.get("/Mesas/admin");
             setMesas(respuesta.data);
-
         }
         catch (error) {
-
-            console.error(
-                "Error cargando mesas:",
-                error
-            );
+            console.error("Error cargando mesas:", error);
 
             showToast(
                 error.response?.data ||
@@ -73,45 +59,21 @@ function Mesas() {
         }
     };
 
-    // ==========================================
-    // FILTRO
-    // ==========================================
+    const mesasFiltradas = mesas.filter(mesa => {
+        const numero = mesa.number?.toString() ?? "";
+        const restaurante = mesa.restaurante?.toLowerCase() ?? "";
+        const estado = mesa.status?.toLowerCase() ?? "";
+        const texto = busqueda.toLowerCase().trim();
 
-    const mesasFiltradas =
-        mesas.filter(mesa => {
-
-            const numero =
-                mesa.number
-                    ?.toString() ?? "";
-
-            const restaurante =
-                mesa.restaurante
-                    ?.toLowerCase() ?? "";
-
-            const estado =
-                mesa.status
-                    ?.toLowerCase() ?? "";
-
-            const texto =
-                busqueda
-                    .toLowerCase()
-                    .trim();
-
-            return (
-                numero.includes(texto) ||
-                restaurante.includes(texto) ||
-                estado.includes(texto)
-            );
-        });
-
-    // ==========================================
-    // GUARDAR CAMBIOS DE MESA
-    // ==========================================
+        return (
+            numero.includes(texto) ||
+            restaurante.includes(texto) ||
+            estado.includes(texto)
+        );
+    });
 
     const guardarMesa = async (mesa) => {
-
         try {
-
             await api.put(
                 `/Mesas/${mesa.id}`,
                 {
@@ -119,14 +81,9 @@ function Mesas() {
                     status: mesa.status
                 }
             );
-
         }
         catch (error) {
-
-            console.error(
-                "Error actualizando mesa:",
-                error
-            );
+            console.error("Error actualizando mesa:", error);
 
             showToast(
                 error.response?.data ||
@@ -134,21 +91,11 @@ function Mesas() {
                 "error"
             );
 
-            // Restauramos valores reales de BD
             cargarMesas();
         }
     };
 
-    // ==========================================
-    // CAMBIAR VALOR LOCAL
-    // ==========================================
-
-    const cambiarValor = (
-        id,
-        campo,
-        valor
-    ) => {
-
+    const cambiarValor = (id, campo, valor) => {
         setMesas(prev =>
             prev.map(mesa =>
                 mesa.id === id
@@ -161,25 +108,15 @@ function Mesas() {
         );
     };
 
-    // ==========================================
-    // LIBERAR MESA
-    // ==========================================
-
     const liberarMesa = async () => {
-
         if (!mesaLiberar || liberando)
             return;
 
         try {
-
             setLiberando(true);
 
-            await api.put(
-                `/Mesas/${mesaLiberar.id}/liberar`
-            );
+            await api.put(`/Mesas/${mesaLiberar.id}/liberar`);
 
-            // Actualizamos inmediatamente
-            // el estado visual.
             setMesas(prev =>
                 prev.map(mesa =>
                     mesa.id === mesaLiberar.id
@@ -197,14 +134,9 @@ function Mesas() {
             );
 
             setMesaLiberar(null);
-
         }
         catch (error) {
-
-            console.error(
-                "Error liberando mesa:",
-                error
-            );
+            console.error("Error liberando mesa:", error);
 
             showToast(
                 error.response?.data ||
@@ -213,24 +145,14 @@ function Mesas() {
             );
         }
         finally {
-
             setLiberando(false);
         }
     };
 
-    // ==========================================
-    // IMPRIMIR QR
-    // ==========================================
-
     const imprimirQR = () => {
-
-        const contenido =
-            document.getElementById(
-                "tarjetaQR"
-            )?.innerHTML;
+        const contenido = document.getElementById("tarjetaQR")?.innerHTML;
 
         if (!contenido) {
-
             showToast(
                 "No fue posible generar el QR.",
                 "error"
@@ -239,15 +161,9 @@ function Mesas() {
             return;
         }
 
-        const ventana =
-            window.open(
-                "",
-                "",
-                "width=500,height=700"
-            );
+        const ventana = window.open("", "", "width=500,height=700");
 
         if (!ventana) {
-
             showToast(
                 "El navegador bloqueó la ventana de impresión.",
                 "warning"
@@ -289,26 +205,16 @@ function Mesas() {
         ventana.document.close();
 
         setTimeout(() => {
-
             ventana.focus();
             ventana.print();
             ventana.close();
-
         }, 300);
     };
 
     return (
-
         <div className="container">
-
-            {/* ====================================== */}
-            {/* HEADER */}
-            {/* ====================================== */}
-
             <div className="d-flex justify-content-between align-items-center mb-4">
-
                 <div>
-
                     <h2 className="fw-bold mb-1">
                         🍽️ Mesas
                     </h2>
@@ -316,50 +222,31 @@ function Mesas() {
                     <p className="text-muted mb-0">
                         Administra las mesas de tu restaurante
                     </p>
-
                 </div>
 
                 <button
                     type="button"
                     className="btn btn-success"
-                    onClick={() =>
-                        navigate("/mesas/nuevo")
-                    }
+                    onClick={() => navigate("/mesas/nuevo")}
                 >
                     <i className="bi bi-plus-circle me-2"></i>
                     Nueva Mesa
                 </button>
-
             </div>
 
-            {/* ====================================== */}
-            {/* TABLA */}
-            {/* ====================================== */}
-
             <div className="card shadow border-0 rounded-4">
-
                 <div className="card-body">
-
                     <input
                         className="form-control mb-4"
                         placeholder="🔍 Buscar mesa..."
                         value={busqueda}
-                        onChange={
-                            e =>
-                                setBusqueda(
-                                    e.target.value
-                                )
-                        }
+                        onChange={e => setBusqueda(e.target.value)}
                     />
 
                     <div className="table-responsive">
-
                         <table className="table align-middle table-hover">
-
                             <thead>
-
                                 <tr>
-
                                     <th style={{ width: "120px" }}>
                                         Número
                                     </th>
@@ -379,162 +266,93 @@ function Mesas() {
                                     <th style={{ width: "160px" }}>
                                         Acción
                                     </th>
-
                                 </tr>
-
                             </thead>
 
                             <tbody>
+                                {mesasFiltradas.map(mesa => (
+                                    <tr key={mesa.id}>
+                                        <td>
+                                            <input
+                                                className="form-control form-control-sm"
+                                                type="number"
+                                                value={mesa.number}
+                                                onChange={e =>
+                                                    cambiarValor(
+                                                        mesa.id,
+                                                        "number",
+                                                        Number(e.target.value)
+                                                    )
+                                                }
+                                                onBlur={() => guardarMesa(mesa)}
+                                            />
+                                        </td>
 
-                                {mesasFiltradas.map(
-                                    mesa => (
+                                        <td>
+                                            <span className="fw-semibold">
+                                                {mesa.restaurante}
+                                            </span>
+                                        </td>
 
-                                        <tr key={mesa.id}>
+                                        <td>
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-primary btn-sm"
+                                                onClick={() => {
+                                                    setMesaSeleccionada(mesa);
+                                                    setMostrarQR(true);
+                                                }}
+                                            >
+                                                <i className="bi bi-qr-code me-1"></i>
+                                                Ver
+                                            </button>
+                                        </td>
 
-                                            {/* NÚMERO */}
-
-                                            <td>
-
-                                                <input
-                                                    className="form-control form-control-sm"
-                                                    type="number"
-                                                    value={mesa.number}
-                                                    onChange={
-                                                        e =>
-                                                            cambiarValor(
-                                                                mesa.id,
-                                                                "number",
-                                                                Number(
-                                                                    e.target.value
-                                                                )
-                                                            )
-                                                    }
-                                                    onBlur={() =>
-                                                        guardarMesa(mesa)
-                                                    }
-                                                />
-
-                                            </td>
-
-                                            {/* RESTAURANTE */}
-
-                                            <td>
-
-                                                <span className="fw-semibold">
-                                                    {mesa.restaurante}
+                                        <td>
+                                            {mesa.status === "Disponible" ? (
+                                                <span className="badge bg-success">
+                                                    🟢 Disponible
                                                 </span>
+                                            ) : (
+                                                <span className="badge bg-danger">
+                                                    🔴 Ocupada
+                                                </span>
+                                            )}
+                                        </td>
 
-                                            </td>
-
-                                            {/* QR */}
-
-                                            <td>
-
+                                        <td>
+                                            {mesa.status === "Ocupada" ? (
                                                 <button
                                                     type="button"
-                                                    className="btn btn-outline-primary btn-sm"
-                                                    onClick={() => {
-
-                                                        setMesaSeleccionada(
-                                                            mesa
-                                                        );
-
-                                                        setMostrarQR(true);
-                                                    }}
+                                                    className="btn btn-outline-danger btn-sm"
+                                                    onClick={() => setMesaLiberar(mesa)}
                                                 >
-
-                                                    <i className="bi bi-qr-code me-1"></i>
-
-                                                    Ver
-
+                                                    <i className="bi bi-unlock me-1"></i>
+                                                    Liberar mesa
                                                 </button>
-
-                                            </td>
-
-                                            {/* ESTADO */}
-
-                                            <td>
-
-                                                {mesa.status === "Disponible" ? (
-
-                                                    <span className="badge bg-success">
-                                                        🟢 Disponible
-                                                    </span>
-
-                                                ) : (
-
-                                                    <span className="badge bg-danger">
-                                                        🔴 Ocupada
-                                                    </span>
-
-                                                )}
-
-                                            </td>
-
-                                            {/* ACCIÓN */}
-
-                                            <td>
-
-                                                {mesa.status === "Ocupada" ? (
-
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-outline-danger btn-sm"
-                                                        onClick={() =>
-                                                            setMesaLiberar(mesa)
-                                                        }
-                                                    >
-                                                        <i className="bi bi-unlock me-1"></i>
-                                                        Liberar mesa
-                                                    </button>
-
-                                                ) : (
-
-                                                    <span className="text-muted small">
-                                                        —
-                                                    </span>
-
-                                                )}
-
-                                            </td>
-
-                                        </tr>
-
-                                    )
-                                )}
-
+                                            ) : (
+                                                <span className="text-muted small">
+                                                    —
+                                                </span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
-
                         </table>
-
                     </div>
-
                 </div>
-
             </div>
 
-
-            {/* ====================================== */}
-            {/* MODAL CONFIRMAR LIBERAR MESA */}
-            {/* ====================================== */}
-
             {mesaLiberar && (
-
                 <div
                     className="modal fade show d-block"
                     tabIndex="-1"
-                    style={{
-                        backgroundColor:
-                            "rgba(0,0,0,.5)"
-                    }}
+                    style={{ backgroundColor: "rgba(0,0,0,.5)" }}
                 >
-
                     <div className="modal-dialog modal-dialog-centered">
-
                         <div className="modal-content">
-
                             <div className="modal-header">
-
                                 <h5 className="modal-title">
                                     ⚠️ Liberar mesa
                                 </h5>
@@ -543,15 +361,11 @@ function Mesas() {
                                     type="button"
                                     className="btn-close"
                                     disabled={liberando}
-                                    onClick={() =>
-                                        setMesaLiberar(null)
-                                    }
+                                    onClick={() => setMesaLiberar(null)}
                                 />
-
                             </div>
 
                             <div className="modal-body">
-
                                 <p>
                                     ¿Está seguro que desea liberar la
                                     <strong>
@@ -560,7 +374,6 @@ function Mesas() {
                                 </p>
 
                                 <div className="alert alert-warning mb-0">
-
                                     Utilice esta opción únicamente
                                     si la mesa quedó ocupada por error.
 
@@ -569,20 +382,15 @@ function Mesas() {
                                     Si existe un pedido activo para
                                     esta mesa, el sistema no permitirá
                                     liberarla.
-
                                 </div>
-
                             </div>
 
                             <div className="modal-footer">
-
                                 <button
                                     type="button"
                                     className="btn btn-secondary"
                                     disabled={liberando}
-                                    onClick={() =>
-                                        setMesaLiberar(null)
-                                    }
+                                    onClick={() => setMesaLiberar(null)}
                                 >
                                     Cancelar
                                 </button>
@@ -593,46 +401,26 @@ function Mesas() {
                                     disabled={liberando}
                                     onClick={liberarMesa}
                                 >
-
                                     {liberando
                                         ? "Liberando..."
                                         : "🔓 Sí, liberar mesa"
                                     }
-
                                 </button>
-
                             </div>
-
                         </div>
-
                     </div>
-
                 </div>
-
             )}
 
-
-            {/* ====================================== */}
-            {/* MODAL QR */}
-            {/* ====================================== */}
-
             {mostrarQR && (
-
                 <div
                     className="modal fade show d-block"
                     tabIndex="-1"
-                    style={{
-                        backgroundColor:
-                            "rgba(0,0,0,.5)"
-                    }}
+                    style={{ backgroundColor: "rgba(0,0,0,.5)" }}
                 >
-
                     <div className="modal-dialog modal-dialog-centered">
-
                         <div className="modal-content">
-
                             <div className="modal-header">
-
                                 <h5 className="modal-title">
                                     🍽️ Mesa #{mesaSeleccionada?.number}
                                 </h5>
@@ -640,20 +428,15 @@ function Mesas() {
                                 <button
                                     type="button"
                                     className="btn-close"
-                                    onClick={() =>
-                                        setMostrarQR(false)
-                                    }
+                                    onClick={() => setMostrarQR(false)}
                                 />
-
                             </div>
 
                             <div
                                 id="tarjetaQR"
                                 className="modal-body text-center"
                             >
-
                                 <div className="border rounded-4 p-4 bg-white">
-
                                     <h3 className="fw-bold">
                                         {mesaSeleccionada?.restaurante}
                                     </h3>
@@ -664,7 +447,7 @@ function Mesas() {
 
                                     <QRCode
                                         value={
-                                            `https://sarchi-hub-mvp.vercel.app/menu/${mesaSeleccionada?.codigoQR}`
+                                            `https://sinfilas.vercel.app/menu/${mesaSeleccionada?.codigoQR}`
                                         }
                                         size={250}
                                     />
@@ -672,7 +455,6 @@ function Mesas() {
                                     <p className="mb-0 mt-3">
                                         Escanee el código para realizar su pedido.
                                     </p>
-
                                 </div>
 
                                 <small className="text-muted d-block mt-2">
@@ -686,17 +468,13 @@ function Mesas() {
                                 <small className="fw-semibold">
                                     📞 6066-2375
                                 </small>
-
                             </div>
 
                             <div className="modal-footer">
-
                                 <button
                                     type="button"
                                     className="btn btn-secondary"
-                                    onClick={() =>
-                                        setMostrarQR(false)
-                                    }
+                                    onClick={() => setMostrarQR(false)}
                                 >
                                     Cerrar
                                 </button>
@@ -706,27 +484,14 @@ function Mesas() {
                                     className="btn btn-primary"
                                     onClick={imprimirQR}
                                 >
-
                                     <i className="bi bi-printer me-2"></i>
-
                                     Imprimir
-
                                 </button>
-
                             </div>
-
                         </div>
-
                     </div>
-
                 </div>
-
             )}
-
-
-            {/* ====================================== */}
-            {/* TOAST */}
-            {/* ====================================== */}
 
             <AppToast
                 show={toast.show}
@@ -734,7 +499,6 @@ function Mesas() {
                 type={toast.type}
                 onClose={hideToast}
             />
-
         </div>
     );
 }
