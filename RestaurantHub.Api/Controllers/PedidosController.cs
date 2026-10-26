@@ -19,7 +19,28 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CrearPedido(CrearPedidoDto dto)
+    [Authorize]
+    public Task<IActionResult> CrearPedido(CrearPedidoDto dto)
+        => CrearPedidoInterno(dto, null);
+
+    [HttpPost("mesa-qr")]
+    [AllowAnonymous]
+    public Task<IActionResult> CrearPedidoMesaQr(CrearPedidoMesaQrDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.CodigoQr))
+            return Task.FromResult<IActionResult>(BadRequest("Código QR inválido."));
+
+        var pedido = new CrearPedidoDto
+        {
+            TipoPedido = "Mesa",
+            ClienteId = null,
+            Productos = dto.Productos
+        };
+
+        return CrearPedidoInterno(pedido, dto.CodigoQr.Trim());
+    }
+
+    private async Task<IActionResult> CrearPedidoInterno(CrearPedidoDto dto, string? codigoQr)
     {
         await using var transaction =
             await _context.Database.BeginTransactionAsync();
@@ -77,32 +98,30 @@ public class PedidosController : ControllerBase
 
             if (tipoPedido == "Mesa")
             {
-                if (!dto.MesaId.HasValue)
-                {
-                    return BadRequest(
-                        "El pedido de mesa requiere una MesaId.");
-                }
+                if (!dto.MesaId.HasValue && string.IsNullOrWhiteSpace(codigoQr))
+                    return BadRequest("El pedido de mesa requiere un código QR válido.");
 
-                mesa = await _context.Mesa
-                    .FirstOrDefaultAsync(m =>
-                        m.Id == dto.MesaId.Value);
+                var consultaMesa = _context.Mesa
+                    .Include(m => m.Restaurant)
+                    .AsQueryable();
+
+                mesa = codigoQr != null
+                    ? await consultaMesa.FirstOrDefaultAsync(m =>
+                        m.CodigoQR == codigoQr && m.Restaurant.Active)
+                    : await consultaMesa.FirstOrDefaultAsync(m =>
+                        m.Id == dto.MesaId!.Value);
 
                 if (mesa == null)
-                {
-                    return BadRequest(
-                        "La mesa no existe.");
-                }
+                    return BadRequest("La mesa o su código QR no son válidos.");
+
+                if (!mesa.Restaurant.Active)
+                    return BadRequest("El restaurante no está activo.");
 
                 if (mesa.Status == "Ocupada")
-                {
-                    return BadRequest(
-                        "La mesa está ocupada.");
-                }
+                    return Conflict("La mesa está ocupada.");
 
-                restaurantId =
-                    mesa.RestaurantId;
-
-                // Un pedido de mesa no necesita cliente
+                restaurantId = mesa.RestaurantId;
+                dto.MesaId = mesa.Id;
                 dto.ClienteId = null;
             }
 
@@ -370,12 +389,21 @@ public class PedidosController : ControllerBase
             pedido.Total =
                 total;
 
-            // Solo pedidos de Mesa ocupan una mesa
-            if (tipoPedido == "Mesa" &&
-                mesa != null)
+            // Reserva condicional: solo una solicitud puede ocupar la mesa.
+            if (tipoPedido == "Mesa" && mesa != null)
             {
-                mesa.Status =
-                    "Ocupada";
+                var mesasReservadas = await _context.Mesa
+                    .Where(m => m.Id == mesa.Id && m.Status != "Ocupada")
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(m => m.Status, "Ocupada"));
+
+                if (mesasReservadas == 0)
+                {
+                    await transaction.RollbackAsync();
+                    return Conflict("La mesa ya fue ocupada por otro pedido. Actualice el menú e inténtelo de nuevo.");
+                }
+
+                mesa.Status = "Ocupada";
             }
 
             await _context.SaveChangesAsync();
@@ -2481,4 +2509,10 @@ public class PedidosController : ControllerBase
             zona
         );
     }
+}
+
+public sealed class CrearPedidoMesaQrDto
+{
+    public string CodigoQr { get; set; } = "";
+    public List<CrearDetallePedidoDto> Productos { get; set; } = new();
 }
