@@ -37,7 +37,7 @@ public class MenuController : ControllerBase
 
             .FirstOrDefaultAsync(m => m.CodigoQR == codigoQr);
 
-        if (mesa == null)
+        if (mesa == null || !mesa.Restaurant.Active)
 
             return NotFound();
 
