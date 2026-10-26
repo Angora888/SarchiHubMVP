@@ -109,7 +109,8 @@ public class PedidosController : ControllerBase
                     ? await consultaMesa.FirstOrDefaultAsync(m =>
                         m.CodigoQR == codigoQr && m.Restaurant.Active)
                     : await consultaMesa.FirstOrDefaultAsync(m =>
-                        m.Id == dto.MesaId!.Value);
+                        m.Id == dto.MesaId!.Value &&
+                        m.RestaurantId == ObtenerRestaurantId());
 
                 if (mesa == null)
                     return BadRequest("La mesa o su código QR no son válidos.");
