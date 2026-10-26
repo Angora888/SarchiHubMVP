@@ -452,9 +452,7 @@ const total = productos.reduce(
         }
 
 const pedido = {
-    tipoPedido: "Mesa",
-    mesaId: mesa.id,
-    clienteId: null,
+    codigoQr,
     productos: productosPedido
 };
 
@@ -473,7 +471,7 @@ const pedido = {
         try {
             const respuesta =
                 await api.post(
-                    "/Pedidos",
+                    "/Pedidos/mesa-qr",
                     pedido
                 );
 
