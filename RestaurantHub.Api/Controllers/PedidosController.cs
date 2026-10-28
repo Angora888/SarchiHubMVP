@@ -2446,7 +2446,7 @@ public class PedidosController : ControllerBase
         // Todos los flujos de creación de pedidos deben usar este método.
         var dia = (int)(DateOnly.FromDateTime(inicio).DayNumber);
         await _context.Database.SqlQueryRaw<int>(
-            "SELECT 1 AS \\"Value\\" FROM pg_advisory_xact_lock({0}, {1})",
+            "SELECT 1 AS \"Value\" FROM pg_advisory_xact_lock({0}, {1})",
             restaurantId, dia).SingleAsync();
 
         return await _context.Pedidos
