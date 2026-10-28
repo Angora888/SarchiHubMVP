@@ -785,12 +785,15 @@ public class PedidosController : ControllerBase
     [Authorize]
     public async Task<IActionResult> CerrarPedido(int id)
     {
-        var pedido = await _context.Pedidos.FindAsync(id);
+        var restaurantId = ObtenerRestaurantId();
+        var pedido = await _context.Pedidos.FirstOrDefaultAsync(p =>
+            p.Id == id && p.RestaurantId == restaurantId);
         if (pedido == null)
             return NotFound("Pedido no encontrado.");
         if (pedido.Estado == "Finalizado")
             return BadRequest("El pedido ya fue cerrado.");
-        var mesa = await _context.Mesa.FindAsync(pedido.MesaId);
+        var mesa = await _context.Mesa.FirstOrDefaultAsync(m =>
+            m.Id == pedido.MesaId && m.RestaurantId == restaurantId);
         if (mesa == null)
             return BadRequest("La mesa no existe.");
         pedido.Estado = "Finalizado";
@@ -816,7 +819,7 @@ public class PedidosController : ControllerBase
         try
         {
             var restaurantId = ObtenerRestaurantId();
-            var esAdmin = User.IsInRole("Admin");
+            var esAdmin = false; // Los administradores de un tenant no omiten el aislamiento.
 
             var query = _context.Pedidos
                 .Where(p => p.Id == id);
@@ -1098,7 +1101,7 @@ public class PedidosController : ControllerBase
     public async Task<IActionResult> ObtenerPedidos()
     {
         var restaurantId = ObtenerRestaurantId();
-        var esAdmin = User.IsInRole("Admin");
+        var esAdmin = false; // Los administradores de un tenant no omiten el aislamiento.
 
         var (inicio, fin) = FechaHelper.ObtenerRangoHoyCostaRica();
 
@@ -1264,7 +1267,7 @@ public class PedidosController : ControllerBase
     public async Task<IActionResult> ObtenerPedidosCocina()
     {
         var restaurantId = ObtenerRestaurantId();
-        var esAdmin = User.IsInRole("Admin");
+        var esAdmin = false; // Los administradores de un tenant no omiten el aislamiento.
         // ==========================================
         // RANGO DEL DÍA ACTUAL EN COSTA RICA
         // ==========================================
@@ -1373,7 +1376,9 @@ public class PedidosController : ControllerBase
     [Authorize]
     public async Task<IActionResult> MarcarPreparando(int id)
     {
-        var pedido = await _context.Pedidos.FindAsync(id);
+        var restaurantId = ObtenerRestaurantId();
+        var pedido = await _context.Pedidos.FirstOrDefaultAsync(p =>
+            p.Id == id && p.RestaurantId == restaurantId);
         if (pedido == null)
             return NotFound("Pedido no encontrado.");
         if (pedido.Estado != "Pendiente")
@@ -1391,7 +1396,9 @@ public class PedidosController : ControllerBase
     [Authorize]
     public async Task<IActionResult> MarcarListo(int id)
     {
-        var pedido = await _context.Pedidos.FindAsync(id);
+        var restaurantId = ObtenerRestaurantId();
+        var pedido = await _context.Pedidos.FirstOrDefaultAsync(p =>
+            p.Id == id && p.RestaurantId == restaurantId);
         if (pedido == null)
             return NotFound("Pedido no encontrado.");
         if (pedido.Estado != "Preparando")
@@ -1409,9 +1416,10 @@ public class PedidosController : ControllerBase
     [Authorize]
     public async Task<IActionResult> TerminarPedido(int id)
     {
+        var restaurantId = ObtenerRestaurantId();
         var pedido = await _context.Pedidos
             .Include(p => p.Mesa)
-            .FirstOrDefaultAsync(p => p.Id == id);
+            .FirstOrDefaultAsync(p => p.Id == id && p.RestaurantId == restaurantId);
         if (pedido == null)
             return NotFound("Pedido no encontrado.");
         if (pedido.Estado != "Listo")
@@ -1434,7 +1442,7 @@ public class PedidosController : ControllerBase
     public async Task<IActionResult> ObtenerPedidosCaja()
     {
         var restaurantId = ObtenerRestaurantId();
-        var esAdmin = User.IsInRole("Admin");
+        var esAdmin = false; // Los administradores de un tenant no omiten el aislamiento.
         // Rango del día actual en Costa Rica
         var (inicio, fin) =
             FechaHelper.ObtenerRangoHoyCostaRica();
