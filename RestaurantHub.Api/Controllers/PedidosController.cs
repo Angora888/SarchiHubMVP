@@ -174,13 +174,7 @@ public class PedidosController : ControllerBase
             var (inicio, fin) =
                 FechaHelper.ObtenerRangoHoyCostaRica();
 
-            var ultimoNumero = await _context.Pedidos
-                .Where(p =>
-                    p.RestaurantId == restaurantId &&
-                    p.Fecha >= inicio &&
-                    p.Fecha < fin)
-                .MaxAsync(p =>
-                    (int?)p.NumeroPedido) ?? 0;
+            var ultimoNumero = await ObtenerUltimoNumeroConBloqueoAsync(restaurantId, inicio, fin);
 
             // =====================================================
             // CREAR PEDIDO
@@ -571,17 +565,7 @@ public class PedidosController : ControllerBase
             var (inicio, fin) =
                 FechaHelper
                     .ObtenerRangoHoyCostaRica();
-            var ultimoNumero =
-                await _context.Pedidos
-                    .Where(p =>
-                        p.RestaurantId ==
-                            restaurantId &&
-                        p.Fecha >= inicio &&
-                        p.Fecha < fin
-                    )
-                    .MaxAsync(p =>
-                        (int?)p.NumeroPedido
-                    ) ?? 0;
+            var ultimoNumero = await ObtenerUltimoNumeroConBloqueoAsync(restaurantId, inicio, fin);
             // =========================
             // CREAR PEDIDO
             // =========================
@@ -2222,16 +2206,7 @@ public class PedidosController : ControllerBase
             var (inicio, fin) =
                 FechaHelper.ObtenerRangoHoyCostaRica();
 
-            var ultimoNumero =
-                await _context.Pedidos
-                    .Where(p =>
-                        p.RestaurantId == restaurantId &&
-                        p.Fecha >= inicio &&
-                        p.Fecha < fin
-                    )
-                    .MaxAsync(p =>
-                        (int?)p.NumeroPedido
-                    ) ?? 0;
+            var ultimoNumero = await ObtenerUltimoNumeroConBloqueoAsync(restaurantId, inicio, fin);
 
             // ==========================================
             // CREAR VENTA
@@ -2460,6 +2435,24 @@ public class PedidosController : ControllerBase
                 $"Error al registrar la venta: {ex.Message}"
             );
         }
+    }
+
+    // Serializa la asignación de consecutivos por restaurante y día dentro
+    // de la transacción existente. No requiere cambios de esquema.
+    private async Task<int> ObtenerUltimoNumeroConBloqueoAsync(
+        int restaurantId, DateTime inicio, DateTime fin)
+    {
+        // La clave de bloqueo combina el restaurante con el día local.
+        // Todos los flujos de creación de pedidos deben usar este método.
+        var dia = (int)(DateOnly.FromDateTime(inicio).DayNumber);
+        await _context.Database.SqlQueryRaw<int>(
+            "SELECT 1 AS \\"Value\\" FROM pg_advisory_xact_lock({0}, {1})",
+            restaurantId, dia).SingleAsync();
+
+        return await _context.Pedidos
+            .Where(p => p.RestaurantId == restaurantId &&
+                        p.Fecha >= inicio && p.Fecha < fin)
+            .MaxAsync(p => (int?)p.NumeroPedido) ?? 0;
     }
 
     private int ObtenerRestaurantId()
