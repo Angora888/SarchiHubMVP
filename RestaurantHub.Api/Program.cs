@@ -40,43 +40,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
        IssuerSigningKey = new SymmetricSecurityKey(
            Encoding.UTF8.GetBytes(jwt["Key"]!))
    };
-   options.Events = new JwtBearerEvents
-   {
-       OnTokenValidated = context =>
-       {
-           Console.WriteLine("=== CLAIMS ===");
-           foreach (var claim in context.Principal!.Claims)
-           {
-               Console.WriteLine($"{claim.Type} = {claim.Value}");
-           }
-           Console.WriteLine("==============");
-           return Task.CompletedTask;
-       }
-   };
 });
 builder.Services.AddAuthorization();
+
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp",
         policy =>
         {
-            policy.AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowAnyOrigin();
+            policy.AllowAnyHeader().AllowAnyMethod();
+            if (builder.Environment.IsDevelopment())
+                policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173");
+            else if (allowedOrigins.Length > 0)
+                policy.WithOrigins(allowedOrigins);
         });
 });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-   app.UseSwagger();
-   app.UseSwaggerUI();
-//}
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-//app.UseHttpsRedirection();
+// HTTPS is terminated by the hosting reverse proxy. Configure forwarded headers
+// and HTTPS redirection together when the proxy is trusted.
 
 app.UseCors("ReactApp");
 
