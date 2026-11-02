@@ -13,9 +13,11 @@ namespace RestaurantHub.Api.Controllers;
 public class PedidosController : ControllerBase
 {
     private readonly RestaurantHubContext _context;
-    public PedidosController(RestaurantHubContext context)
+    private readonly ILogger<PedidosController> _logger;
+    public PedidosController(RestaurantHubContext context, ILogger<PedidosController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpPost]
@@ -429,10 +431,8 @@ public class PedidosController : ControllerBase
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-
-            return StatusCode(
-                500,
-                $"Error al crear el pedido: {ex.Message}");
+            _logger.LogError(ex, "Error en operación de pedidos");
+            return StatusCode(500, "Error al crear el pedido. Intente nuevamente.");
         }
     }
 
@@ -772,12 +772,9 @@ public class PedidosController : ControllerBase
         }
         catch (Exception ex)
         {
-            await transaction
-                .RollbackAsync();
-            return StatusCode(
-                500,
-                $"Error al crear el pedido: {ex.Message}"
-            );
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error en operación de pedidos");
+            return StatusCode(500, "Error al crear el pedido. Intente nuevamente.");
         }
     }
 
@@ -1089,15 +1086,13 @@ public class PedidosController : ControllerBase
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-
-            return StatusCode(
-                500,
-                $"Error al agregar el producto: {ex.Message}"
-            );
+            _logger.LogError(ex, "Error en operación de pedidos");
+            return StatusCode(500, "Error al agregar el producto. Intente nuevamente.");
         }
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> ObtenerPedidos()
     {
         var restaurantId = ObtenerRestaurantId();
@@ -1155,12 +1150,12 @@ public class PedidosController : ControllerBase
 
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> ObtenerPedido(string id)
     {
         var pedido = await _context.Pedidos
             .Include(p => p.Restaurant)
             .Include(p => p.Mesa)
-            .Include(p => p.Cliente)
             .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
             .FirstOrDefaultAsync(p =>
@@ -1180,17 +1175,6 @@ public class PedidosController : ControllerBase
 
             mesa =
                 pedido.Mesa?.Number,
-
-            cliente = pedido.Cliente == null
-                ? null
-                : new
-                {
-                    id = pedido.Cliente.Id,
-                    nombre = pedido.Cliente.NombreCompleto,
-                    telefono = pedido.Cliente.Telefono,
-                    tipoPedido = pedido.TipoPedido,
-                    direccion = pedido.Cliente.Direccion
-                },
 
             estado =
                 pedido.Estado,
@@ -2437,11 +2421,8 @@ public class PedidosController : ControllerBase
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-
-            return StatusCode(
-                500,
-                $"Error al registrar la venta: {ex.Message}"
-            );
+            _logger.LogError(ex, "Error en operación de pedidos");
+            return StatusCode(500, "Error al registrar la venta. Intente nuevamente.");
         }
     }
 
