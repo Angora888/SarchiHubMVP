@@ -1,0 +1,43 @@
+name: Directorio Sarchí - live API smoke test
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/directorio-sarchi
+    paths:
+      - '.github/workflows/directorio-live-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify categories and CORS from the public Azure endpoint
+        env:
+          API_URL: https://sinfilas-api-hmfnexh2h5bsg0c4.canadacentral-01.azurewebsites.net
+          ORIGIN: https://directoriosarchi.vercel.app
+        run: |
+          set -euo pipefail
+          echo "Checking Directory Sarchí categories from Azure (public response only)"
+          for attempt in 1 2 3; do
+            code=$(curl --connect-timeout 12 --max-time 30 -sS -o /tmp/directory-categories.json -D /tmp/directory-headers.txt -w '%{http_code}' -H "Origin: $ORIGIN" "$API_URL/api/directory/categories") || code=000
+            echo "Attempt $attempt: HTTP $code"
+            if [ "$code" = "200" ]; then break; fi
+            sleep 5
+          done
+          if [ "$code" != "200" ]; then
+            echo "Azure API has not published GET /api/directory/categories or is unreachable."
+            head -c 500 /tmp/directory-categories.json || true
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          with open("/tmp/directory-categories.json", encoding="utf8") as f: data=json.load(f)
+          assert isinstance(data, list), "Expected categories array"
+          print("Categories returned:", len(data))
+          assert len(data) >= 8, "Expected at least eight categories"
+          assert all(isinstance(c.get("id"),int) and c.get("name") for c in data), "Invalid category fields"
+          with open("/tmp/directory-headers.txt",encoding="utf8") as f: headers=f.read().lower()
+          assert "access-control-allow-origin: https://directoriosarchi.vercel.app" in headers, "CORS origin missing"
+          print("Categories and CORS verified")
+          PY
