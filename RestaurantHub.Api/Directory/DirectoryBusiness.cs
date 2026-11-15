@@ -1,4 +1,4 @@
-namespace RestaurantHub.Api.Directory;
+namespace RestaurantHub.Api.BusinessDirectory;
 
 public sealed class DirectoryBusiness
 {
