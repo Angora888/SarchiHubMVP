@@ -1,7 +1,9 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RestaurantHub.Api.Data;
+using RestaurantHub.Api.BusinessDirectory;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -19,6 +21,8 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<RestaurantHubContext>(options =>
    options.UseNpgsql(
        builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<DirectoryDbContext>(options =>
+   options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -41,9 +45,40 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
            Encoding.UTF8.GetBytes(jwt["Key"]!))
    };
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("DirectoryAdmin", policy => policy
+        .RequireAuthenticatedUser()
+        .RequireClaim("directory_admin", "true"));
+});
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("directory-admin-login", context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter("directory-admin-login:" + ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5, Window = TimeSpan.FromMinutes(15), QueueLimit = 0,
+            AutoReplenishment = true
+        });
+    });
+    options.AddPolicy("directory-submissions", context =>
+    {
+        // Local abuse control only; use a trusted forwarded-header configuration behind Azure.
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 3, Window = TimeSpan.FromHours(1), QueueLimit = 0,
+            AutoReplenishment = true
+        });
+    });
+});
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+var allowedOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
+    .Append("https://directoriosarchi.vercel.app")
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
 
 builder.Services.AddCors(options =>
 {
@@ -71,6 +106,7 @@ if (app.Environment.IsDevelopment())
 // and HTTPS redirection together when the proxy is trusted.
 
 app.UseCors("ReactApp");
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseStaticFiles();
