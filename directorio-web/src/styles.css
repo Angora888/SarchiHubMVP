@@ -123,3 +123,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  .phone-chips{margin-right:-14px}
 }
 @media(max-width:360px){.phone-row{gap:6px}.phone-actions{gap:3px}.phone-action{width:29px;height:29px}.phone-avatar{flex-basis:38px;width:38px;height:38px}.phone-meta{font-size:9px}}
+
+
+/* Business ordering and WhatsApp editor in the dark admin panel */
+.directory-order-controls{margin:15px 0;padding:11px 13px;border:1px solid #333643;border-radius:11px;background:#1c1e27;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.directory-order-controls>span{font-size:13px;font-weight:700;color:#d6d7ee}
+.directory-order-controls>div{display:flex;gap:7px}
+.directory-order-controls button,.directory-wa-controls button{display:inline-flex;align-items:center;justify-content:center;gap:5px;background:#313755;color:#e7e9ff;border:1px solid #555b7a;border-radius:9px;padding:9px 11px;font-size:12px;font-weight:700}
+.directory-order-controls button:disabled,.directory-wa-controls button:disabled{opacity:.35;cursor:not-allowed}
+.directory-wa-editor{padding:14px;margin:13px 0;background:#1b1c23;border:1px solid #373945;border-radius:12px}
+.directory-wa-editor>label{display:flex;align-items:center;gap:7px;font-size:13px;color:#91e3b6;font-weight:750;margin-bottom:10px}
+.directory-wa-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.directory-wa-controls input{flex:1;min-width:130px;background:#272833;color:#fff;border:1px solid #484956;border-radius:9px;padding:10px}
+.directory-wa-controls button:last-child{background:#245b42;color:#e0ffec;border-color:#387654}
+.directory-wa-editor small{display:block;color:#9698a8;font-size:11px;line-height:1.5;margin-top:9px}
+@media(max-width:650px){.directory-wa-controls input{flex:1 1 100%}.directory-wa-controls button{flex:1}.directory-order-controls{align-items:flex-start}}
