@@ -3,6 +3,7 @@ import { Link, Route, Routes, useParams, useSearchParams } from 'react-router-do
 import { ArrowLeft, ArrowRight, Clock3, ExternalLink, MapPin, Menu, MessageCircle, Phone, Search, Store, X } from 'lucide-react';
 import { directoryApi, type Business, type Category } from './api';
 import Register from './Register';
+import Admin from './Admin';
 
 const districts = ['Sarchí Norte', 'Sarchí Sur', 'Toro Amarillo', 'San Pedro', 'Rodríguez'];
 const tiles = [
@@ -126,4 +127,4 @@ function Detail() {
       {biz.website && safeWebsite(biz.website) && <a href={safeWebsite(biz.website)!} target="_blank" rel="noopener noreferrer"><ExternalLink size={18}/> Visitar sitio web</a>}</div></aside></div>}
   </main>;
 }
-export default function App() { return <><Header/><Routes><Route path="/" element={<Home/>}/><Route path="/negocio/:slug" element={<Detail/>}/><Route path="/registrar-negocio" element={<Register/>}/><Route path="*" element={<main className="shell detail-page empty-state"><Clock3 size={32}/><h2>Página no encontrada</h2><Link to="/">Volver al inicio</Link></main>}/></Routes><Footer/></>; }
+export default function App() { return <><Header/><Routes><Route path="/" element={<Home/>}/><Route path="/negocio/:slug" element={<Detail/>}/><Route path="/registrar-negocio" element={<Register/>}/><Route path="/admin" element={<Admin/>}/><Route path="*" element={<main className="shell detail-page empty-state"><Clock3 size={32}/><h2>Página no encontrada</h2><Link to="/">Volver al inicio</Link></main>}/></Routes><Footer/></>; }
