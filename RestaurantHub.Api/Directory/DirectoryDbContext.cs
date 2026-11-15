@@ -21,6 +21,7 @@ public sealed class DirectoryDbContext : DbContext
             entity.Property(a => a.Email).HasColumnName("email").HasMaxLength(254).IsRequired();
             entity.HasIndex(a => a.Email).IsUnique();
             entity.Property(a => a.PasswordHash).HasColumnName("password_hash").IsRequired();
+            entity.Property(a => a.AuthProvider).HasColumnName("auth_provider").HasMaxLength(20).IsRequired();
             entity.Property(a => a.IsActive).HasColumnName("is_active");
         });
         modelBuilder.Entity<DirectoryModerationEvent>(entity =>

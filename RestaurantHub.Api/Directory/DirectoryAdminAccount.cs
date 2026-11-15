@@ -6,6 +6,7 @@ public sealed class DirectoryAdminAccount
     public int Id { get; set; }
     public string Email { get; set; } = "";
     public string PasswordHash { get; set; } = "";
+    public string AuthProvider { get; set; } = "Local";
     public bool IsActive { get; set; } = true;
 }
 public sealed class DirectoryModerationEvent
