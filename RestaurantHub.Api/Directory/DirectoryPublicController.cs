@@ -47,7 +47,7 @@ public sealed class DirectoryPublicController : ControllerBase
             query = query.Where(b => b.CategoryId == categoryId.Value);
 
         var total = await query.CountAsync(ct);
-        var results = await query.OrderBy(b => b.Name).ThenBy(b => b.Id)
+        var results = await query.OrderBy(b => b.SortOrder == 0 ? int.MaxValue : b.SortOrder).ThenBy(b => b.Name).ThenBy(b => b.Id)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(b => new {
                 b.Id, b.Slug, b.Name, b.Description, b.District,
