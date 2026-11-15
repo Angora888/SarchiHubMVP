@@ -9,7 +9,7 @@ export type PageResponse = { page: number; pageSize: number; total: number; item
 const base = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '');
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   if (!base) throw new Error('Configurá VITE_API_URL para conectar con Sin Filas.');
-  const response = await fetch(base + path, { signal, headers: { Accept: 'application/json' } });
+  const response = await fetch(base + path, { signal, cache: 'no-store', headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error('No se pudieron cargar los datos. Intentá nuevamente.');
   return response.json() as Promise<T>;
 }
