@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace RestaurantHub.Api.Directory;
+namespace RestaurantHub.Api.BusinessDirectory;
 
 // Separate context/schema avoids modifying existing Sin Filas tables or migrations.
 public sealed class DirectoryDbContext : DbContext
