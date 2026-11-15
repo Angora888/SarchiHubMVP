@@ -1,0 +1,32 @@
+name: Directorio Sarchí - API build
+on:
+  pull_request:
+    paths:
+      - 'RestaurantHub.Api/**'
+      - 'RestaurantHub.Core/**'
+      - '.github/workflows/directorio-api.yml'
+  push:
+    branches:
+      - feature/directorio-sarchi
+    paths:
+      - 'RestaurantHub.Api/**'
+      - 'RestaurantHub.Core/**'
+      - '.github/workflows/directorio-api.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Find solutions and projects
+        run: find . -maxdepth 3 -name '*.sln' -o -name '*.csproj'
+      - name: Restore API dependencies
+        run: dotnet restore RestaurantHub.Api/RestaurantHub.Api.csproj
+      - name: Compile API
+        run: dotnet build RestaurantHub.Api/RestaurantHub.Api.csproj --no-restore --configuration Release
