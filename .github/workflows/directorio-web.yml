@@ -1,0 +1,27 @@
+name: Directorio Sarchí - frontend checks
+on:
+  pull_request:
+    paths:
+      - 'directorio-web/**'
+      - '.github/workflows/directorio-web.yml'
+  push:
+    branches:
+      - feature/directorio-sarchi
+    paths:
+      - 'directorio-web/**'
+      - '.github/workflows/directorio-web.yml'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: directorio-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: TypeScript and Vite production build
+        run: npm run build
