@@ -58,8 +58,8 @@ export default function Admin(){
     finally{setBusy(false);}
   }
   return <main className="shell admin-page"><Link to="/" className="back-link"><ArrowLeft size={18}/> Volver al directorio</Link>
-    {!token?<div className="admin-login"><LockKeyhole size={40}/><h1>Administración del directorio</h1><p>Acceso reservado para la moderación de negocios de Sarchí.</p><form onSubmit={login}>
-      <label>Correo administrativo<input type="email" required autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label>
+    {!token?<div className="admin-login"><LockKeyhole size={40}/><h1>Administración del directorio</h1><p>Ingresá con tu cuenta de Sin Filas autorizada para administrar Directorio Sarchí.</p><form onSubmit={login}>
+      <label>Correo de Sin Filas<input type="email" required autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label>
       <label>Contraseña<input type="password" required autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
       {error&&<p className="form-error" role="alert">{error}</p>}<button type="submit" disabled={busy}>{busy?'Ingresando...':'Iniciar sesión'}</button>
     </form></div>:
