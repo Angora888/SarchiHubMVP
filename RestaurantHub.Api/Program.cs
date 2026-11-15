@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -45,6 +46,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
    };
 });
 builder.Services.AddAuthorization();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("directory-submissions", context =>
+    {
+        // Local abuse control only; use a trusted forwarded-header configuration behind Azure.
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 3, Window = TimeSpan.FromHours(1), QueueLimit = 0,
+            AutoReplenishment = true
+        });
+    });
+});
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 
@@ -74,6 +89,7 @@ if (app.Environment.IsDevelopment())
 // and HTTPS redirection together when the proxy is trusted.
 
 app.UseCors("ReactApp");
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseStaticFiles();
