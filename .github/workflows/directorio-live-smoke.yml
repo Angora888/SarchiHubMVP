@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - feature/directorio-sarchi
+      - feature/directorio-operaciones
     paths:
       - '.github/workflows/directorio-live-smoke.yml'
 permissions:
