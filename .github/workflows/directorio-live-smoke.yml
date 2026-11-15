@@ -44,3 +44,34 @@ jobs:
           assert "access-control-allow-origin: https://directoriosarchi.vercel.app" in headers, "CORS origin missing"
           print("Categories and CORS verified")
           PY
+      - name: Verify public validation, browser preflight and admin isolation
+        env:
+          API_URL: https://sinfilas-api-hmfnexh2h5bsg0c4.canadacentral-01.azurewebsites.net
+          ORIGIN: https://directoriosarchi.vercel.app
+        run: |
+          set -euo pipefail
+          # This intentionally sends invalid data, and MUST NOT create a business.
+          status=$(curl -sS --connect-timeout 12 --max-time 30 -o /tmp/directory-invalid.json -w '%{http_code}' \
+            -X POST "$API_URL/api/directory/submissions" \
+            -H "Content-Type: application/json" -H "Origin: $ORIGIN" \
+            -d '{"name":"","categoryId":0,"district":"","contactEmail":"invalid"}')
+          echo "Invalid submission HTTP: $status"
+          test "$status" = 400
+
+          # The business review API must require an administrator token.
+          status=$(curl -sS --connect-timeout 12 --max-time 30 -o /dev/null -w '%{http_code}' \
+            "$API_URL/api/directory/admin/businesses")
+          echo "Anonymous admin HTTP: $status"
+          test "$status" = 401
+
+          # Preflight of the browser's JSON POST should accept the official origin.
+          status=$(curl -sS --connect-timeout 12 --max-time 30 -o /dev/null \
+            -D /tmp/directory-preflight-headers.txt -w '%{http_code}' -X OPTIONS \
+            "$API_URL/api/directory/submissions" -H "Origin: $ORIGIN" \
+            -H "Access-Control-Request-Method: POST" \
+            -H "Access-Control-Request-Headers: content-type")
+          echo "Submission preflight HTTP: $status"
+          test "$status" = 204
+          grep -qi '^access-control-allow-origin: https://directoriosarchi.vercel.app' /tmp/directory-preflight-headers.txt
+          grep -qi 'access-control-allow-methods:.*POST' /tmp/directory-preflight-headers.txt
+          echo "Invalid input, anonymous admin protection, and browser preflight all verified."
