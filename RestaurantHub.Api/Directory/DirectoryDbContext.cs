@@ -8,9 +8,35 @@ public sealed class DirectoryDbContext : DbContext
     public DirectoryDbContext(DbContextOptions<DirectoryDbContext> options) : base(options) { }
     public DbSet<DirectoryBusiness> Businesses => Set<DirectoryBusiness>();
     public DbSet<DirectoryCategory> Categories => Set<DirectoryCategory>();
+    public DbSet<DirectoryAdminAccount> AdminAccounts => Set<DirectoryAdminAccount>();
+    public DbSet<DirectoryModerationEvent> ModerationEvents => Set<DirectoryModerationEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<DirectoryAdminAccount>(entity =>
+        {
+            entity.ToTable("admin_accounts", "directory");
+            entity.HasKey(a => a.Id);
+            entity.Property(a => a.Id).HasColumnName("id");
+            entity.Property(a => a.Email).HasColumnName("email").HasMaxLength(254).IsRequired();
+            entity.HasIndex(a => a.Email).IsUnique();
+            entity.Property(a => a.PasswordHash).HasColumnName("password_hash").IsRequired();
+            entity.Property(a => a.IsActive).HasColumnName("is_active");
+        });
+        modelBuilder.Entity<DirectoryModerationEvent>(entity =>
+        {
+            entity.ToTable("moderation_events", "directory");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.BusinessId).HasColumnName("business_id");
+            entity.Property(e => e.AdminId).HasColumnName("admin_id");
+            entity.Property(e => e.PreviousStatus).HasColumnName("previous_status").HasMaxLength(20);
+            entity.Property(e => e.NewStatus).HasColumnName("new_status").HasMaxLength(20);
+            entity.Property(e => e.Reason).HasColumnName("reason").HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.HasOne<DirectoryBusiness>().WithMany().HasForeignKey(e => e.BusinessId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<DirectoryAdminAccount>().WithMany().HasForeignKey(e => e.AdminId).OnDelete(DeleteBehavior.Restrict);
+        });
         modelBuilder.Entity<DirectoryCategory>(entity =>
         {
             entity.ToTable("categories", "directory");
