@@ -1,5 +1,8 @@
 name: Directorio Sarchí - live API smoke test
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/directorio-live-smoke.yml'
   workflow_dispatch:
   push:
     branches:
