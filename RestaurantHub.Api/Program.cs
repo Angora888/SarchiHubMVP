@@ -45,10 +45,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
            Encoding.UTF8.GetBytes(jwt["Key"]!))
    };
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("DirectoryAdmin", policy => policy
+        .RequireAuthenticatedUser()
+        .RequireClaim("directory_admin", "true"));
+});
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("directory-admin-login", context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter("directory-admin-login:" + ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5, Window = TimeSpan.FromMinutes(15), QueueLimit = 0,
+            AutoReplenishment = true
+        });
+    });
     options.AddPolicy("directory-submissions", context =>
     {
         // Local abuse control only; use a trusted forwarded-header configuration behind Azure.
