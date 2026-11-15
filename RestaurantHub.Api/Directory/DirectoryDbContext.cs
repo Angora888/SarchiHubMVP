@@ -65,6 +65,7 @@ public sealed class DirectoryDbContext : DbContext
             entity.Property(x => x.Website).HasColumnName("website").HasMaxLength(500);
             entity.Property(x => x.ImageUrl).HasColumnName("image_url").HasMaxLength(500);
             entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
+            entity.Property(x => x.SortOrder).HasColumnName("sort_order").HasDefaultValue(0);
             entity.Property(x => x.CreatedAt).HasColumnName("created_at");
             entity.HasOne(x => x.Category).WithMany().HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => new { x.Status, x.District });

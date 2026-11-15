@@ -18,7 +18,9 @@ const tiles = [
 ];
 const waUrl = (number: string) => {
   const digits = number.replace(/\D/g, '');
-  return 'https://wa.me/' + (digits.length === 8 ? '506' + digits : digits);
+  const fullNumber = digits.length === 8 ? '506' + digits : digits;
+  const message = 'Hola, vi su negocio en Directorio Sarchí y me gustaría obtener más información.';
+  return 'https://wa.me/' + fullNumber + '?text=' + encodeURIComponent(message);
 };
 const safeWebsite = (url: string) => {
   try { const parsed = new URL(url); return ['https:', 'http:'].includes(parsed.protocol) ? parsed.href : null; }
