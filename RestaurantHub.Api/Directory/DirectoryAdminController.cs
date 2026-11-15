@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using RestaurantHub.Api.Data;
 using Microsoft.IdentityModel.Tokens;
 
 namespace RestaurantHub.Api.BusinessDirectory;
@@ -26,9 +27,10 @@ public sealed class DirectoryReviewRequest
 public sealed class DirectoryAdminController : ControllerBase
 {
     private readonly DirectoryDbContext _db;
+    private readonly RestaurantHubContext _sinFilas;
     private readonly IConfiguration _config;
-    public DirectoryAdminController(DirectoryDbContext db, IConfiguration config)
-    { _db = db; _config = config; }
+    public DirectoryAdminController(DirectoryDbContext db, RestaurantHubContext sinFilas, IConfiguration config)
+    { _db = db; _sinFilas = sinFilas; _config = config; }
 
     [HttpPost("login")]
     [EnableRateLimiting("directory-admin-login")]
@@ -37,7 +39,28 @@ public sealed class DirectoryAdminController : ControllerBase
         var email = dto.Email.Trim().ToLowerInvariant();
         var account = await _db.AdminAccounts.AsNoTracking()
             .FirstOrDefaultAsync(a => a.Email == email && a.IsActive, ct);
-        if (account is null || !BCrypt.Net.BCrypt.Verify(dto.Password, account.PasswordHash))
+        if (account is null)
+            return Unauthorized(new { message = "Credenciales incorrectas." });
+
+        // A directory allowlist is mandatory even for Sin Filas restaurant administrators.
+        // Never copy or synchronize passwords from Sin Filas into directory.admin_accounts.
+        bool authenticated;
+        if (account.AuthProvider == "SinFilas")
+        {
+            var user = await _sinFilas.Usuarios.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Correo.ToLower() == email && u.Activo, ct);
+            authenticated = user is not null &&
+                BCrypt.Net.BCrypt.Verify(dto.Password, user.Password);
+        }
+        else if (account.AuthProvider == "Local")
+        {
+            authenticated = BCrypt.Net.BCrypt.Verify(dto.Password, account.PasswordHash);
+        }
+        else
+        {
+            authenticated = false;
+        }
+        if (!authenticated)
             return Unauthorized(new { message = "Credenciales incorrectas." });
 
         var jwt = _config.GetSection("Jwt");
