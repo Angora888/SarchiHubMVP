@@ -4,19 +4,39 @@ import { ArrowLeft, CheckCircle2, Store } from 'lucide-react';
 import { directoryApi, type Category } from './api';
 
 const districts = ['Sarchí Norte','Sarchí Sur','Toro Amarillo','San Pedro','Rodríguez'];
+// Informational list shown while the API module is not yet deployed.
+// Category IDs for submissions MUST always come from the API.
+const previewCategories: Category[] = [
+  { id:-1, slug:'comida', name:'Comida y restaurantes' },
+  { id:-2, slug:'belleza', name:'Belleza y bienestar' },
+  { id:-3, slug:'talleres', name:'Talleres y mecánica' },
+  { id:-4, slug:'tiendas', name:'Tiendas y comercio' },
+  { id:-5, slug:'artesanias', name:'Muebles y artesanías' },
+  { id:-6, slug:'salud', name:'Salud' },
+  { id:-7, slug:'turismo', name:'Turismo' },
+  { id:-8, slug:'servicios', name:'Servicios profesionales' }
+];
 type Submission = { name:string; categoryId:number; district:string; description:string; address:string; phone:string; whatsApp:string; contactEmail:string; website:string };
 const initial: Submission = {name:'',categoryId:0,district:'',description:'',address:'',phone:'',whatsApp:'',contactEmail:'',website:''};
 export default function Register() {
   const [form,setForm] = useState(initial);
-  const [categories,setCategories] = useState<Category[]>([]);
+  const [categories,setCategories] = useState<Category[]>(previewCategories);
+  const [categoriesOnline,setCategoriesOnline] = useState(false);
   const [loading,setLoading] = useState(false);
   const [message,setMessage] = useState('');
   const [error,setError] = useState('');
   const [consent,setConsent] = useState(false);
-  useEffect(() => { const controller = new AbortController(); directoryApi.categories(controller.signal).then(setCategories).catch(()=>setError('No se pudieron cargar las categorías.')); return ()=>controller.abort(); },[]);
+  useEffect(() => {
+    const controller = new AbortController();
+    directoryApi.categories(controller.signal)
+      .then(items => { setCategories(items); setCategoriesOnline(true); })
+      .catch(() => { if (!controller.signal.aborted) { setCategories(previewCategories); setCategoriesOnline(false); } });
+    return () => controller.abort();
+  },[]);
   const change = (key:keyof Submission, value:string|number) => setForm(old=>({...old,[key]:value}));
   async function submit(e:FormEvent) {
     e.preventDefault(); setError('');setMessage('');
+    if (!categoriesOnline) {setError('El registro estará disponible cuando se habilite la API del directorio.');return;}
     if (!consent) {setError('Confirmá que tenés autorización para publicar los datos comerciales.');return;}
     setLoading(true);
     try {
@@ -31,6 +51,7 @@ export default function Register() {
     {message ? <div className="register-success" role="status"><CheckCircle2 size={40}/><h2>¡Solicitud recibida!</h2><p>{message}</p><Link to="/">Volver al directorio</Link></div> :
     <form className="register-form" onSubmit={submit}>
       <h2><Store size={22}/> Información del comercio</h2>
+      {!categoriesOnline && <p className="form-error" role="status">Podés consultar las categorías disponibles, pero el registro está temporalmente deshabilitado mientras conectamos la API. No se enviarán solicitudes.</p>}
       <label>Nombre del negocio *<input required minLength={3} maxLength={180} value={form.name} onChange={e=>change('name',e.target.value)} placeholder="Ej. Mi emprendimiento de Sarchí"/></label>
       <div className="form-pair"><label>Categoría *<select required value={form.categoryId} onChange={e=>change('categoryId',Number(e.target.value))}><option value={0}>Seleccioná una categoría</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
       <label>Distrito *<select required value={form.district} onChange={e=>change('district',e.target.value)}><option value="">Seleccioná un distrito</option>{districts.map(d=><option key={d}>{d}</option>)}</select></label></div>
@@ -41,7 +62,7 @@ export default function Register() {
       <label>Correo de contacto del responsable *<input required type="email" maxLength={254} value={form.contactEmail} onChange={e=>change('contactEmail',e.target.value)} placeholder="correo@ejemplo.com"/><small>Solo para gestionar esta solicitud. No se mostrará públicamente.</small></label>
       <label className="consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>Confirmo que tengo autorización para enviar y publicar los datos comerciales proporcionados.</span></label>
       {error && <p className="form-error" role="alert">{error}</p>}
-      <button disabled={loading || categories.length===0} type="submit">{loading?'Enviando...':'Enviar solicitud de registro'}</button>
+      <button disabled={loading || !categoriesOnline || categories.length===0} type="submit">{loading?'Enviando...':!categoriesOnline?'Registro temporalmente no disponible':'Enviar solicitud de registro'}</button>
       <small>* Los negocios no se publican automáticamente; requieren revisión.</small>
     </form>}
   </main>;
