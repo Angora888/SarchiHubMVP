@@ -13,3 +13,113 @@
 .register-page{max-width:940px;padding-top:42px;padding-bottom:90px}.register-intro{text-align:center;margin:20px auto 35px;max-width:600px}.register-intro h1{font:800 clamp(35px,5vw,52px) Outfit;margin:12px 0}.register-intro p{color:#657e70;line-height:1.7}.register-form{background:#fff;border:1px solid #e2eae3;border-radius:20px;padding:32px;box-shadow:0 12px 35px #0a37200a;display:flex;flex-direction:column;gap:20px}.register-form h2{font:700 24px Outfit;margin:0;display:flex;align-items:center;gap:10px}.register-form label{display:flex;flex-direction:column;gap:8px;font-size:14px;font-weight:700;color:#254739}.register-form input:not([type=checkbox]),.register-form textarea,.register-form select{border:1px solid #d5e3da;border-radius:10px;padding:13px 14px;outline:none;background:#fff;color:#234336;width:100%;font-size:15px}.register-form input:focus,.register-form textarea:focus,.register-form select:focus{border-color:#208968;box-shadow:0 0 0 3px #168e601a}.register-form label small,.register-form>small{color:#70877c;font-size:12px;font-weight:400}.form-pair{display:grid;grid-template-columns:1fr 1fr;gap:18px}.register-form .consent{flex-direction:row;align-items:start;font-weight:500;line-height:1.6}.register-form .consent input{margin-top:5px;accent-color:#166b51}.register-form>button{background:#164c3b;color:#fff;border:0;border-radius:11px;padding:16px;font-weight:800;font-size:15px}.register-form>button:disabled{opacity:.55;cursor:not-allowed}.form-error{background:#fff1f0;color:#a32929;padding:13px;border-radius:10px}.register-success{border:1px solid #cbe4d5;border-radius:18px;text-align:center;background:#f1f9f3;padding:65px 25px;color:#145d3c}.register-success h2{font:700 28px Outfit}.register-success p{line-height:1.8}.register-success a{display:inline-block;background:#17533c;color:#fff;padding:12px 20px;border-radius:10px;font-weight:700}@media(max-width:650px){.register-form{padding:20px}.form-pair{grid-template-columns:1fr}.register-page{padding-top:26px;padding-bottom:50px}}
 
 .admin-page{padding-top:42px;padding-bottom:85px;min-height:80vh}.admin-login{max-width:480px;margin:30px auto;padding:35px;background:#fff;border:1px solid #dde9df;border-radius:20px;text-align:center}.admin-login>svg{color:#197858}.admin-login h1{font:700 30px Outfit}.admin-login p{color:#688272;line-height:1.7}.admin-login form{display:flex;flex-direction:column;gap:18px;text-align:left;margin-top:24px}.admin-login label{font-size:13px;font-weight:700;display:flex;flex-direction:column;gap:7px}.admin-login input{border:1px solid #d5e3da;border-radius:10px;padding:13px;font:inherit}.admin-login button,.admin-actions button,.admin-toolbar button{background:#17543f;border:0;color:white;border-radius:9px;padding:12px 16px;font-weight:700;cursor:pointer}.admin-head{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:15px 0 32px}.admin-head h1{font:800 40px Outfit;margin:9px 0}.admin-head p{color:#6e8173}.admin-logout{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #dce6e0;border-radius:10px;padding:12px}.admin-toolbar{display:flex;gap:15px;align-items:center;margin-bottom:24px}.admin-toolbar select{background:#fff;border:1px solid #dce6e0;padding:12px;border-radius:10px}.admin-toolbar span{color:#62776a;font-size:13px;margin-right:auto}.admin-business{background:#fff;border:1px solid #e1e9e3;border-radius:16px;padding:26px;margin-bottom:18px}.admin-business-head{display:flex;justify-content:space-between;gap:15px;align-items:start}.admin-business h2{font:700 24px Outfit;margin:10px 0}.admin-business>p{line-height:1.65;color:#60766a}.admin-status{background:#eaf3ed;border-radius:100px;padding:7px 11px;font-size:12px;font-weight:800;color:#28684a}.admin-details{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;color:#63786b}.admin-actions{border-top:1px solid #ebf1ed;margin-top:20px;padding-top:20px;display:flex;gap:10px;flex-wrap:wrap}.admin-actions button{display:flex;align-items:center;gap:7px}.admin-actions button:nth-child(2){background:#f8eeee;color:#9d3434}.admin-actions button:disabled{opacity:.5}.admin-notice{padding:13px 16px;background:#e8f7eb;color:#16623b;border-radius:9px}@media(max-width:650px){.admin-head{flex-direction:column;align-items:flex-start}.admin-head h1{font-size:30px}.admin-login{padding:24px 20px}.admin-details{grid-template-columns:1fr}.admin-business{padding:20px}.admin-toolbar{flex-wrap:wrap}}
+
+
+/* Directorio Sarchí — native phonebook-inspired dark experience */
+:root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,'DM Sans',system-ui,sans-serif;color:#f7f7fa;background:#050507}
+html,body,#root{min-height:100%;background:#050507;color:#f7f7fa}
+button,input,select,textarea{color-scheme:dark}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #70a8ff;outline-offset:3px}
+.shell{width:min(840px,calc(100% - 36px))}
+.header{height:70px;background:#08080b;border-color:#222229}
+.brand{color:#f8f8fb;letter-spacing:-.6px;font-size:19px;font-weight:700}
+.brand strong{color:#f8f8fb}.brand-mark{background:linear-gradient(145deg,#2c345d,#161a33);border:1px solid #434b72;border-radius:13px;color:#e9ebff}
+.nav>a{color:#d1d1d8}.nav>a:hover{color:#86b5ff}.nav .nav-cta{background:#20232d;border:1px solid #393b47;color:#f7f7fa;border-radius:12px;padding:11px 14px}
+.mobile-menu{color:#f9f9fb}
+.footer{background:#08080b!important;border-top:1px solid #25252c;color:#dadbe3}
+.footer p{color:#858592!important}
+.directory-home{padding-top:42px;padding-bottom:58px;min-height:75vh}
+.directory-intro{margin:0 0 24px}
+.intro-label{display:flex;align-items:center;gap:8px;color:#9c9daa;font-size:11px;font-weight:750;letter-spacing:1.6px}
+.live-dot{width:7px;height:7px;background:#58cf99;border-radius:50%;box-shadow:0 0 0 4px #58cf991a}
+.directory-intro h1{font:800 clamp(36px,6.5vw,56px)/1.12 -apple-system,BlinkMacSystemFont,'Outfit',sans-serif;letter-spacing:-1.8px;margin:12px 0 7px;color:#f8f8fb}
+.directory-intro h1 span{color:#a2a6ff}
+.directory-intro p{color:#9b9ba7;font-size:15px;margin:0}
+.phone-search{display:flex;align-items:center;gap:12px;background:#1c1c22;border:1px solid #2c2c36;border-radius:17px;padding:5px 6px 5px 15px;height:56px;color:#a9a9b5}
+.phone-search:focus-within{border-color:#777fcd}
+.phone-search input{min-width:0;flex:1;background:transparent;border:none;outline:none;font:500 16px -apple-system,BlinkMacSystemFont,'DM Sans',sans-serif;color:#f7f7fa}
+.phone-search input::placeholder{color:#7e7e8a}
+.phone-search input::-webkit-search-cancel-button{display:none}
+.search-go{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#474caa;color:white;border:0;flex-shrink:0}
+.clear-search{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;border:0;background:#42424c;color:#e9e9ef;padding:0}
+.phone-chips{display:flex;gap:9px;overflow-x:auto;padding:19px 1px 17px;scrollbar-width:none;white-space:nowrap}
+.phone-chips::-webkit-scrollbar{display:none}
+.phone-chips button{flex-shrink:0;background:#1b1b21;border:1px solid #303039;color:#b8b8c4;border-radius:999px;font-size:13px;font-weight:650;padding:10px 15px;transition:background .15s}
+.phone-chips button.selected{background:#3d447e;border-color:#676fbb;color:#fff}
+.phone-toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:21px 0 14px}
+.phone-toolbar>div{display:flex;align-items:baseline;gap:12px}
+.phone-toolbar h2{font:780 27px -apple-system,BlinkMacSystemFont,'Outfit',sans-serif;letter-spacing:-.8px;color:#fff;margin:0}
+.phone-toolbar span{color:#8a8a99;font-size:13px}
+.filter-toggle{display:flex;align-items:center;gap:7px;border:1px solid #31313c;background:#1a1a20;color:#bebec9;border-radius:11px;padding:10px 12px;font-size:13px;font-weight:650}
+.filter-toggle.is-active{color:#b8bcff;border-color:#646a9f}
+.district-filter{display:flex;gap:14px;align-items:center;justify-content:space-between;background:#16161b;border:1px solid #2b2b34;border-radius:14px;padding:12px 15px;margin-bottom:12px;color:#bcbcc6;font-size:13px}
+.district-filter select{min-width:0;max-width:60%;border:1px solid #363642;background:#25252c;color:#eeeef3;border-radius:9px;padding:10px}
+.active-filters{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#b6b8db;font-size:12px;margin:5px 0 12px}
+.active-filters button{background:transparent;border:0;color:#9da7ff;display:flex;align-items:center;gap:4px}
+.phone-directory{background:#141418;border:1px solid #282830;border-radius:19px;overflow:hidden}
+.phone-row{display:flex;align-items:center;gap:12px;padding:13px 14px;min-height:80px;position:relative}
+.phone-row+.phone-row:before{content:"";position:absolute;height:1px;top:0;left:70px;right:14px;background:#303038}
+.phone-avatar{position:relative;flex:0 0 46px;width:46px;height:46px;border-radius:50%;background:linear-gradient(140deg,#50547a,#252641);display:grid;place-items:center;overflow:hidden;color:#fff}
+.phone-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.phone-avatar .avatar-letter{font-weight:760;font-size:21px}
+.phone-avatar.image-failed img{display:none}
+.phone-identity{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.phone-name{display:block;color:#f4f4f8;font-size:15px;font-weight:760;letter-spacing:-.25px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phone-number{color:#c2c2ce;font-size:13px;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phone-meta{color:#787885;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phone-actions{display:flex;align-items:center;flex-shrink:0;gap:5px}
+.phone-action{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#24252d;border:1px solid #333540;color:#d0d5ff;transition:background .15s,transform .15s}
+.phone-action:active{transform:scale(.92)}
+.phone-action.info{color:#8dacf9}.phone-action.call{color:#7ce7aa}.phone-action.wa{color:#64dca2}
+.phone-action.unavailable{opacity:.22;cursor:not-allowed}
+.phone-empty{padding:58px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;color:#9293a3}
+.phone-empty>svg{color:#6d75d6}.phone-empty h3{color:#f5f5fb;font-size:20px;margin:15px 0 4px}.phone-empty p{font-size:14px;line-height:1.6}.phone-empty button{background:#454ca4;border:0;color:#fff;border-radius:10px;padding:11px 16px}
+.skeleton-row .skeleton-avatar{height:45px;width:45px;flex:0 0 45px;border-radius:50%;background:#292932;animation:pulse 1.4s infinite}
+.skeleton-text{flex:1}.skeleton-text i{display:block;width:60%;height:11px;border-radius:5px;background:#2b2b33;margin:8px 0;animation:pulse 1.4s infinite}.skeleton-text i:last-child{width:36%}
+.directory-register{display:flex;align-items:center;gap:14px;margin-top:25px;padding:17px;background:#17171d;border:1px solid #30303b;border-radius:16px;color:#f8f8fb}
+.directory-register>span{display:grid;place-items:center;width:41px;height:41px;border-radius:12px;background:#33396e;color:#c4c9ff}
+.directory-register>div{flex:1;display:flex;flex-direction:column;gap:4px}
+.directory-register strong{font-size:14px}.directory-register small{font-size:12px;color:#92929e}.directory-register>svg{color:#969ac0}
+.pagination{color:#9b9bad}.pagination button{background:#21212a;color:#dcdcf2;border-color:#3b3b48}
+.pagination button:disabled{opacity:.3}
+.back-link{color:#b5b8ff!important}
+.detail-page,.register-page,.admin-page{color:#f3f3f6}
+.detail-main,.contact-card,.register-form,.admin-login,.admin-business,.empty-state{background:#15151a!important;border-color:#34343c!important;color:#f3f3f8!important;box-shadow:none!important}
+.detail-main h1,.contact-card h2,.register-intro h1,.admin-login h1,.admin-head h1,.empty-state h2,.empty-state h3{color:#f6f6fb!important}
+.detail-desc,.contact-card p,.register-intro p,.admin-login p,.admin-head p,.admin-business>p{color:#a2a2af!important}
+.detail-image{background:#23232a!important}
+.eyebrow{color:#a5abff}
+.register-form h2,.register-form label,.admin-login label,.admin-business h2{color:#eaeaf4!important}
+.register-form input:not([type=checkbox]),.register-form textarea,.register-form select,.admin-login input,.admin-toolbar select{background:#22222a!important;color:#f7f7fa!important;border-color:#42424d!important}
+.register-form label small,.register-form>small{color:#a2a2ae!important}
+.register-form>button,.admin-login button,.admin-actions button,.admin-toolbar button,.empty-state button,.empty-state a{background:#4851a0!important;color:#fff!important}
+.form-error{background:#37252b!important;color:#ffc4d1!important}
+.register-success,.admin-notice{background:#153529!important;color:#c0f5d6!important;border-color:#285740!important}
+.register-success h2{color:#e1fce9}
+.admin-business-head .admin-status{background:#293347;color:#c2d7ff}
+.admin-details,.admin-toolbar span{color:#acacb7}
+.admin-logout{background:#24242b;color:#e8e8f3;border-color:#3a3a45}
+.admin-actions{border-color:#33333b}
+.admin-actions button:nth-child(2){background:#492d34!important;color:#ffe0e4!important}
+.contact-actions a{background:#242832!important;color:#f2f4ff!important;border-color:#3a3e4a!important}
+.contact-actions .contact-primary{background:#214b37!important}
+@media(max-width:700px){
+ .shell{width:calc(100% - 28px)}
+ .header{height:62px}.brand{font-size:17px}.brand-mark{width:35px;height:35px;font-size:12px}
+ .mobile-menu{display:grid;place-items:center;width:40px;height:40px}
+ .nav{background:#18181e;border:1px solid #33333c;box-shadow:0 15px 32px #000a}
+ .nav a{color:#eeeef4}
+ .directory-home{padding-top:29px}
+ .directory-intro h1{font-size:39px}
+ .phone-row{padding:11px 10px;gap:9px;min-height:73px}
+ .phone-avatar{flex-basis:41px;width:41px;height:41px}
+ .phone-row+.phone-row:before{left:59px;right:10px}
+ .phone-name{font-size:14px}
+ .phone-number{font-size:12px}.phone-meta{font-size:10px}
+ .phone-actions{gap:4px}
+ .phone-action{width:32px;height:32px}
+ .phone-action svg{width:17px;height:17px}
+ .phone-toolbar h2{font-size:24px}
+ .phone-chips{margin-right:-14px}
+}
+@media(max-width:360px){.phone-row{gap:6px}.phone-actions{gap:3px}.phone-action{width:29px;height:29px}.phone-avatar{flex-basis:38px;width:38px;height:38px}.phone-meta{font-size:9px}}
