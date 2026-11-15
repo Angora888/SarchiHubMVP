@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Clock3, ExternalLink, MapPin, Menu, MessageCircle, Phone, Search, Store, X } from 'lucide-react';
 import { directoryApi, type Business, type Category } from './api';
+import Register from './Register';
 
 const districts = ['Sarchí Norte', 'Sarchí Sur', 'Toro Amarillo', 'San Pedro', 'Rodríguez'];
 const tiles = [
@@ -30,7 +31,7 @@ function Header() {
     <nav className={open ? 'nav open' : 'nav'}>
       <Link to="/" onClick={() => setOpen(false)}>Explorar negocios</Link>
       <a href="#categorias" onClick={() => setOpen(false)}>Categorías</a>
-      <a className="nav-cta" href="mailto:directorio@example.invalid?subject=Registrar%20mi%20negocio" onClick={e => { e.preventDefault(); alert('El registro de negocios estará disponible próximamente.'); setOpen(false); }}>Registrar mi negocio <ArrowRight size={15}/></a>
+      <Link className="nav-cta" to="/registrar-negocio" onClick={() => setOpen(false)}>Registrar mi negocio <ArrowRight size={15}/></Link>
     </nav>
   </div></header>;
 }
@@ -105,7 +106,7 @@ function Home() {
           <div className="pagination"><button disabled={page === 1} onClick={() => changePage(page - 1)}>Anterior</button><span>Página {page} de {Math.max(1, Math.ceil(data.total / data.pageSize))}</span><button disabled={page * data.pageSize >= data.total} onClick={() => changePage(page + 1)}>Siguiente</button></div></>
         : <div className="empty-state"><Search size={36}/><h3>Aún no encontramos negocios con estos filtros</h3><p>Probá otra palabra o explorá los demás distritos de Sarchí.</p><button onClick={() => setParams(new URLSearchParams())}>Ver todos los negocios</button></div>}
       </section>
-      <section className="join-banner"><div><span className="eyebrow light">CREZCAMOS JUNTOS</span><h2>¿Tenés un negocio en Sarchí?</h2><p>Queremos que más personas conozcan lo que hacés. Muy pronto podrás registrar tu comercio gratis.</p></div><span className="join-pill">Próximamente <ArrowRight size={17}/></span></section>
+      <section className="join-banner"><div><span className="eyebrow light">CREZCAMOS JUNTOS</span><h2>¿Tenés un negocio en Sarchí?</h2><p>Queremos que más personas conozcan lo que hacés. Registrá tu negocio gratis y ayudanos a conectar Sarchí.</p></div><Link className="join-pill" to="/registrar-negocio">Registrar negocio <ArrowRight size={17}/></Link></section>
     </main>
   </>;
   function changePage(n: number) { const next = new URLSearchParams(params); next.set('page', String(n)); setParams(next); document.getElementById('resultados')?.scrollIntoView({ behavior: 'smooth' }); }
@@ -125,4 +126,4 @@ function Detail() {
       {biz.website && safeWebsite(biz.website) && <a href={safeWebsite(biz.website)!} target="_blank" rel="noopener noreferrer"><ExternalLink size={18}/> Visitar sitio web</a>}</div></aside></div>}
   </main>;
 }
-export default function App() { return <><Header/><Routes><Route path="/" element={<Home/>}/><Route path="/negocio/:slug" element={<Detail/>}/><Route path="*" element={<main className="shell detail-page empty-state"><Clock3 size={32}/><h2>Página no encontrada</h2><Link to="/">Volver al inicio</Link></main>}/></Routes><Footer/></>; }
+export default function App() { return <><Header/><Routes><Route path="/" element={<Home/>}/><Route path="/negocio/:slug" element={<Detail/>}/><Route path="/registrar-negocio" element={<Register/>}/><Route path="*" element={<main className="shell detail-page empty-state"><Clock3 size={32}/><h2>Página no encontrada</h2><Link to="/">Volver al inicio</Link></main>}/></Routes><Footer/></>; }
