@@ -72,6 +72,16 @@ function Home() {
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState('');
   const [filtersOpen,setFiltersOpen] = useState(false);
+  const [dataRefresh,setDataRefresh] = useState(0);
+  useEffect(()=>{
+    // Installed Windows sites can stay open for days. Refresh listings on return
+    // and periodically while visible, without reloading the entire application.
+    const refresh = () => { if (document.visibilityState === 'visible') setDataRefresh(n=>n+1); };
+    window.addEventListener('focus',refresh);
+    document.addEventListener('visibilitychange',refresh);
+    const interval=window.setInterval(refresh,90_000);
+    return ()=>{window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);window.clearInterval(interval);};
+  },[]);
   useEffect(()=>{setTerm(search)},[search]);
   useEffect(()=>{
     const controller=new AbortController();
@@ -87,7 +97,7 @@ function Home() {
     query.set('page',String(page));query.set('pageSize','30');
     directoryApi.businesses(query,controller.signal).then(setData).catch(e=>{if(!controller.signal.aborted){setError((e as Error).message);setData(null);}}).finally(()=>{if(!controller.signal.aborted)setLoading(false)});
     return ()=>controller.abort();
-  },[search,district,categoryId,page]);
+  },[search,district,categoryId,page,dataRefresh]);
   function update(key:string,value:string){
     const next=new URLSearchParams(params);
     if(value)next.set(key,value);else next.delete(key);
