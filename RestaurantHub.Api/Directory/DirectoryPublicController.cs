@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace RestaurantHub.Api.Directory;
+namespace RestaurantHub.Api.BusinessDirectory;
 
 [ApiController]
 [Route("api/directory")]
