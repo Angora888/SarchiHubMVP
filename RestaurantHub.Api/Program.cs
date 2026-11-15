@@ -75,7 +75,10 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+var allowedOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>())
+    .Append("https://directoriosarchi.vercel.app")
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
 
 builder.Services.AddCors(options =>
 {
