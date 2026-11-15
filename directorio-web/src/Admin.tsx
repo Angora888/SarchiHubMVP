@@ -8,8 +8,18 @@ const base = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/
 async function api<T>(path:string, method:string, token:string|null, body?:unknown):Promise<T>{
   if (!base) throw new Error('Falta configurar la URL de la API.');
   const response=await fetch(base+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined});
-  const data=await response.json().catch(()=>({message:'Respuesta inesperada del servidor.'}));
-  if (!response.ok) throw new Error(response.status===401?'La sesión expiró o las credenciales son incorrectas.':(data.message || 'Ocurrió un error.'));
+  // Rate limits and infrastructure errors may have an empty or HTML response.
+  const data=await response.json().catch(()=>null);
+  if (!response.ok) {
+    const serverMessage = data && typeof data.message === 'string' ? data.message : null;
+    if (response.status === 429) throw new Error('Demasiados intentos de inicio de sesión. Esperá 15 minutos antes de volver a probar.');
+    if (response.status === 401) throw new Error('Credenciales incorrectas o acceso administrativo aún no habilitado.');
+    if (response.status === 403) throw new Error('Esta cuenta no tiene permisos para administrar el directorio.');
+    if (response.status === 404) throw new Error('El servicio de acceso administrativo todavía no está disponible en la API.');
+    if (response.status >= 500) throw new Error('El servidor está presentando un problema temporal (HTTP '+response.status+'). No es necesario cambiar tu contraseña.');
+    throw new Error(serverMessage || 'No fue posible iniciar sesión (HTTP '+response.status+').');
+  }
+  if (!data || typeof data !== 'object') throw new Error('La API devolvió una respuesta no válida.');
   return data as T;
 }
 export default function Admin(){
