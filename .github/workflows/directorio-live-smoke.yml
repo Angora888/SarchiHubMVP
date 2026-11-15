@@ -1,0 +1,77 @@
+name: Directorio Sarchí - live API smoke test
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/directorio-live-smoke.yml'
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/directorio-operaciones
+    paths:
+      - '.github/workflows/directorio-live-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify categories and CORS from the public Azure endpoint
+        env:
+          API_URL: https://sinfilas-api-hmfnexh2h5bsg0c4.canadacentral-01.azurewebsites.net
+          ORIGIN: https://directoriosarchi.vercel.app
+        run: |
+          set -euo pipefail
+          echo "Checking Directory Sarchí categories from Azure (public response only)"
+          for attempt in 1 2 3; do
+            code=$(curl --connect-timeout 12 --max-time 30 -sS -o /tmp/directory-categories.json -D /tmp/directory-headers.txt -w '%{http_code}' -H "Origin: $ORIGIN" "$API_URL/api/directory/categories") || code=000
+            echo "Attempt $attempt: HTTP $code"
+            if [ "$code" = "200" ]; then break; fi
+            sleep 5
+          done
+          if [ "$code" != "200" ]; then
+            echo "Azure API has not published GET /api/directory/categories or is unreachable."
+            head -c 500 /tmp/directory-categories.json || true
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          with open("/tmp/directory-categories.json", encoding="utf8") as f: data=json.load(f)
+          assert isinstance(data, list), "Expected categories array"
+          print("Categories returned:", len(data))
+          assert len(data) >= 8, "Expected at least eight categories"
+          assert all(isinstance(c.get("id"),int) and c.get("name") for c in data), "Invalid category fields"
+          with open("/tmp/directory-headers.txt",encoding="utf8") as f: headers=f.read().lower()
+          assert "access-control-allow-origin: https://directoriosarchi.vercel.app" in headers, "CORS origin missing"
+          print("Categories and CORS verified")
+          PY
+      - name: Verify public validation, browser preflight and admin isolation
+        env:
+          API_URL: https://sinfilas-api-hmfnexh2h5bsg0c4.canadacentral-01.azurewebsites.net
+          ORIGIN: https://directoriosarchi.vercel.app
+        run: |
+          set -euo pipefail
+          # This intentionally sends invalid data, and MUST NOT create a business.
+          status=$(curl -sS --connect-timeout 12 --max-time 30 -o /tmp/directory-invalid.json -w '%{http_code}' \
+            -X POST "$API_URL/api/directory/submissions" \
+            -H "Content-Type: application/json" -H "Origin: $ORIGIN" \
+            -d '{"name":"","categoryId":0,"district":"","contactEmail":"invalid"}')
+          echo "Invalid submission HTTP: $status"
+          test "$status" = 400
+
+          # The business review API must require an administrator token.
+          status=$(curl -sS --connect-timeout 12 --max-time 30 -o /dev/null -w '%{http_code}' \
+            "$API_URL/api/directory/admin/businesses")
+          echo "Anonymous admin HTTP: $status"
+          test "$status" = 401
+
+          # Preflight of the browser's JSON POST should accept the official origin.
+          status=$(curl -sS --connect-timeout 12 --max-time 30 -o /dev/null \
+            -D /tmp/directory-preflight-headers.txt -w '%{http_code}' -X OPTIONS \
+            "$API_URL/api/directory/submissions" -H "Origin: $ORIGIN" \
+            -H "Access-Control-Request-Method: POST" \
+            -H "Access-Control-Request-Headers: content-type")
+          echo "Submission preflight HTTP: $status"
+          test "$status" = 204
+          grep -qi '^access-control-allow-origin: https://directoriosarchi.vercel.app' /tmp/directory-preflight-headers.txt
+          grep -qi 'access-control-allow-methods:.*POST' /tmp/directory-preflight-headers.txt
+          echo "Invalid input, anonymous admin protection, and browser preflight all verified."
