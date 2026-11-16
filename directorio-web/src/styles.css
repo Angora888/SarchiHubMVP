@@ -138,3 +138,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .directory-wa-controls button:last-child{background:#245b42;color:#e0ffec;border-color:#387654}
 .directory-wa-editor small{display:block;color:#9698a8;font-size:11px;line-height:1.5;margin-top:9px}
 @media(max-width:650px){.directory-wa-controls input{flex:1 1 100%}.directory-wa-controls button{flex:1}.directory-order-controls{align-items:flex-start}}
+
+
+/* Anonymous visit counter, dark-mode footer */
+.footer-right{display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.visit-counter{display:flex;align-items:center;gap:11px;background:#171821;border:1px solid #373847;border-radius:14px;padding:10px 14px;min-width:166px}
+.visit-counter-icon{font-size:21px}
+.visit-counter>span:last-child{display:flex;flex-direction:column;gap:2px}
+.visit-counter strong{font-size:20px;letter-spacing:-.4px;color:#f1f1ff;font-variant-numeric:tabular-nums}
+.visit-counter small{font-size:11px;color:#a0a2bb}
+@media(max-width:650px){.footer-right{align-items:flex-start}.visit-counter{margin-top:8px}}

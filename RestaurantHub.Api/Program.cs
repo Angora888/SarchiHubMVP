@@ -63,6 +63,16 @@ builder.Services.AddRateLimiter(options =>
             AutoReplenishment = true
         });
     });
+    options.AddPolicy("directory-visits", context =>
+    {
+        // Simple abuse limit; browser sessions are deduplicated on the client.
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter("directory-visits:" + ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 100, Window = TimeSpan.FromHours(1), QueueLimit = 0,
+            AutoReplenishment = true
+        });
+    });
     options.AddPolicy("directory-submissions", context =>
     {
         // Local abuse control only; use a trusted forwarded-header configuration behind Azure.
