@@ -38,7 +38,30 @@ function Header() {
     </nav>
   </div></header>;
 }
-function Footer() { return <footer className="footer"><div className="shell foot-inner"><div><strong>Directorio Sarchí</strong><p>Lo que buscás, está en Sarchí. 🇨🇷</p></div><p>Hecho para conectar a nuestra comunidad.</p></div></footer>; }
+function Footer() {
+  const [visits, setVisits] = useState<number | null>(null);
+  useEffect(() => {
+    const key = 'directorio-sarchi-visited-this-session';
+    let alreadyCounted = false;
+    try { alreadyCounted = sessionStorage.getItem(key) === '1'; } catch { /* Storage can be disabled. */ }
+    directoryApi.visitCount(!alreadyCounted).then(total => {
+      if (!alreadyCounted) {
+        try { sessionStorage.setItem(key, '1'); } catch { /* Private mode or blocked storage. */ }
+      }
+      setVisits(total);
+    }).catch(() => { /* The public directory must still work if analytics is unavailable. */ });
+  }, []);
+  return <footer className="footer"><div className="shell foot-inner">
+    <div><strong>Directorio Sarchí</strong><p>Lo que buscás, está en Sarchí. 🇨🇷</p></div>
+    <div className="footer-right">
+      <p>Hecho para conectar a nuestra comunidad.</p>
+      <div className="visit-counter" aria-live="polite" aria-label="Visitas registradas en el directorio">
+        <span className="visit-counter-icon" aria-hidden="true">👀</span>
+        <span><strong>{visits === null ? '—' : visits.toLocaleString('es-CR')}</strong><small>visitas registradas</small></span>
+      </div>
+    </div>
+  </div></footer>;
+}
 function BusinessCard({ b }: { b: Business }) {
   const detail = '/negocio/' + encodeURIComponent(b.slug);
   const phone = b.phone?.replace(/[^+0-9]/g,'') || '';
