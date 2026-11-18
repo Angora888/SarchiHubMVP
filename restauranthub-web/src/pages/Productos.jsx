@@ -9,6 +9,7 @@ function Productos() {
     const [categorias, setCategorias] = useState([]);
 	const { toast, showToast, hideToast} = useToast();
     const [busqueda, setBusqueda] = useState("");
+    const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todos");
 
     const navigate = useNavigate();
 
@@ -85,14 +86,14 @@ function Productos() {
         }
     };
 
+    const categoriasFiltro = [{ id: "Todos", name: "Todos" }, ...categorias.filter(c => productos.some(p => Number(p.categoriaId) === Number(c.id)))];
+
     const productosFiltrados = productos.filter(producto => {
         const texto = busqueda.toLowerCase();
 
-        return (
+        return (categoriaSeleccionada === "Todos" || Number(producto.categoriaId) === Number(categoriaSeleccionada)) && (
             producto.nombre.toLowerCase().includes(texto) ||
-            (producto.descripcion ?? "")
-                .toLowerCase()
-                .includes(texto)
+            (producto.descripcion ?? "").toLowerCase().includes(texto)
         );
     });
 
@@ -131,6 +132,17 @@ function Productos() {
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
                     />
+
+                    <div className="d-flex flex-wrap gap-2 mb-4" aria-label="Filtrar por categoría">
+                        {categoriasFiltro.map(categoria => (
+                            <button key={categoria.id} type="button"
+                                className={String(categoriaSeleccionada) === String(categoria.id) ? "btn btn-success" : "btn btn-outline-success"}
+                                aria-pressed={String(categoriaSeleccionada) === String(categoria.id)}
+                                onClick={() => setCategoriaSeleccionada(categoria.id)}>
+                                {categoria.name}
+                            </button>
+                        ))}
+                    </div>
 
                     <div className="table-responsive">
 
