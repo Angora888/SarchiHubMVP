@@ -32,10 +32,27 @@ export const directoryApi = {
   submit: async (submission: {name:string;categoryId:number;district:string;description:string;address:string;phone:string;whatsApp:string;contactEmail:string;website:string}): Promise<{message:string}> => {
     if (!base) throw new Error('La API del directorio todavía no está disponible.');
     const response = await fetch(base + '/api/directory/submissions', {
-      method:'POST', headers: {'Content-Type':'application/json'}, body:JSON.stringify(submission)
+      method:'POST', headers: {'Content-Type':'application/json'}, body:JSON.stringify({ ...submission, description:submission.description.trim() || null, address:submission.address.trim() || null, phone:submission.phone.trim() || null, whatsApp:submission.whatsApp.trim() || null, website:submission.website.trim() || null })
     });
     const data = await response.json().catch(()=>({message:'Error del servidor.'}));
-    if (!response.ok) throw new Error(response.status===429 ? 'Demasiadas solicitudes. Intentá de nuevo más tarde.' : (typeof data.message==='string'?data.message:'Revisá los datos del formulario.'));
+    if (!response.ok) {
+      if (response.status === 429) throw new Error('Demasiadas solicitudes. Intentá de nuevo más tarde.');
+      const fieldNames: Record<string,string> = {
+        Name:'Nombre del negocio', CategoryId:'Categoría', District:'Distrito',
+        Description:'Descripción', Address:'Dirección', Phone:'Teléfono',
+        WhatsApp:'WhatsApp', ContactEmail:'Correo de contacto', Website:'Sitio web'
+      };
+      const errors = data && typeof data === 'object' && 'errors' in data
+        ? (data.errors as Record<string,string[]>) : undefined;
+      if (errors && typeof errors === 'object') {
+        const details = Object.entries(errors).flatMap(([field, messages]) => {
+          const label = fieldNames[field.split('.').pop() || ''] || field;
+          return Array.isArray(messages) && messages.length ? [label + ': ' + messages.join(', ')] : [];
+        });
+        if (details.length) throw new Error('Revisá estos campos: ' + details.join(' · '));
+      }
+      throw new Error(typeof data.message === 'string' ? data.message : 'No se pudo registrar el negocio. Revisá los datos e intentá de nuevo.');
+    }
     return data;
   },
   business: (slug: string, signal?: AbortSignal) =>
