@@ -1,3 +1,4 @@
+import PageSkeleton from "../components/PageSkeleton";
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import AppToast from "../components/AppToast";
@@ -51,16 +52,7 @@ const cobrarPedido = async (id) => {
 };
 
 
-    if (loading) {
-        return (
-            <div className="container text-center py-5">
-                <div className="spinner-border text-success"></div>
-                <h4 className="mt-3">
-                    Cargando pedidos...
-                </h4>
-            </div>
-        );
-    }
+    if (loading) return <PageSkeleton variant="table" />;
 
     return (
         <div className="container-fluid py-4">
