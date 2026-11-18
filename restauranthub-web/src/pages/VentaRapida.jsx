@@ -30,6 +30,7 @@ function VentaRapida() {
 
     const [busqueda, setBusqueda] =
         useState("");
+    const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todos");
 
     const [loading, setLoading] =
         useState(true);
@@ -247,6 +248,11 @@ function VentaRapida() {
             categoriasExtrasIds
         ]);
 
+    const categorias = useMemo(() => [
+        "Todos",
+        ...new Set(productosVisibles.map(p => p.categoria).filter(c => c && c.trim()))
+    ], [productosVisibles]);
+
     // ==========================================
     // FILTRAR PRODUCTOS
     // ==========================================
@@ -258,10 +264,6 @@ function VentaRapida() {
                 busqueda
                     .trim()
                     .toLowerCase();
-
-            if (!texto) {
-                return productosVisibles;
-            }
 
             return productosVisibles.filter(
                 producto => {
@@ -278,17 +280,15 @@ function VentaRapida() {
                         producto.categoria
                             ?.toLowerCase() ?? "";
 
-                    return (
-                        nombre.includes(texto) ||
-                        descripcion.includes(texto) ||
-                        categoria.includes(texto)
-                    );
+                    return (categoriaSeleccionada === "Todos" || producto.categoria === categoriaSeleccionada) &&
+                        (!texto || nombre.includes(texto) || descripcion.includes(texto) || categoria.includes(texto));
                 }
             );
 
         }, [
             productosVisibles,
-            busqueda
+            busqueda,
+            categoriaSeleccionada
         ]);
 
     // ==========================================
@@ -896,6 +896,17 @@ function VentaRapida() {
                                         )
                                 }
                             />
+
+                            <div className="d-flex flex-wrap gap-2 mb-4" aria-label="Filtrar por categoría">
+                                {categorias.map(categoria => (
+                                    <button key={categoria} type="button"
+                                        className={categoriaSeleccionada === categoria ? "btn btn-success" : "btn btn-outline-success"}
+                                        aria-pressed={categoriaSeleccionada === categoria}
+                                        onClick={() => setCategoriaSeleccionada(categoria)}>
+                                        {categoria}
+                                    </button>
+                                ))}
+                            </div>
 
                             <div className="row g-3">
 
