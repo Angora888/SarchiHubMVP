@@ -1,3 +1,4 @@
+import PageSkeleton from "../components/PageSkeleton";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -1097,21 +1098,7 @@ function Reportes() {
     // LOADING
     // ==========================================
 
-    if (loading) {
-
-        return (
-
-            <div className="container py-5 text-center">
-
-                <div className="spinner-border text-success"></div>
-
-                <h4 className="mt-3">
-                    Cargando reporte...
-                </h4>
-
-            </div>
-        );
-    }
+    if (loading) return <PageSkeleton variant="table" />;
 
     return (
 
