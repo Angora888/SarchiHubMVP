@@ -1,3 +1,4 @@
+import PageSkeleton from "../components/PageSkeleton";
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import AppToast from "../components/AppToast";
@@ -110,17 +111,7 @@ function Cocina() {
         p => p.estado === "Preparando"
     );
 
-    if (loading) {
-        return (
-            <div className="container py-5 text-center">
-                <div className="spinner-border text-success"></div>
-
-                <h4 className="mt-3">
-                    Cargando pedidos...
-                </h4>
-            </div>
-        );
-    }
+    if (loading) return <PageSkeleton variant="cards" />;
 
     return (
         <div className="container-fluid py-4">
