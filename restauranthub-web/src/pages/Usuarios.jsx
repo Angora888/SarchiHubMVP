@@ -5,6 +5,9 @@ function Usuarios() {
 	const [usuarios, setUsuarios] = useState([]);
 	const [restaurantes, setRestaurantes] = useState([]);
 	const [busqueda, setBusqueda] = useState("");
+  const [resetEnCurso, setResetEnCurso] = useState(null);
+  const [resultadoReset, setResultadoReset] = useState(null);
+  const [errorReset, setErrorReset] = useState("");
 	      const navigate = useNavigate();
 	   useEffect(() => {
        cargarUsuarios();
@@ -19,6 +22,23 @@ const cargarRestaurantes = async () => {
    const respuesta = await api.get("/Restaurants");
    setRestaurantes(respuesta.data);
 }
+
+const resetearPassword = async (usuario) => {
+  if (!window.confirm(`¿Restablecer la contraseña de ${usuario.nombre}? La anterior dejará de funcionar.`)) return;
+  setResetEnCurso(usuario.id);
+  setResultadoReset(null);
+  setErrorReset("");
+  try {
+    const respuesta = await api.post(`/Usuarios/${usuario.id}/reset-password`);
+    setResultadoReset({ nombre: usuario.nombre, password: respuesta.data.temporaryPassword });
+  } catch (error) {
+    setErrorReset(error.response?.status === 403 || error.response?.status === 404
+      ? "No tenés permisos para restablecer este usuario."
+      : "No se pudo restablecer la contraseña.");
+  } finally {
+    setResetEnCurso(null);
+  }
+};
 
 const usuariosFiltrados =
 usuarios.filter(u =>
@@ -66,6 +86,18 @@ return (
            Nuevo Usuario
 </button>
 </div>
+{errorReset && <div className="alert alert-danger" role="alert">{errorReset}</div>}
+{resultadoReset && (
+  <div className="alert alert-warning" role="status">
+    <strong>Contraseña temporal de {resultadoReset.nombre}</strong>
+    <p className="mb-2">Copiala ahora y compartila de forma privada. No volverá a mostrarse.</p>
+    <div className="d-flex flex-wrap gap-2 align-items-center">
+      <code className="user-select-all">{resultadoReset.password}</code>
+      <button type="button" className="btn btn-sm btn-outline-dark" onClick={() => navigator.clipboard.writeText(resultadoReset.password)}>Copiar</button>
+      <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setResultadoReset(null)}>Ocultar</button>
+    </div>
+  </div>
+)}
 <div className="card shadow border-0 rounded-4">
 <div className="card-body">
 <input
@@ -82,6 +114,7 @@ return (
 <th style={{ width: "160px" }}>Rol</th>
 <th style={{ width: "220px" }}>Restaurante</th>
 <th style={{ width: "120px" }}>Activo</th>
+<th>Contraseña</th>
 </tr>
 </thead>
 <tbody>
@@ -184,6 +217,13 @@ usuario.id,
                                        }}
                                    />
 </div>
+</td>
+<td>
+{usuario.rol === "Cliente" && (
+<button type="button" className="btn btn-sm btn-outline-warning" disabled={resetEnCurso !== null} onClick={() => resetearPassword(usuario)}>
+{resetEnCurso === usuario.id ? "Generando..." : "🔐 Restablecer"}
+</button>
+)}
 </td>
 </tr>
                    ))}
