@@ -45,6 +45,8 @@ function PedidoXpress() {
     const [busqueda, setBusqueda] =
         useState("");
 
+    const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todos");
+
     // =========================
     // ESTADOS UI
     // =========================
@@ -1038,6 +1040,11 @@ const manejarCambioTelefono = (
         }
     };
 
+    const categorias = [
+        "Todos",
+        ...new Set(productosVisibles.map(p => p.categoria).filter(c => c && c.trim()))
+    ];
+
     // =========================
     // FILTRAR PRODUCTOS
     // =========================
@@ -1051,20 +1058,12 @@ const manejarCambioTelefono = (
                         .toLowerCase()
                         .trim();
 
-                return (
-
-                    p.nombre
-                        ?.toLowerCase()
-                        .includes(
-                            texto
-                        ) ||
-
-                    p.categoria
-                        ?.toLowerCase()
-                        .includes(
-                            texto
-                        )
-                );
+                const coincideCategoria = categoriaSeleccionada === "Todos" ||
+                    p.categoria === categoriaSeleccionada;
+                const coincideBusqueda = !texto ||
+                    (p.nombre ?? "").toLowerCase().includes(texto) ||
+                    (p.categoria ?? "").toLowerCase().includes(texto);
+                return coincideCategoria && coincideBusqueda;
             }
         );
 
@@ -1438,6 +1437,17 @@ const manejarCambioTelefono = (
                                         )
                                 }
                             />
+
+                            <div className="d-flex flex-wrap gap-2 mb-3" aria-label="Filtrar productos por categoría">
+                                {categorias.map(categoria => (
+                                    <button type="button" key={categoria}
+                                        className={categoriaSeleccionada === categoria ? "btn btn-success" : "btn btn-outline-success"}
+                                        aria-pressed={categoriaSeleccionada === categoria}
+                                        onClick={() => setCategoriaSeleccionada(categoria)}>
+                                        {categoria}
+                                    </button>
+                                ))}
+                            </div>
 
                             <div className="row g-2">
 
