@@ -1,3 +1,4 @@
+import PageSkeleton from "../components/PageSkeleton";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -161,16 +162,7 @@ function Pedidos() {
    // =========================
    // LOADING
    // =========================
-   if (loading) {
-       return (
-<div className="container py-5 text-center">
-<div className="spinner-border text-success"></div>
-<h5 className="mt-3">
-                   Cargando pedidos...
-</h5>
-</div>
-       );
-   }
+   if (loading) return <PageSkeleton variant="cards" />;
    // =========================
    // UI
    // =========================
