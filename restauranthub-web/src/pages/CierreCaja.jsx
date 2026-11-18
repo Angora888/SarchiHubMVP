@@ -1,3 +1,4 @@
+import PageSkeleton from "../components/PageSkeleton";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -35,23 +36,7 @@ function CierreCaja() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="text-center mt-5">
-                <div className="spinner-border text-success"></div>
-            </div>
-        );
-    }
-
-    if (!resumen) {
-        return (
-            <div className="container py-5">
-                <div className="alert alert-warning">
-                    No fue posible cargar la información.
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <PageSkeleton variant="table" />;
 
     return (
         <div className="container py-4">
