@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import "./PageSkeleton.css";
 
 /**
@@ -5,6 +6,13 @@ import "./PageSkeleton.css";
  * Variants preserve the shape of the content users are waiting for.
  */
 export default function PageSkeleton({ variant = "cards", publicPage = false }) {
+    const [visible, setVisible] = useState(false);
+    useEffect(() => {
+        const timeout = setTimeout(() => setVisible(true), 220);
+        return () => clearTimeout(timeout);
+    }, []);
+    if (!visible) return null;
+
     const table = variant === "table";
     const dashboard = variant === "dashboard";
     return (
