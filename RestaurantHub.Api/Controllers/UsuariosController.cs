@@ -99,4 +99,24 @@ public class UsuariosController : ControllerBase
         await _context.SaveChangesAsync();
         return Ok();
     }
+    [HttpPost("{id:int}/reset-password")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ResetPassword(int id)
+    {
+        if (!int.TryParse(User.FindFirst("RestaurantId")?.Value, out var restaurantId))
+            return Forbid();
+
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u =>
+            u.Id == id && u.RestaurantId == restaurantId && u.Rol == "Cliente");
+        if (usuario == null) return NotFound();
+
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+        var random = System.Security.Cryptography.RandomNumberGenerator.GetBytes(20);
+        var temporaryPassword = new string(random.Select(b => chars[b % chars.Length]).ToArray());
+        usuario.Password = BCrypt.Net.BCrypt.HashPassword(temporaryPassword);
+        await _context.SaveChangesAsync();
+        Response.Headers.CacheControl = "no-store";
+        return Ok(new { temporaryPassword });
+    }
+
 }
