@@ -1,3 +1,4 @@
+import PageSkeleton from "../components/PageSkeleton";
 import {
     useEffect,
     useMemo,
@@ -819,21 +820,7 @@ function VentaRapida() {
     // LOADING
     // ==========================================
 
-    if (loading) {
-
-        return (
-
-            <div className="container py-5 text-center">
-
-                <div className="spinner-border text-success"></div>
-
-                <p className="mt-3">
-                    Cargando productos...
-                </p>
-
-            </div>
-        );
-    }
+    if (loading) return <PageSkeleton variant="cards" />;
 
     return (
 
