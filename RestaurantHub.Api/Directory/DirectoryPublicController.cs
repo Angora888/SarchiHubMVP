@@ -64,7 +64,7 @@ public sealed class DirectoryPublicController : ControllerBase
             .Where(b => b.Status == "Published" && b.Slug == slug)
             .Select(b => new {
                 b.Id, b.Slug, b.Name, b.Description, b.District,
-                b.Address, b.Phone, b.WhatsApp, b.Website, b.ImageUrl,
+                b.Address, b.Phone, b.WhatsApp, b.Website, b.MapsUrl, b.ImageUrl,
                 Category = new { b.Category.Id, b.Category.Name, b.Category.Slug }
             }).FirstOrDefaultAsync(ct);
         return business is null ? NotFound() : Ok(business);
