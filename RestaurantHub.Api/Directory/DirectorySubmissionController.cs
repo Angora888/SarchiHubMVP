@@ -19,6 +19,7 @@ public sealed class DirectorySubmissionRequest
     [Phone, StringLength(40)] public string? WhatsApp { get; set; }
     [Required, EmailAddress, StringLength(254)] public string ContactEmail { get; set; } = "";
     [Url, StringLength(500)] public string? Website { get; set; }
+    [StringLength(1000)] public string? MapsUrl { get; set; }
 }
 
 [ApiController]
@@ -38,6 +39,7 @@ public sealed class DirectorySubmissionController : ControllerBase
         var categoryExists = await _db.Categories.AnyAsync(c => c.Id == request.CategoryId, ct);
         if (!categoryExists) return BadRequest(new { message = "La categoría seleccionada no existe." });
 
+        if (!DirectoryMaps.IsValid(request.MapsUrl)) return BadRequest(new { message = "Ingresá un enlace válido de Google Maps (https)." });
         var name = request.Name.Trim();
         if (name.Length < 3) return BadRequest(new { message = "El nombre debe tener al menos tres caracteres." });
         var normalized = name.Normalize(NormalizationForm.FormD);
@@ -51,7 +53,7 @@ public sealed class DirectorySubmissionController : ControllerBase
             Name = name, Slug = slug, CategoryId = request.CategoryId, District = district,
             Description = request.Description?.Trim(), Address = request.Address?.Trim(),
             Phone = request.Phone?.Trim(), WhatsApp = request.WhatsApp?.Trim(),
-            Website = request.Website?.Trim(), ContactEmail = request.ContactEmail.Trim(),
+            Website = request.Website?.Trim(), MapsUrl = DirectoryMaps.Normalize(request.MapsUrl), ContactEmail = request.ContactEmail.Trim(),
             Status = "Pending", CreatedAt = DateTime.UtcNow
         });
         await _db.SaveChangesAsync(ct);
