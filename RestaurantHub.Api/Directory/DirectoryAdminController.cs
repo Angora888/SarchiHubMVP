@@ -20,6 +20,19 @@ public sealed class DirectoryWhatsAppRequest
 {
     [Required, StringLength(40)] public string Number { get; set; } = "";
 }
+public sealed class DirectoryEditRequest
+{
+    [Required, StringLength(180, MinimumLength = 3)] public string Name { get; set; } = "";
+    [Required, Range(1, int.MaxValue)] public int CategoryId { get; set; }
+    [Required, StringLength(80)] public string District { get; set; } = "";
+    [StringLength(1000)] public string? Description { get; set; }
+    [StringLength(250)] public string? Address { get; set; }
+    [Phone, StringLength(40)] public string? Phone { get; set; }
+    [Phone, StringLength(40)] public string? WhatsApp { get; set; }
+    [EmailAddress, StringLength(254)] public string? ContactEmail { get; set; }
+    [Url, StringLength(500)] public string? Website { get; set; }
+    [StringLength(1000)] public string? MapsUrl { get; set; }
+}
 public sealed class DirectoryMoveRequest
 {
     [Required] public string Direction { get; set; } = "";
@@ -98,10 +111,35 @@ public sealed class DirectoryAdminController : ControllerBase
         var items = await q.OrderBy(b => b.SortOrder == 0 ? int.MaxValue : b.SortOrder).ThenBy(b => b.Name).ThenBy(b => b.Id)
             .Skip((page - 1) * 20).Take(20)
             .Select(b => new { b.Id, b.Name, b.Slug, b.Description, b.District,
-                b.Address, b.Phone, b.WhatsApp, b.ContactEmail, b.Website,
+                b.Address, b.Phone, b.WhatsApp, b.ContactEmail, b.Website, b.MapsUrl, b.CategoryId,
                 b.Status, b.SortOrder, b.CreatedAt, Category = b.Category.Name })
             .ToListAsync(ct);
         return Ok(new { page, pageSize = 20, total, items });
+    }
+
+    [Authorize(Policy = "DirectoryAdmin")]
+    [HttpPut("businesses/{id:int}")]
+    public async Task<IActionResult> EditBusiness(int id, [FromBody] DirectoryEditRequest request, CancellationToken ct)
+    {
+        var districts = new[] { "Sarchí Norte", "Sarchí Sur", "Toro Amarillo", "San Pedro", "Rodríguez" };
+        var district = districts.FirstOrDefault(d => string.Equals(d, request.District?.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (district is null) return BadRequest(new { message = "Distrito inválido." });
+        if (!DirectoryMaps.IsValid(request.MapsUrl)) return BadRequest(new { message = "Ingresá un enlace válido de Google Maps (https)." });
+        if (!await _db.Categories.AnyAsync(c => c.Id == request.CategoryId, ct)) return BadRequest(new { message = "Categoría inválida." });
+        var business = await _db.Businesses.FirstOrDefaultAsync(b => b.Id == id, ct);
+        if (business is null) return NotFound(new { message = "Negocio no encontrado." });
+        business.Name = request.Name.Trim();
+        business.CategoryId = request.CategoryId;
+        business.District = district;
+        business.Description = request.Description?.Trim();
+        business.Address = request.Address?.Trim();
+        business.Phone = request.Phone?.Trim();
+        business.WhatsApp = request.WhatsApp?.Trim();
+        business.ContactEmail = request.ContactEmail?.Trim();
+        business.Website = request.Website?.Trim();
+        business.MapsUrl = DirectoryMaps.Normalize(request.MapsUrl);
+        await _db.SaveChangesAsync(ct);
+        return Ok(new { message = "Negocio actualizado." });
     }
 
     [Authorize(Policy = "DirectoryAdmin")]
