@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Clock3, ExternalLink, MapPin, Menu, MessageCircl
 import { directoryApi, type Business, type Category } from './api';
 import Register from './Register';
 import Admin from './Admin';
+import BusinessMap from './BusinessMap';
 
 const districts = ['Sarchí Norte', 'Sarchí Sur', 'Toro Amarillo', 'San Pedro', 'Rodríguez'];
 const tiles = [
@@ -33,7 +34,8 @@ function Header() {
     <button className="mobile-menu" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} onClick={() => setOpen(!open)}>{open ? <X size={22}/> : <Menu size={22}/>}</button>
     <nav className={open ? 'nav open' : 'nav'}>
       <Link to="/" onClick={() => setOpen(false)}>Explorar negocios</Link>
-      <a href="#categorias" onClick={() => setOpen(false)}>Categorías</a>
+      <Link to="/mapa" onClick={() => setOpen(false)}><MapPin size={16}/> Mapa de negocios</Link>
+      <a href="/#categorias" onClick={() => setOpen(false)}>Categorías</a>
       <Link className="nav-cta" to="/registrar-negocio" onClick={() => setOpen(false)}>Registrar mi negocio <ArrowRight size={15}/></Link>
     </nav>
   </div></header>;
@@ -160,6 +162,7 @@ function Home() {
       <div className="phone-empty"><Search size={31}/><h3>No encontramos negocios</h3><p>Probá otro nombre, servicio o distrito.</p><button onClick={()=>{setTerm('');setParams(new URLSearchParams());}}>Ver todos</button></div>}
     </section>
     {!loading&&!error&&data&&data.total>data.pageSize&&<div className="pagination"><button disabled={page===1} onClick={()=>changePage(page-1)}>Anterior</button><span>{page} / {Math.ceil(data.total/data.pageSize)}</span><button disabled={page*data.pageSize>=data.total} onClick={()=>changePage(page+1)}>Siguiente</button></div>}
+    <Link className="directory-map-banner" to="/mapa"><MapPin size={21}/><span><strong>Explorá el mapa de Sarchí</strong><small>Descubrí comercios y cómo llegar</small></span><ArrowRight size={19}/></Link>
     <Link className="directory-register" to="/registrar-negocio"><span><Plus size={19}/></span><div><strong>¿Tenés un negocio?</strong><small>Agregalo gratis a nuestro directorio</small></div><ArrowRight size={19}/></Link>
   </main>;
 }
@@ -178,4 +181,4 @@ function Detail() {
       {biz.website && safeWebsite(biz.website) && <a href={safeWebsite(biz.website)!} target="_blank" rel="noopener noreferrer"><ExternalLink size={18}/> Visitar sitio web</a>}</div></aside></div>}
   </main>;
 }
-export default function App() { return <><Header/><Routes><Route path="/" element={<Home/>}/><Route path="/negocio/:slug" element={<Detail/>}/><Route path="/registrar-negocio" element={<Register/>}/><Route path="/admin" element={<Admin/>}/><Route path="*" element={<main className="shell detail-page empty-state"><Clock3 size={32}/><h2>Página no encontrada</h2><Link to="/">Volver al inicio</Link></main>}/></Routes><Footer/></>; }
+export default function App() { return <><Header/><Routes><Route path="/" element={<Home/>}/><Route path="/negocio/:slug" element={<Detail/>}/><Route path="/registrar-negocio" element={<Register/>}/><Route path="/mapa" element={<BusinessMap/>}/><Route path="/admin" element={<Admin/>}/><Route path="*" element={<main className="shell detail-page empty-state"><Clock3 size={32}/><h2>Página no encontrada</h2><Link to="/">Volver al inicio</Link></main>}/></Routes><Footer/></>; }
