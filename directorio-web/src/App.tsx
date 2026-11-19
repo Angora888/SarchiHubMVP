@@ -174,7 +174,7 @@ function Detail() {
     <div className="detail-layout"><div className="detail-main"><div className="detail-image">{biz.imageUrl ? <img src={biz.imageUrl} alt={biz.name}/> : <Store size={65}/>}</div><span className="eyebrow">{biz.category.name}</span><h1>{biz.name}</h1><p className="detail-desc">{biz.description || 'Descubrí este negocio local de Sarchí.'}</p></div>
       <aside className="contact-card"><h2>Información del negocio</h2><p><MapPin size={18}/> <span>{biz.district}{biz.address && <><br/>{biz.address}</>}</span></p>{biz.phone && <p><Phone size={18}/><a href={'tel:' + biz.phone}>{biz.phone}</a></p>}
       <div className="contact-actions">{biz.whatsApp && <a className="contact-primary" href={waUrl(biz.whatsApp)} target="_blank" rel="noopener noreferrer"><MessageCircle size={18}/> Contactar por WhatsApp</a>}
-      {biz.address && <a href={'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(biz.address + ', ' + biz.district + ', Sarchí, Costa Rica')} target="_blank" rel="noopener noreferrer"><MapPin size={18}/> Cómo llegar</a>}
+      {(biz.mapsUrl || biz.address) && <a href={biz.mapsUrl || 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(biz.address + ', ' + biz.district + ', Sarchí, Costa Rica')} target="_blank" rel="noopener noreferrer"><MapPin size={18}/> Cómo llegar</a>}
       {biz.website && safeWebsite(biz.website) && <a href={safeWebsite(biz.website)!} target="_blank" rel="noopener noreferrer"><ExternalLink size={18}/> Visitar sitio web</a>}</div></aside></div>}
   </main>;
 }
