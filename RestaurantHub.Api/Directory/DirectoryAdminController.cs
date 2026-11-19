@@ -125,6 +125,7 @@ public sealed class DirectoryAdminController : ControllerBase
         var district = districts.FirstOrDefault(d => string.Equals(d, request.District?.Trim(), StringComparison.OrdinalIgnoreCase));
         if (district is null) return BadRequest(new { message = "Distrito inválido." });
         if (!DirectoryMaps.IsValid(request.MapsUrl)) return BadRequest(new { message = "Ingresá un enlace válido de Google Maps (https)." });
+        if (DirectoryPhone.IsLandline2454(request.WhatsApp)) return BadRequest(new { message = "No se admite el teléfono fijo 2454 como WhatsApp." });
         if (!await _db.Categories.AnyAsync(c => c.Id == request.CategoryId, ct)) return BadRequest(new { message = "Categoría inválida." });
         var business = await _db.Businesses.FirstOrDefaultAsync(b => b.Id == id, ct);
         if (business is null) return NotFound(new { message = "Negocio no encontrado." });
@@ -149,7 +150,7 @@ public sealed class DirectoryAdminController : ControllerBase
         // Require an explicit WhatsApp number; never silently assume a voice phone has WhatsApp.
         var digits = new string(request.Number.Where(char.IsDigit).ToArray());
         if (digits.Length == 8) digits = "506" + digits;
-        if (digits.Length < 10 || digits.Length > 15 || digits.All(ch => ch == '0'))
+        if (DirectoryPhone.IsLandline2454(digits) || digits.Length < 10 || digits.Length > 15 || digits.All(ch => ch == '0'))
             return BadRequest(new { message = "Ingresá un WhatsApp válido con código de país." });
         var business = await _db.Businesses.FirstOrDefaultAsync(b => b.Id == id, ct);
         if (business is null) return NotFound(new { message = "Negocio no encontrado." });
