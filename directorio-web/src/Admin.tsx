@@ -7,6 +7,7 @@ type Item = {id:number;name:string;categoryId:number;mapsUrl:string|null;distric
 type Result = {page:number;pageSize:number;total:number;items:Item[]};
 const districts = ['Sarchí Norte','Sarchí Sur','Toro Amarillo','San Pedro','Rodríguez'];
 type EditForm = {name:string;categoryId:number;district:string;description:string;address:string;phone:string;whatsApp:string;contactEmail:string;website:string;mapsUrl:string};
+const isLandline2454=(value:string|null|undefined)=>{const digits=(value||'').replace(/\D/g,'');return digits.replace(/^506(?=2454)/,'').startsWith('2454');};
 const toForm=(item:Item):EditForm=>({name:item.name,categoryId:item.categoryId,district:item.district,description:item.description||'',address:item.address||'',phone:item.phone||'',whatsApp:item.whatsApp||'',contactEmail:item.contactEmail||'',website:item.website||'',mapsUrl:item.mapsUrl||''});
 const base = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/,'');
 async function api<T>(path:string, method:string, token:string|null, body?:unknown):Promise<T>{
@@ -53,6 +54,7 @@ export default function Admin(){
   useEffect(()=>{if(!token)return;api<{id:number;name:string}[]>('/api/directory/categories','GET',token).then(setCategories).catch(()=>{});},[token]);
   async function saveEdit(e:FormEvent){
     e.preventDefault();if(editing===null||!editForm)return;
+    if(isLandline2454(editForm.whatsApp)){setError('No asignés el fijo 2454 como WhatsApp.');return;}
     setBusy(true);setError('');setNotice('');
     try{await api('/api/directory/admin/businesses/'+editing,'PUT',token,editForm);setNotice('Cambios guardados correctamente.');setEditing(null);setEditForm(null);setRefresh(n=>n+1);}
     catch(err){setError((err as Error).message);}
@@ -85,6 +87,7 @@ export default function Admin(){
   async function saveWhatsApp(item:Item){
     const number=(waDraft[item.id]??item.whatsApp??'').trim();
     if(!number){setError('Ingresá un número de WhatsApp antes de guardar.');return;}
+    if(isLandline2454(number)){setError('Un teléfono fijo 2454 no debe asignarse como WhatsApp. Ingresá un número confirmado.');return;}
     setBusy(true);setError('');setNotice('');
     try{
       await api('/api/directory/admin/businesses/'+item.id+'/whatsapp','PATCH',token,{number});
@@ -121,7 +124,7 @@ export default function Admin(){
         <div className="admin-actions"><button type="submit" disabled={busy}><Save size={16}/> {busy?'Guardando...':'Guardar cambios'}</button><button type="button" onClick={()=>{setEditing(null);setEditForm(null);}}>Cancelar</button></div>
       </form>}
       {item.status==='Published'&&<div className="directory-order-controls"><span>Orden en la portada</span><div><button type="button" disabled={busy||(page===1&&items[0]?.id===item.id)} onClick={()=>move(item,'up')} aria-label={'Subir '+item.name}><ArrowUp size={17}/> Subir</button><button type="button" disabled={busy||(page*20>=total&&items[items.length-1]?.id===item.id)} onClick={()=>move(item,'down')} aria-label={'Bajar '+item.name}><ArrowDown size={17}/> Bajar</button></div></div>}
-      <div className="directory-wa-editor"><label htmlFor={'wa-'+item.id}><MessageCircle size={16}/> WhatsApp del negocio</label><div className="directory-wa-controls"><input id={'wa-'+item.id} type="tel" inputMode="tel" value={waDraft[item.id]??item.whatsApp??''} onChange={e=>setWaDraft(d=>({...d,[item.id]:e.target.value}))} placeholder="50688888888"/><button type="button" disabled={busy||!item.phone} onClick={()=>setWaDraft(d=>({...d,[item.id]:item.phone||''}))}>Usar teléfono</button><button type="button" disabled={busy} onClick={()=>saveWhatsApp(item)}><Save size={15}/> Guardar</button></div><small>Solo asigná números confirmados para WhatsApp. El enlace abre un mensaje listo para enviar.</small></div>
+      <div className="directory-wa-editor"><label htmlFor={'wa-'+item.id}><MessageCircle size={16}/> WhatsApp del negocio</label><div className="directory-wa-controls"><input id={'wa-'+item.id} type="tel" inputMode="tel" value={waDraft[item.id]??item.whatsApp??''} onChange={e=>setWaDraft(d=>({...d,[item.id]:e.target.value}))} placeholder="50688888888"/><button type="button" disabled={busy||!item.phone||isLandline2454(item.phone)} onClick={()=>setWaDraft(d=>({...d,[item.id]:item.phone||''}))}>Usar teléfono</button><button type="button" disabled={busy} onClick={()=>saveWhatsApp(item)}><Save size={15}/> Guardar</button></div><small>Solo asigná números confirmados para WhatsApp; no usés líneas fijas 2454. Si no hay WhatsApp, dejá el campo vacío.</small></div>
       <div className="admin-details"><span>Dirección: {item.address||'No indicada'}</span>{item.mapsUrl&&<a href={item.mapsUrl} target="_blank" rel="noopener noreferrer">Ver ubicación en Google Maps</a>}<span>Teléfono: {item.phone||'No indicado'}</span><span>WhatsApp: {item.whatsApp||'No indicado'}</span><span>Contacto privado: {item.contactEmail||'No indicado'}</span><span>Fecha: {new Date(item.createdAt).toLocaleDateString('es-CR')}</span></div>
       <div className="admin-actions">{item.status!=='Published'&&<button disabled={busy} onClick={()=>review(item,'Published')}><CheckCircle2 size={17}/> Aprobar</button>}
       {item.status!=='Rejected'&&<button disabled={busy} onClick={()=>review(item,'Rejected')}><XCircle size={17}/> Rechazar</button>}
