@@ -29,10 +29,10 @@ export const directoryApi = {
   categories: (signal?: AbortSignal) => get<Category[]>('/api/directory/categories', signal),
   businesses: (params: URLSearchParams, signal?: AbortSignal) =>
     get<PageResponse>('/api/directory/businesses?' + params.toString(), signal),
-  submit: async (submission: {name:string;categoryId:number;district:string;description:string;address:string;phone:string;whatsApp:string;contactEmail:string;website:string;mapsUrl:string}): Promise<{message:string}> => {
+  submit: async (submission: {name:string;categoryId:number;district:string;description:string;address:string;phone:string;contactEmail:string;website:string;mapsUrl:string}): Promise<{message:string}> => {
     if (!base) throw new Error('La API del directorio todavía no está disponible.');
     const response = await fetch(base + '/api/directory/submissions', {
-      method:'POST', headers: {'Content-Type':'application/json'}, body:JSON.stringify({ ...submission, description:submission.description.trim() || null, address:submission.address.trim() || null, phone:submission.phone.trim() || null, whatsApp:submission.whatsApp.trim() || null, website:submission.website.trim() || null, mapsUrl:submission.mapsUrl.trim() || null })
+      method:'POST', headers: {'Content-Type':'application/json'}, body:JSON.stringify({ ...submission, description:submission.description.trim() || null, address:submission.address.trim() || null, phone:submission.phone.trim(), website:submission.website.trim() || null, mapsUrl:submission.mapsUrl.trim() || null })
     });
     const data = await response.json().catch(()=>({message:'Error del servidor.'}));
     if (!response.ok) {
