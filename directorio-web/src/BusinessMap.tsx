@@ -16,7 +16,7 @@ const SARCHI:[number,number]=[10.090, -84.347];
 let leafletLoad:Promise<Leaflet>|undefined;
 function loadLeaflet():Promise<Leaflet> {
   if (window.L) return Promise.resolve(window.L);
-  if (!leafletLoad) leafletLoad = new Promise((resolve,reject)=>{
+  if (!leafletLoad) leafletLoad = new Promise<Leaflet>((resolve,reject)=>{
     const script=document.createElement('script');
     script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
     script.integrity='sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
@@ -25,7 +25,7 @@ function loadLeaflet():Promise<Leaflet> {
     script.onerror=()=>reject(new Error('No se pudo descargar el mapa.'));
     document.head.appendChild(script);
   }).catch(e=>{leafletLoad=undefined;throw e;});
-  return leafletLoad;
+  return leafletLoad!;
 }
 async function getAllPublished(signal:AbortSignal):Promise<Business[]> {
   const collected:Business[]=[];
