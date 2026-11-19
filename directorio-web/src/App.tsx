@@ -64,7 +64,7 @@ function Footer() {
       <a className="directory-support-button" href={adminWhatsApp} target="_blank" rel="noopener noreferrer"><MessageCircle size={19}/> Contactar por WhatsApp</a>
     </div>
     <div className="shell foot-inner">
-    <div><strong>Directorio Sarchí</strong><p>Lo que buscás, está en Sarchí. 🇨🇷</p></div>
+    <div><strong>Directorio Sarchí</strong><p>Lo que buscás, está aquí. 🇨🇷</p></div>
     <div className="footer-right">
       <p>Hecho para conectar a nuestra comunidad.</p>
       <div className="visit-counter" aria-live="polite" aria-label="Visitas registradas en el directorio">
@@ -143,8 +143,13 @@ function Home() {
   return <main className="shell directory-home">
     <div className="directory-intro">
       <div className="intro-label"><span className="live-dot"/> SARCHÍ · COSTA RICA</div>
-      <h1>Directorio<span> Sarchí</span></h1>
-      <p>Lo que buscás, está en Sarchí.</p>
+      <div className="directory-title-row">
+        <h1>Directorio<span> Sarchí</span></h1>
+        <Link to="/mapa" className="directory-map-shortcut" aria-label="Abrir mapa de negocios de Sarchí" title="Ver mapa de negocios">
+          <MapPin size={26} aria-hidden="true"/>
+        </Link>
+      </div>
+      <p>Lo que buscás, está aquí.</p>
     </div>
     <form className="phone-search" role="search" onSubmit={e=>{e.preventDefault();update('search',term.trim());}}>
       <Search size={21} aria-hidden="true"/>
