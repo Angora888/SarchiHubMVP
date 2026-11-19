@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { LocationPicker } from './LocationPicker';
 import { ArrowLeft, CheckCircle2, LockKeyhole, LogOut, ShieldCheck, XCircle, ArrowUp, ArrowDown, MessageCircle, Save, Pencil, MapPin } from 'lucide-react';
 
 type Item = {id:number;name:string;categoryId:number;mapsUrl:string|null;district:string;description:string|null;category:string;address:string|null;phone:string|null;whatsApp:string|null;contactEmail:string|null;website:string|null;status:string;sortOrder:number;createdAt:string};
@@ -112,7 +113,7 @@ export default function Admin(){
         <label>Distrito *<select required value={editForm.district} onChange={e=>setEditForm(f=>f&&({...f,district:e.target.value}))}>{districts.map(d=><option key={d}>{d}</option>)}</select></label>
         <label>Descripción<textarea maxLength={1000} rows={3} value={editForm.description} onChange={e=>setEditForm(f=>f&&({...f,description:e.target.value}))}/></label>
         <label>Dirección o señas<textarea maxLength={250} rows={2} value={editForm.address} onChange={e=>setEditForm(f=>f&&({...f,address:e.target.value}))}/></label>
-        <label><MapPin size={16}/> Ubicación en Google Maps<input type="url" maxLength={1000} placeholder="https://maps.app.goo.gl/..." value={editForm.mapsUrl} onChange={e=>setEditForm(f=>f&&({...f,mapsUrl:e.target.value}))}/><small>En Google Maps seleccioná Compartir → Copiar enlace.</small></label>
+        <div className="location-field"><strong><MapPin size={16}/> Ubicación del negocio</strong><LocationPicker value={editForm.mapsUrl} onChange={value=>setEditForm(f=>f&&({...f,mapsUrl:value}))}/></div>
         <label>Teléfono<input type="tel" maxLength={40} value={editForm.phone} onChange={e=>setEditForm(f=>f&&({...f,phone:e.target.value}))}/></label>
         <label>WhatsApp<input type="tel" maxLength={40} value={editForm.whatsApp} onChange={e=>setEditForm(f=>f&&({...f,whatsApp:e.target.value}))}/></label>
         <label>Correo de contacto privado<input type="email" maxLength={254} value={editForm.contactEmail} onChange={e=>setEditForm(f=>f&&({...f,contactEmail:e.target.value}))}/></label>
