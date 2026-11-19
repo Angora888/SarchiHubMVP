@@ -53,7 +53,17 @@ function Footer() {
       setVisits(total);
     }).catch(() => { /* The public directory must still work if analytics is unavailable. */ });
   }, []);
-  return <footer className="footer"><div className="shell foot-inner">
+  const adminWhatsApp = 'https://wa.me/50660662375?text=' + encodeURIComponent('Hola, tengo una consulta sobre Directorio Sarchí.');
+  return <footer className="footer">
+    <div className="shell directory-support">
+      <div className="directory-support-icon"><MessageCircle size={25} aria-hidden="true"/></div>
+      <div className="directory-support-copy">
+        <h2>¿Tenés alguna duda o consulta?</h2>
+        <p>Si necesitás ayuda, querés consultar por un negocio o reportar información incorrecta, contactá al administrador de Directorio Sarchí.</p>
+      </div>
+      <a className="directory-support-button" href={adminWhatsApp} target="_blank" rel="noopener noreferrer"><MessageCircle size={19}/> Contactar por WhatsApp</a>
+    </div>
+    <div className="shell foot-inner">
     <div><strong>Directorio Sarchí</strong><p>Lo que buscás, está en Sarchí. 🇨🇷</p></div>
     <div className="footer-right">
       <p>Hecho para conectar a nuestra comunidad.</p>
