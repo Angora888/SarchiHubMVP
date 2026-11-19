@@ -40,6 +40,7 @@ public sealed class DirectorySubmissionController : ControllerBase
         if (!categoryExists) return BadRequest(new { message = "La categoría seleccionada no existe." });
 
         if (!DirectoryMaps.IsValid(request.MapsUrl)) return BadRequest(new { message = "Ingresá un enlace válido de Google Maps (https)." });
+        if (DirectoryPhone.IsLandline2454(request.WhatsApp)) return BadRequest(new { message = "No se admite el teléfono fijo 2454 como WhatsApp." });
         var name = request.Name.Trim();
         if (name.Length < 3) return BadRequest(new { message = "El nombre debe tener al menos tres caracteres." });
         var normalized = name.Normalize(NormalizationForm.FormD);
