@@ -196,3 +196,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .discovery-footnote{font-size:12px;color:#999aaa;line-height:1.6}
 @media(max-width:850px){.discovery-layout{grid-template-columns:1fr}.discovery-map-wrap{min-height:430px}.discovery-map{height:430px}.discovery-list{height:310px}}
 @media(max-width:600px){.discovery-page{padding-top:22px}.discovery-filters{grid-template-columns:1fr 1fr}.discovery-search{grid-column:1/-1}.discovery-map-wrap{min-height:390px}.discovery-map{height:390px}.discovery-hero h1{font-size:36px}.discovery-selected{align-items:flex-start}}
+
+
+/* Leaflet essential layout fallback, bundled with the app so Safari never
+   positions map tiles as regular images when the CDN stylesheet is unavailable. */
+.discovery-map.leaflet-container{position:relative;overflow:hidden;outline:0;touch-action:pan-x pan-y;background:#202936}
+.discovery-map .leaflet-pane,.discovery-map .leaflet-tile,.discovery-map .leaflet-marker-icon,.discovery-map .leaflet-marker-shadow,.discovery-map .leaflet-tile-container,.discovery-map .leaflet-pane>svg,.discovery-map .leaflet-pane>canvas,.discovery-map .leaflet-zoom-box,.discovery-map .leaflet-image-layer,.discovery-map .leaflet-layer{position:absolute;left:0;top:0}
+.discovery-map .leaflet-map-pane canvas{z-index:100}
+.discovery-map .leaflet-tile-pane{z-index:200}.discovery-map .leaflet-overlay-pane{z-index:400}.discovery-map .leaflet-shadow-pane{z-index:500}.discovery-map .leaflet-marker-pane{z-index:600}.discovery-map .leaflet-tooltip-pane{z-index:650}.discovery-map .leaflet-popup-pane{z-index:700}
+.discovery-map .leaflet-tile{filter:inherit;visibility:inherit;max-width:none!important;max-height:none!important;width:256px;height:256px}
+.discovery-map .leaflet-tile-loaded{visibility:inherit}
+.discovery-map .leaflet-container img{max-width:none!important;max-height:none!important}
+.discovery-map .leaflet-marker-icon,.discovery-map .leaflet-marker-shadow{display:block}
+.discovery-map .leaflet-zoom-animated{transform-origin:0 0}
+.discovery-map .leaflet-control-container{position:relative;z-index:800}
+.discovery-map .leaflet-control{position:relative;z-index:800;pointer-events:auto}
+.discovery-map .leaflet-top,.discovery-map .leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}
+.discovery-map .leaflet-top{top:0}.discovery-map .leaflet-right{right:0}.discovery-map .leaflet-bottom{bottom:0}.discovery-map .leaflet-left{left:0}
+.discovery-map .leaflet-top .leaflet-control{margin-top:10px}.discovery-map .leaflet-bottom .leaflet-control{margin-bottom:10px}.discovery-map .leaflet-left .leaflet-control{margin-left:10px}.discovery-map .leaflet-right .leaflet-control{margin-right:10px}
+.discovery-map .leaflet-control-attribution{font-size:10px;background:#fffbe8;color:#333;padding:2px 5px}
+.discovery-map .leaflet-control-attribution a{color:#1266b3}
+.discovery-map .leaflet-control-zoom a{display:block;width:30px;height:30px;line-height:30px;text-align:center;background:white;color:#222;font-size:20px;border:1px solid #bbb}
