@@ -17,11 +17,13 @@ const tiles = [
   { label: 'Turismo', emoji: '🌿', key: 'turismo' },
   { label: 'Servicios', emoji: '⚡', key: 'servicios' }
 ];
+const localPhone = (number: string | null | undefined) => {
+  const digits = (number || '').replace(/\D/g, '');
+  return digits.length === 11 && digits.startsWith('506') ? digits.slice(3) : digits;
+};
 const hasWhatsApp = (number: string | null | undefined) => {
-  if (!number) return false;
-  const digits = number.replace(/\D/g, '');
-  const local = digits.startsWith('506') && digits.length === 11 ? digits.slice(3) : digits;
-  return local.length === 8 && !local.startsWith('2454');
+  const digits = localPhone(number);
+  return /^\d{8}$/.test(digits) && !digits.startsWith('2454');
 };
 const waUrl = (number: string) => {
   const digits = number.replace(/\D/g, '');
@@ -82,7 +84,7 @@ function Footer() {
 }
 function BusinessCard({ b }: { b: Business }) {
   const detail = '/negocio/' + encodeURIComponent(b.slug);
-  const phone = b.phone?.replace(/[^+0-9]/g,'') || '';
+  const phone = localPhone(b.phone);
   return <article className="phone-row">
     <Link to={detail} className="phone-avatar" aria-label={'Información de ' + b.name}>
       {b.imageUrl ? <img src={b.imageUrl} alt="" loading="lazy" onError={e=>{e.currentTarget.style.display='none';e.currentTarget.parentElement?.classList.add('image-failed');}} /> : null}
@@ -90,13 +92,13 @@ function BusinessCard({ b }: { b: Business }) {
     </Link>
     <div className="phone-identity">
       <Link to={detail} className="phone-name">{b.name}</Link>
-      <span className="phone-number">{b.phone || 'Teléfono no disponible'}</span>
+      <span className="phone-number">{localPhone(b.phone) || 'Teléfono no disponible'}</span>
       <span className="phone-meta">{b.category.name} · {b.district}</span>
     </div>
     <div className="phone-actions">
       <Link to={detail} aria-label={'Ver información de ' + b.name} title="Información" className="phone-action info"><Info size={19}/></Link>
       {phone ? <a href={'tel:'+phone} aria-label={'Llamar a '+b.name} title="Llamar" className="phone-action call"><Phone size={18}/></a> : <span className="phone-action unavailable" aria-label="Teléfono no disponible" title="Teléfono no disponible"><Phone size={18}/></span>}
-      {hasWhatsApp(b.whatsApp) ? <a href={waUrl(b.whatsApp!)} target="_blank" rel="noopener noreferrer" aria-label={'WhatsApp de '+b.name} title="WhatsApp" className="phone-action wa"><MessageCircle size={19}/></a> : null}
+      {hasWhatsApp(b.phone) ? <a href={waUrl(localPhone(b.phone))} target="_blank" rel="noopener noreferrer" aria-label={'WhatsApp de '+b.name} title="WhatsApp" className="phone-action wa"><MessageCircle size={19}/></a> : null}
     </div>
   </article>;
 }
@@ -196,8 +198,8 @@ function Detail() {
   return <main className="shell detail-page"><Link to="/" className="back-link"><ArrowLeft size={18}/> Volver a negocios</Link>
     {loading ? <p>Cargando negocio...</p> : error || !biz ? <div className="empty-state"><h2>No encontramos este negocio</h2><p>{error || 'Es posible que aún no esté publicado.'}</p><Link to="/">Volver al directorio</Link></div> :
     <div className="detail-layout"><div className="detail-main"><div className="detail-image">{biz.imageUrl ? <img src={biz.imageUrl} alt={biz.name}/> : <Store size={65}/>}</div><span className="eyebrow">{biz.category.name}</span><h1>{biz.name}</h1><p className="detail-desc">{biz.description || 'Descubrí este negocio local de Sarchí.'}</p></div>
-      <aside className="contact-card"><h2>Información del negocio</h2><p><MapPin size={18}/> <span>{biz.district}{biz.address && <><br/>{biz.address}</>}</span></p>{biz.phone && <p><Phone size={18}/><a href={'tel:' + biz.phone}>{biz.phone}</a></p>}
-      <div className="contact-actions">{hasWhatsApp(biz.whatsApp) && <a className="contact-primary" href={waUrl(biz.whatsApp!)} target="_blank" rel="noopener noreferrer"><MessageCircle size={18}/> Contactar por WhatsApp</a>}
+      <aside className="contact-card"><h2>Información del negocio</h2><p><MapPin size={18}/> <span>{biz.district}{biz.address && <><br/>{biz.address}</>}</span></p>{biz.phone && <p><Phone size={18}/><a href={'tel:' + localPhone(biz.phone)}>{localPhone(biz.phone)}</a></p>}
+      <div className="contact-actions">{hasWhatsApp(biz.phone) && <a className="contact-primary" href={waUrl(localPhone(biz.phone))} target="_blank" rel="noopener noreferrer"><MessageCircle size={18}/> Contactar por WhatsApp</a>}
       {(biz.mapsUrl || biz.address) && <a href={biz.mapsUrl || 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(biz.address + ', ' + biz.district + ', Sarchí, Costa Rica')} target="_blank" rel="noopener noreferrer"><MapPin size={18}/> Cómo llegar</a>}
       {biz.website && safeWebsite(biz.website) && <a href={safeWebsite(biz.website)!} target="_blank" rel="noopener noreferrer"><ExternalLink size={18}/> Visitar sitio web</a>}</div></aside></div>}
   </main>;
