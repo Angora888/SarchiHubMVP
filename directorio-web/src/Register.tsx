@@ -16,8 +16,8 @@ const previewCategories: Category[] = [
   { id:-7, slug:'turismo', name:'Turismo' },
   { id:-8, slug:'servicios', name:'Servicios profesionales' }
 ];
-type Submission = { name:string; categoryId:number; district:string; description:string; address:string; phone:string; whatsApp:string; contactEmail:string; website:string };
-const initial: Submission = {name:'',categoryId:0,district:'',description:'',address:'',phone:'',whatsApp:'',contactEmail:'',website:''};
+type Submission = { name:string; categoryId:number; district:string; description:string; address:string; phone:string; whatsApp:string; contactEmail:string; website:string; mapsUrl:string };
+const initial: Submission = {name:'',categoryId:0,district:'',description:'',address:'',phone:'',whatsApp:'',contactEmail:'',website:'',mapsUrl:''};
 export default function Register() {
   const [form,setForm] = useState(initial);
   const [categories,setCategories] = useState<Category[]>(previewCategories);
@@ -58,6 +58,7 @@ export default function Register() {
       <label>Descripción del negocio<textarea maxLength={1000} rows={4} value={form.description} onChange={e=>change('description',e.target.value)} placeholder="Contanos qué productos o servicios ofrecés."/></label>
       <label>Dirección o señas<textarea rows={2} maxLength={250} value={form.address} onChange={e=>change('address',e.target.value)} placeholder="Ubicación del negocio en Sarchí"/></label>
       <div className="form-pair"><label>Teléfono<input type="tel" maxLength={40} value={form.phone} onChange={e=>change('phone',e.target.value)} placeholder="Ej. 2222-2222"/></label><label>WhatsApp<input type="tel" maxLength={40} value={form.whatsApp} onChange={e=>change('whatsApp',e.target.value)} placeholder="Ej. 8888-8888"/></label></div>
+      <label>Ubicación en Google Maps (opcional)<input type="url" maxLength={1000} value={form.mapsUrl} onChange={e=>change('mapsUrl',e.target.value)} placeholder="https://maps.app.goo.gl/..." /><small>Abrí tu negocio en Google Maps, seleccioná Compartir y pegá el enlace aquí.</small></label>
       <label>Sitio web (opcional)<input type="url" value={form.website} maxLength={500} onChange={e=>change('website',e.target.value)} placeholder="https://..."/></label>
       <label>Correo de contacto del responsable *<input required type="email" maxLength={254} value={form.contactEmail} onChange={e=>change('contactEmail',e.target.value)} placeholder="correo@ejemplo.com"/><small>Solo para gestionar esta solicitud. No se mostrará públicamente.</small></label>
       <label className="consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>Confirmo que tengo autorización para enviar y publicar los datos comerciales proporcionados.</span></label>
