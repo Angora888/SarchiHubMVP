@@ -15,7 +15,7 @@ public sealed class DirectorySubmissionRequest
     [Required, StringLength(80)] public string District { get; set; } = "";
     [StringLength(1000)] public string? Description { get; set; }
     [StringLength(250)] public string? Address { get; set; }
-    [Phone, StringLength(40)] public string? Phone { get; set; }
+    [Required, RegularExpression(@"^[0-9]{8}$", ErrorMessage = "El teléfono debe tener exactamente 8 dígitos.")] public string Phone { get; set; } = "";
     [Phone, StringLength(40)] public string? WhatsApp { get; set; }
     [Required, EmailAddress, StringLength(254)] public string ContactEmail { get; set; } = "";
     [Url, StringLength(500)] public string? Website { get; set; }
@@ -40,7 +40,7 @@ public sealed class DirectorySubmissionController : ControllerBase
         if (!categoryExists) return BadRequest(new { message = "La categoría seleccionada no existe." });
 
         if (!DirectoryMaps.IsValid(request.MapsUrl)) return BadRequest(new { message = "Ingresá un enlace válido de Google Maps (https)." });
-        if (DirectoryPhone.IsLandline2454(request.WhatsApp)) return BadRequest(new { message = "No se admite el teléfono fijo 2454 como WhatsApp." });
+
         var name = request.Name.Trim();
         if (name.Length < 3) return BadRequest(new { message = "El nombre debe tener al menos tres caracteres." });
         var normalized = name.Normalize(NormalizationForm.FormD);
@@ -53,7 +53,7 @@ public sealed class DirectorySubmissionController : ControllerBase
         _db.Businesses.Add(new DirectoryBusiness {
             Name = name, Slug = slug, CategoryId = request.CategoryId, District = district,
             Description = request.Description?.Trim(), Address = request.Address?.Trim(),
-            Phone = request.Phone?.Trim(), WhatsApp = request.WhatsApp?.Trim(),
+            Phone = request.Phone.Trim(), WhatsApp = request.Phone.StartsWith("2454") ? null : request.Phone,
             Website = request.Website?.Trim(), MapsUrl = DirectoryMaps.Normalize(request.MapsUrl), ContactEmail = request.ContactEmail.Trim(),
             Status = "Pending", CreatedAt = DateTime.UtcNow
         });
