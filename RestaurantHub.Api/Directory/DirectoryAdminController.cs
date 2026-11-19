@@ -27,7 +27,7 @@ public sealed class DirectoryEditRequest
     [Required, StringLength(80)] public string District { get; set; } = "";
     [StringLength(1000)] public string? Description { get; set; }
     [StringLength(250)] public string? Address { get; set; }
-    [Phone, StringLength(40)] public string? Phone { get; set; }
+    [Required, RegularExpression(@"^[0-9]{8}$", ErrorMessage = "El teléfono debe tener exactamente 8 dígitos.")] public string Phone { get; set; } = "";
     [Phone, StringLength(40)] public string? WhatsApp { get; set; }
     [EmailAddress, StringLength(254)] public string? ContactEmail { get; set; }
     [Url, StringLength(500)] public string? Website { get; set; }
@@ -125,7 +125,7 @@ public sealed class DirectoryAdminController : ControllerBase
         var district = districts.FirstOrDefault(d => string.Equals(d, request.District?.Trim(), StringComparison.OrdinalIgnoreCase));
         if (district is null) return BadRequest(new { message = "Distrito inválido." });
         if (!DirectoryMaps.IsValid(request.MapsUrl)) return BadRequest(new { message = "Ingresá un enlace válido de Google Maps (https)." });
-        if (DirectoryPhone.IsLandline2454(request.WhatsApp)) return BadRequest(new { message = "No se admite el teléfono fijo 2454 como WhatsApp." });
+
         if (!await _db.Categories.AnyAsync(c => c.Id == request.CategoryId, ct)) return BadRequest(new { message = "Categoría inválida." });
         var business = await _db.Businesses.FirstOrDefaultAsync(b => b.Id == id, ct);
         if (business is null) return NotFound(new { message = "Negocio no encontrado." });
@@ -134,8 +134,8 @@ public sealed class DirectoryAdminController : ControllerBase
         business.District = district;
         business.Description = request.Description?.Trim();
         business.Address = request.Address?.Trim();
-        business.Phone = request.Phone?.Trim();
-        business.WhatsApp = request.WhatsApp?.Trim();
+        business.Phone = request.Phone.Trim();
+        business.WhatsApp = request.Phone.StartsWith("2454") ? null : request.Phone;
         business.ContactEmail = request.ContactEmail?.Trim();
         business.Website = request.Website?.Trim();
         business.MapsUrl = DirectoryMaps.Normalize(request.MapsUrl);
@@ -149,9 +149,8 @@ public sealed class DirectoryAdminController : ControllerBase
     {
         // Require an explicit WhatsApp number; never silently assume a voice phone has WhatsApp.
         var digits = new string(request.Number.Where(char.IsDigit).ToArray());
-        if (digits.Length == 8) digits = "506" + digits;
-        if (DirectoryPhone.IsLandline2454(digits) || digits.Length < 10 || digits.Length > 15 || digits.All(ch => ch == '0'))
-            return BadRequest(new { message = "Ingresá un WhatsApp válido con código de país." });
+        if (digits.Length != 8 || digits.StartsWith("2454"))
+            return BadRequest(new { message = "Ingresá exactamente 8 dígitos y no un fijo 2454." });
         var business = await _db.Businesses.FirstOrDefaultAsync(b => b.Id == id, ct);
         if (business is null) return NotFound(new { message = "Negocio no encontrado." });
         business.WhatsApp = digits;
