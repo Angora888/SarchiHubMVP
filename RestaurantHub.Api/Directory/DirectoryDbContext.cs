@@ -63,6 +63,7 @@ public sealed class DirectoryDbContext : DbContext
             entity.Property(x => x.WhatsApp).HasColumnName("whatsapp").HasMaxLength(40);
             entity.Property(x => x.ContactEmail).HasColumnName("contact_email").HasMaxLength(254);
             entity.Property(x => x.Website).HasColumnName("website").HasMaxLength(500);
+            entity.Property(x => x.MapsUrl).HasColumnName("maps_url").HasMaxLength(1000);
             entity.Property(x => x.ImageUrl).HasColumnName("image_url").HasMaxLength(500);
             entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
             entity.Property(x => x.SortOrder).HasColumnName("sort_order").HasDefaultValue(0);
