@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle2, Store } from 'lucide-react';
 import { directoryApi, type Category } from './api';
 import { LocationPicker } from './LocationPicker';
 
+const isLandline2454=(value:string)=>{const digits=value.replace(/\D/g,'');return (digits.startsWith('506')&&digits.length===11?digits.slice(3):digits).startsWith('2454');};
 const districts = ['Sarchí Norte','Sarchí Sur','Toro Amarillo','San Pedro','Rodríguez'];
 // Informational list shown while the API module is not yet deployed.
 // Category IDs for submissions MUST always come from the API.
@@ -39,6 +40,7 @@ export default function Register() {
     e.preventDefault(); setError('');setMessage('');
     if (!categoriesOnline) {setError('El registro estará disponible cuando se habilite la API del directorio.');return;}
     if (!consent) {setError('Confirmá que tenés autorización para publicar los datos comerciales.');return;}
+    if(isLandline2454(form.whatsApp)){setError('El número fijo 2454 no se puede registrar como WhatsApp. Dejá ese campo vacío si no hay WhatsApp confirmado.');return;}
     setLoading(true);
     try {
       const result=await directoryApi.submit(form);
