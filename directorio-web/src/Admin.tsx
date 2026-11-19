@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { LocationPicker } from './LocationPicker';
-import { ArrowLeft, CheckCircle2, LockKeyhole, LogOut, ShieldCheck, XCircle, ArrowUp, ArrowDown, MessageCircle, Save, Pencil, MapPin } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, LockKeyhole, LogOut, ShieldCheck, XCircle, ArrowUp, ArrowDown, Save, Pencil, MapPin } from 'lucide-react';
 
 type Item = {id:number;name:string;categoryId:number;mapsUrl:string|null;district:string;description:string|null;category:string;address:string|null;phone:string|null;whatsApp:string|null;contactEmail:string|null;website:string|null;status:string;sortOrder:number;createdAt:string};
 type Result = {page:number;pageSize:number;total:number;items:Item[]};
@@ -42,7 +42,6 @@ export default function Admin(){
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const [refresh,setRefresh]=useState(0);
-  const [waDraft,setWaDraft]=useState<Record<number,string>>({});
   useEffect(()=>{
     if(!token) return;
     const controller=new AbortController();
