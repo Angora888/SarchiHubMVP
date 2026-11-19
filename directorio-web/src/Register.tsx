@@ -4,7 +4,6 @@ import { ArrowLeft, CheckCircle2, Store } from 'lucide-react';
 import { directoryApi, type Category } from './api';
 import { LocationPicker } from './LocationPicker';
 
-const isLandline2454=(value:string)=>{const digits=value.replace(/\D/g,'');return (digits.startsWith('506')&&digits.length===11?digits.slice(3):digits).startsWith('2454');};
 const districts = ['Sarchí Norte','Sarchí Sur','Toro Amarillo','San Pedro','Rodríguez'];
 // Informational list shown while the API module is not yet deployed.
 // Category IDs for submissions MUST always come from the API.
@@ -18,8 +17,8 @@ const previewCategories: Category[] = [
   { id:-7, slug:'turismo', name:'Turismo' },
   { id:-8, slug:'servicios', name:'Servicios profesionales' }
 ];
-type Submission = { name:string; categoryId:number; district:string; description:string; address:string; phone:string; whatsApp:string; contactEmail:string; website:string; mapsUrl:string };
-const initial: Submission = {name:'',categoryId:0,district:'',description:'',address:'',phone:'',whatsApp:'',contactEmail:'',website:'',mapsUrl:''};
+type Submission = { name:string; categoryId:number; district:string; description:string; address:string; phone:string; contactEmail:string; website:string; mapsUrl:string };
+const initial: Submission = {name:'',categoryId:0,district:'',description:'',address:'',phone:'',contactEmail:'',website:'',mapsUrl:''};
 export default function Register() {
   const [form,setForm] = useState(initial);
   const [categories,setCategories] = useState<Category[]>(previewCategories);
@@ -40,7 +39,7 @@ export default function Register() {
     e.preventDefault(); setError('');setMessage('');
     if (!categoriesOnline) {setError('El registro estará disponible cuando se habilite la API del directorio.');return;}
     if (!consent) {setError('Confirmá que tenés autorización para publicar los datos comerciales.');return;}
-    if(isLandline2454(form.whatsApp)){setError('El número fijo 2454 no se puede registrar como WhatsApp. Dejá ese campo vacío si no hay WhatsApp confirmado.');return;}
+    if(!/^\d{8}$/.test(form.phone)){setError('El teléfono debe tener exactamente 8 dígitos, sin 506 ni guiones.');return;}
     setLoading(true);
     try {
       const result=await directoryApi.submit(form);
@@ -60,7 +59,7 @@ export default function Register() {
       <label>Distrito *<select required value={form.district} onChange={e=>change('district',e.target.value)}><option value="">Seleccioná un distrito</option>{districts.map(d=><option key={d}>{d}</option>)}</select></label></div>
       <label>Descripción del negocio<textarea maxLength={1000} rows={4} value={form.description} onChange={e=>change('description',e.target.value)} placeholder="Contanos qué productos o servicios ofrecés."/></label>
       <label>Dirección o señas<textarea rows={2} maxLength={250} value={form.address} onChange={e=>change('address',e.target.value)} placeholder="Ubicación del negocio en Sarchí"/></label>
-      <div className="form-pair"><label>Teléfono<input type="tel" maxLength={40} value={form.phone} onChange={e=>change('phone',e.target.value)} placeholder="Ej. 2222-2222"/></label><label>WhatsApp<input type="tel" maxLength={40} value={form.whatsApp} onChange={e=>change('whatsApp',e.target.value)} placeholder="Ej. 8888-8888"/></label></div>
+      <label>Teléfono (8 dígitos) *<input required type="tel" inputMode="numeric" pattern="[0-9]{8}" maxLength={8} minLength={8} value={form.phone} onChange={e=>change('phone',e.target.value.replace(/\D/g,'').slice(0,8))} placeholder="Ej. 88881234"/><small>Si empieza con 2454 se muestra solo llamada. Para los demás números también estará disponible WhatsApp.</small></label>
       <div className="location-field"><strong>Ubicación del negocio (opcional)</strong><LocationPicker value={form.mapsUrl} onChange={value=>change('mapsUrl',value)}/></div>
       <label>Sitio web (opcional)<input type="url" value={form.website} maxLength={500} onChange={e=>change('website',e.target.value)} placeholder="https://..."/></label>
       <label>Correo de contacto del responsable *<input required type="email" maxLength={254} value={form.contactEmail} onChange={e=>change('contactEmail',e.target.value)} placeholder="correo@ejemplo.com"/><small>Solo para gestionar esta solicitud. No se mostrará públicamente.</small></label>
