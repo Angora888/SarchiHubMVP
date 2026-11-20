@@ -245,3 +245,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .directory-support-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;white-space:nowrap;background:#198754;color:#fff!important;padding:14px 18px;border-radius:12px;font-size:14px;font-weight:750;transition:background .15s,transform .15s}
 .directory-support-button:hover{background:#1b9c62;transform:translateY(-1px)}
 @media(max-width:650px){.directory-support{padding:20px;gap:13px;margin-bottom:24px}.directory-support-icon{width:45px;height:45px;border-radius:13px}.directory-support-copy{min-width:calc(100% - 65px)}.directory-support-button{width:100%}}
+
+
+/* Cached directory lists remain visible while fresh data is requested. */
+.directory-refresh-status{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#aeb5d3;background:#1d2235;border:1px solid #38415b;border-radius:12px;padding:10px 14px;margin:5px 0 14px;font-size:12px;line-height:1.5}
+.directory-refresh-status button{border:1px solid #6068a5;background:#343c73;color:#fff;border-radius:9px;padding:7px 12px;font-size:12px;cursor:pointer}
