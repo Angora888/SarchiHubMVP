@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Clock3, ExternalLink, MapPin, Menu, MessageCircle, Phone, Search, Store, X, Info, Plus, SlidersHorizontal } from 'lucide-react';
 import { directoryApi, type Business, type Category } from './api';
 import Register from './Register';
 import Admin from './Admin';
 import BusinessMap from './BusinessMap';
+import { readCachedListings, cacheListings } from './listingCache';
+import type { PageResponse } from './api';
 
 const districts = ['Sarchí Norte', 'Sarchí Sur', 'Toro Amarillo', 'San Pedro', 'Rodríguez'];
 const tiles = [
@@ -111,18 +113,29 @@ function Home() {
   const page = Math.max(1, Number(params.get('page')) || 1);
   const [term,setTerm] = useState(search);
   const [categories,setCategories] = useState<Category[]>([]);
-  const [data,setData] = useState<{items:Business[];total:number;pageSize:number}|null>(null);
-  const [loading,setLoading] = useState(true);
+  const listingKey = JSON.stringify([search, district, categoryId, page]);
+  const [snapshot,setSnapshot] = useState<{key:string;data:PageResponse;cached:boolean}|null>(() => {
+    const cached=readCachedListings(listingKey);
+    return cached ? {key:listingKey,data:cached.response,cached:true} : null;
+  });
+  const data = snapshot?.key === listingKey ? snapshot.data : null;
+  const [loading,setLoading] = useState(() => !readCachedListings(listingKey));
+  const [refreshing,setRefreshing] = useState(false);
+  const lastRefresh=useRef(0);
   const [error,setError] = useState('');
   const [filtersOpen,setFiltersOpen] = useState(false);
   const [dataRefresh,setDataRefresh] = useState(0);
   useEffect(()=>{
     // Installed Windows sites can stay open for days. Refresh listings on return
     // and periodically while visible, without reloading the entire application.
-    const refresh = () => { if (document.visibilityState === 'visible') setDataRefresh(n=>n+1); };
+    const refresh = () => {
+      if (document.visibilityState !== 'visible' || Date.now()-lastRefresh.current<60_000) return;
+      lastRefresh.current=Date.now();
+      setDataRefresh(n=>n+1);
+    };
     window.addEventListener('focus',refresh);
     document.addEventListener('visibilitychange',refresh);
-    const interval=window.setInterval(refresh,90_000);
+    const interval=window.setInterval(refresh,300_000);
     return ()=>{window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);window.clearInterval(interval);};
   },[]);
   useEffect(()=>{setTerm(search)},[search]);
@@ -132,15 +145,38 @@ function Home() {
     return ()=>controller.abort();
   },[]);
   useEffect(()=>{
-    const controller=new AbortController();setLoading(true);setError('');
+    const controller=new AbortController();
+    let timeoutTriggered=false;
+    const cached=readCachedListings(listingKey);
+    if(cached) setSnapshot({key:listingKey,data:cached.response,cached:true});
+    setLoading(!cached);
+    setRefreshing(Boolean(cached));
+    setError('');
     const query=new URLSearchParams();
     if(search)query.set('search',search);
     if(district)query.set('district',district);
     if(categoryId)query.set('categoryId',categoryId);
     query.set('page',String(page));query.set('pageSize','30');
-    directoryApi.businesses(query,controller.signal).then(setData).catch(e=>{if(!controller.signal.aborted){setError((e as Error).message);setData(null);}}).finally(()=>{if(!controller.signal.aborted)setLoading(false)});
-    return ()=>controller.abort();
-  },[search,district,categoryId,page,dataRefresh]);
+    // Azure can be slow after inactivity. Keep cached listings visible meanwhile.
+    const timeout=window.setTimeout(()=>{
+      timeoutTriggered=true;
+      controller.abort();
+      setError('La actualización está tardando. Podés seguir usando los negocios guardados.');
+      setLoading(false);
+      setRefreshing(false);
+    },18_000);
+    directoryApi.businesses(query,controller.signal).then(result=>{
+      if(controller.signal.aborted)return;
+      cacheListings(listingKey,result);
+      setSnapshot({key:listingKey,data:result,cached:false});
+    }).catch(e=>{
+      if(!controller.signal.aborted && !timeoutTriggered)setError((e as Error).message);
+    }).finally(()=>{
+      window.clearTimeout(timeout);
+      if(!controller.signal.aborted){setLoading(false);setRefreshing(false);}
+    });
+    return ()=>{window.clearTimeout(timeout);controller.abort();};
+  },[listingKey,dataRefresh]);
   function update(key:string,value:string){
     const next=new URLSearchParams(params);
     if(value)next.set(key,value);else next.delete(key);
@@ -173,18 +209,22 @@ function Home() {
       })}
     </div>
     <div className="phone-toolbar">
-      <div><h2>Negocios</h2><span>{loading?'Cargando...':error?'Sin conexión':data?.total===1?'1 negocio':(data?.total??0)+' negocios'}</span></div>
+      <div><h2>Negocios</h2><span>{!data&&loading?'Cargando...':data?.total===1?'1 negocio':(data?.total??0)+' negocios'}</span></div>
       <button className={district?'filter-toggle is-active':'filter-toggle'} onClick={()=>setFiltersOpen(v=>!v)} aria-expanded={filtersOpen} aria-controls="district-filter"><SlidersHorizontal size={17}/> Distrito</button>
     </div>
     {filtersOpen&&<div className="district-filter" id="district-filter"><label htmlFor="district-select">Mostrar negocios en</label><select id="district-select" value={district} onChange={e=>update('district',e.target.value)}><option value="">Todos los distritos</option>{districts.map(d=><option key={d}>{d}</option>)}</select></div>}
     {(search||district||categoryId)&&<div className="active-filters"><span>{[search,district,selectedCategory?.name].filter(Boolean).join(' · ')}</span><button onClick={()=>{setTerm('');setParams(new URLSearchParams());}}><X size={14}/> Limpiar</button></div>}
+    {data && (refreshing || snapshot?.cached || error) && <div className="directory-refresh-status" role="status">
+      <span>{error ? 'Sin conexión: mostrando los últimos datos guardados.' : refreshing ? 'Actualizando negocios sin interrumpir la lista…' : 'Mostrando datos guardados; se actualizarán automáticamente.'}</span>
+      {error && <button type="button" onClick={()=>setDataRefresh(n=>n+1)}>Reintentar</button>}
+    </div>}
     <section id="resultados" className="phone-directory" aria-label="Lista de negocios">
-      {loading?<div className="phone-loading" aria-busy="true">{Array.from({length:6},(_,i)=><div className="phone-row skeleton-row" key={i}><div className="skeleton-avatar"/><div className="skeleton-text"><i/><i/></div></div>)}</div>:
-      error?<div className="phone-empty"><Store size={31}/><h3>No pudimos cargar los negocios</h3><p>{error}</p><button onClick={()=>window.location.reload()}>Intentar de nuevo</button></div>:
+      {!data&&loading?<div className="phone-loading" aria-busy="true">{Array.from({length:6},(_,i)=><div className="phone-row skeleton-row" key={i}><div className="skeleton-avatar"/><div className="skeleton-text"><i/><i/></div></div>)}</div>:
+      !data&&error?<div className="phone-empty"><Store size={31}/><h3>No pudimos cargar los negocios</h3><p>{error}</p><button onClick={()=>window.location.reload()}>Intentar de nuevo</button></div>:
       data?.items.length?<div className="phone-list">{data.items.map(b=><BusinessCard key={b.id} b={b}/>)}</div>:
       <div className="phone-empty"><Search size={31}/><h3>No encontramos negocios</h3><p>Probá otro nombre, servicio o distrito.</p><button onClick={()=>{setTerm('');setParams(new URLSearchParams());}}>Ver todos</button></div>}
     </section>
-    {!loading&&!error&&data&&data.total>data.pageSize&&<div className="pagination"><button disabled={page===1} onClick={()=>changePage(page-1)}>Anterior</button><span>{page} / {Math.ceil(data.total/data.pageSize)}</span><button disabled={page*data.pageSize>=data.total} onClick={()=>changePage(page+1)}>Siguiente</button></div>}
+    {data&&data.total>data.pageSize&&<div className="pagination"><button disabled={page===1} onClick={()=>changePage(page-1)}>Anterior</button><span>{page} / {Math.ceil(data.total/data.pageSize)}</span><button disabled={page*data.pageSize>=data.total} onClick={()=>changePage(page+1)}>Siguiente</button></div>}
     <Link className="directory-map-banner" to="/mapa"><MapPin size={21}/><span><strong>Explorá el mapa de Sarchí</strong><small>Descubrí comercios y cómo llegar</small></span><ArrowRight size={19}/></Link>
     <Link className="directory-register" to="/registrar-negocio"><span><Plus size={19}/></span><div><strong>¿Tenés un negocio?</strong><small>Agregalo gratis a nuestro directorio</small></div><ArrowRight size={19}/></Link>
   </main>;
