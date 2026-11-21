@@ -40,6 +40,8 @@ async function getAllPublished(signal:AbortSignal):Promise<Business[]> {
 export default function BusinessMap(){
   const [businesses,setBusinesses]=useState<Business[]>([]);
   const [categories,setCategories]=useState<Category[]>([]);
+  const [resolvedCoordinates,setResolvedCoordinates]=useState<Record<number,[number,number]>>({});
+  const [coordinatesWarning,setCoordinatesWarning]=useState('');
   const [search,setSearch]=useState('');
   const [district,setDistrict]=useState('');
   const [category,setCategory]=useState('');
@@ -52,12 +54,16 @@ export default function BusinessMap(){
   const markers=useRef<MarkerInstance[]>([]);
   useEffect(()=>{
     const ctrl=new AbortController();
-    Promise.all([getAllPublished(ctrl.signal),directoryApi.categories(ctrl.signal)]).then(([items,cats])=>{
-      if(!ctrl.signal.aborted){setBusinesses(items);setCategories(cats);}
+    Promise.all([getAllPublished(ctrl.signal),directoryApi.categories(ctrl.signal),directoryApi.mapCoordinates(ctrl.signal).catch(()=>null)]).then(([items,cats,locations])=>{
+      if(!ctrl.signal.aborted){
+        setBusinesses(items);setCategories(cats);
+        if(locations) setResolvedCoordinates(Object.fromEntries(locations.map(x=>[x.id,x.coordinates])));
+        else setCoordinatesWarning('No se pudieron resolver los enlaces cortos. Solo se muestran las ubicaciones con coordenadas explícitas.');
+      }
     }).catch(e=>{if(!ctrl.signal.aborted)setError((e as Error).message);}).finally(()=>{if(!ctrl.signal.aborted)setLoading(false);});
     return ()=>ctrl.abort();
   },[]);
-  const positioned=useMemo(()=>businesses.map(b=>({business:b,coords:coordinatesFromMapsUrl(b.mapsUrl)})).filter((x):x is {business:Business;coords:[number,number]}=>x.coords!==null),[businesses]);
+  const positioned=useMemo(()=>businesses.map(b=>({business:b,coords:resolvedCoordinates[b.id] || coordinatesFromMapsUrl(b.mapsUrl)})).filter((x):x is {business:Business;coords:[number,number]}=>x.coords!==null),[businesses,resolvedCoordinates]);
   const visible=useMemo(()=>positioned.filter(x=>(!search||[x.business.name,x.business.description||''].join(' ').toLowerCase().includes(search.toLowerCase()))&&(!district||x.business.district===district)&&(!category||String(x.business.category.id)===category)),[positioned,search,district,category]);
   useEffect(()=>{
     let canceled=false;
@@ -88,6 +94,7 @@ export default function BusinessMap(){
       <select aria-label="Categoría" value={category} onChange={e=>{setCategory(e.target.value);setSelected(null)}}><option value="">Todas las categorías</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
     </div>
     {error && <p className="form-error" role="alert">{error}</p>}
+    {coordinatesWarning && <p className="map-notice" role="status">{coordinatesWarning}</p>}
     <div className="discovery-layout">
       <section className="discovery-map-wrap" aria-label="Mapa interactivo de Sarchí">
         <div ref={node} className="discovery-map"/>
@@ -102,6 +109,6 @@ export default function BusinessMap(){
       </aside>
     </div>
     {chosen&&<div className="discovery-selected"><div><span className="eyebrow">NEGOCIO SELECCIONADO</span><h2>{chosen.name}</h2><p>{chosen.category.name} · {chosen.district}</p></div><div className="discovery-actions"><Link to={'/negocio/'+encodeURIComponent(chosen.slug)}><Store size={17}/> Ver negocio</Link>{chosen.mapsUrl&&<a href={chosen.mapsUrl} target="_blank" rel="noopener noreferrer"><Navigation size={17}/> Cómo llegar</a>}{chosen.phone && /^\d{8}$/.test(chosen.phone.replace(/\D/g,'')) && !chosen.phone.replace(/\D/g,'').startsWith('2454') && <a href={'https://wa.me/506'+chosen.phone.replace(/\D/g,'')} target="_blank" rel="noopener noreferrer"><MessageCircle size={17}/> WhatsApp</a>}</div></div>}
-    <p className="discovery-footnote">Solo se muestran pines con coordenadas verificables. Los enlaces cortos de Google Maps y las direcciones escritas no se ubican automáticamente para evitar puntos incorrectos.</p>
+    <p className="discovery-footnote">Solo se muestran pines con coordenadas verificables. Los enlaces cortos de Google Maps se intentan resolver automáticamente; las direcciones escritas no se ubican sin coordenadas.</p>
   </main>;
 }
