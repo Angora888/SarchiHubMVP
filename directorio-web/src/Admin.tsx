@@ -12,7 +12,7 @@ const toForm=(item:Item):EditForm=>({name:item.name,categoryId:item.categoryId,d
 const base = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/,'');
 async function api<T>(path:string, method:string, token:string|null, body?:unknown):Promise<T>{
   if (!base) throw new Error('Falta configurar la URL de la API.');
-  const response=await fetch(base+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined});
+  const response=await fetch(base+path,{method,cache:'no-store',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined});
   // Rate limits and infrastructure errors may have an empty or HTML response.
   const data=await response.json().catch(()=>null);
   if (!response.ok) {
@@ -55,7 +55,16 @@ export default function Admin(){
     e.preventDefault();if(editing===null||!editForm)return;
     if(!/^\d{8}$/.test(editForm.phone)){setError('El teléfono debe tener exactamente 8 dígitos.');return;}
     setBusy(true);setError('');setNotice('');
-    try{await api('/api/directory/admin/businesses/'+editing,'PUT',token,{...editForm,whatsApp:null});setNotice('Cambios guardados correctamente.');setEditing(null);setEditForm(null);setRefresh(n=>n+1);}
+    try{
+      const saved=await api<{message:string;mapsUrl?:string|null}>('/api/directory/admin/businesses/'+editing,'PUT',token,{...editForm,whatsApp:null});
+      if (!Object.prototype.hasOwnProperty.call(saved,'mapsUrl')) {
+        throw new Error('La API todavía no confirma la ubicación guardada. Actualizá el backend e intentá nuevamente.');
+      }
+      if ((saved.mapsUrl||'').trim()!==editForm.mapsUrl.trim()) {
+        throw new Error('La ubicación devuelta por la API no coincide con la seleccionada. Revisá antes de salir.');
+      }
+      setNotice('Cambios y ubicación guardados correctamente.');setEditing(null);setEditForm(null);setRefresh(n=>n+1);
+    }
     catch(err){setError((err as Error).message);}
     finally{setBusy(false);}
   }
