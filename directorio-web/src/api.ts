@@ -27,6 +27,7 @@ export const directoryApi = {
     return data.totalVisits;
   },
   categories: (signal?: AbortSignal) => get<Category[]>('/api/directory/categories', signal),
+  mapCoordinates: (signal?: AbortSignal) => get<{id:number;coordinates:[number,number]}[]>('/api/directory/map-coordinates',signal),
   businesses: (params: URLSearchParams, signal?: AbortSignal) =>
     get<PageResponse>('/api/directory/businesses?' + params.toString(), signal),
   submit: async (submission: {name:string;categoryId:number;district:string;description:string;address:string;phone:string;contactEmail:string;website:string;mapsUrl:string}): Promise<{message:string}> => {
