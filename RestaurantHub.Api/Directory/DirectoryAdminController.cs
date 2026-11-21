@@ -140,7 +140,7 @@ public sealed class DirectoryAdminController : ControllerBase
         business.Website = request.Website?.Trim();
         business.MapsUrl = DirectoryMaps.Normalize(request.MapsUrl);
         await _db.SaveChangesAsync(ct);
-        return Ok(new { message = "Negocio actualizado." });
+        return Ok(new { message = "Negocio actualizado.", id = business.Id, mapsUrl = business.MapsUrl });
     }
 
     [Authorize(Policy = "DirectoryAdmin")]
