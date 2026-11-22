@@ -24,11 +24,29 @@ function pinColor(category:Category):string {
   if(/turismo|hotel|hospedaje/.test(v))return PIN_COLORS.tourism;
   return PIN_COLORS.other;
 }
-function classicPinIcon(L:Leaflet,color:string):unknown {
+function businessImageUrl(value:string|null):string|null {
+  if(!value)return null;
+  try {
+    const url=new URL(value);
+    return url.protocol==='https:' ? url.href : null;
+  }catch{return null;}
+}
+function escapeSvgAttribute(value:string):string {
+  return value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c));
+}
+function classicPinIcon(L:Leaflet,business:Business):unknown {
+  const color=pinColor(business.category);
+  const photo=businessImageUrl(business.imageUrl);
+  // Keep the original pointed pin silhouette, with only a small photo inside its center.
+  const face=photo
+    ? '<circle cx="13.5" cy="13.5" r="8" fill="#ffffff"/><clipPath id="photo"><circle cx="13.5" cy="13.5" r="7"/></clipPath>'+
+      '<image href="'+escapeSvgAttribute(photo)+'" x="6.5" y="6.5" width="14" height="14" preserveAspectRatio="xMidYMid slice" clip-path="url(#photo)"/>'+
+      '<circle cx="13.5" cy="13.5" r="7.5" fill="none" stroke="#fff" stroke-width="1"/>'
+    : '<circle cx="13.5" cy="13.5" r="5" fill="#ffffff" stroke="#26425a" stroke-opacity=".22"/>';
   return L.divIcon({className:'directory-classic-pin-icon',iconSize:[27,42],iconAnchor:[13,41],html:
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 42" width="27" height="42" aria-hidden="true">'+
     '<path d="M13.5 1C6.6 1 1 6.6 1 13.5c0 10 12.5 26.5 12.5 26.5S26 23.5 26 13.5C26 6.6 20.4 1 13.5 1Z" fill="'+color+'" stroke="#ffffff" stroke-width="1.8"/>'+
-    '<circle cx="13.5" cy="13.5" r="5" fill="#ffffff" stroke="#26425a" stroke-opacity=".22"/></svg>'});
+    face+'</svg>'});
 }
 
 let leafletLoad:Promise<Leaflet>|undefined;
@@ -94,7 +112,7 @@ export default function BusinessMap(){
         map.current.setView(SARCHI,12);
       }
       markers.current.forEach(x=>x.remove());
-      markers.current=visible.map(x=>L.marker(x.coords,{icon:classicPinIcon(L,pinColor(x.business.category))}).addTo(map.current!).on('click',()=>setSelected(x.business.id)));
+      markers.current=visible.map(x=>L.marker(x.coords,{icon:classicPinIcon(L,x.business)}).addTo(map.current!).on('click',()=>setSelected(x.business.id)));
       if(visible.length===1)map.current.setView(visible[0].coords,16);
       else if(visible.length>1)map.current.fitBounds(visible.map(x=>x.coords),{padding:[35,35],maxZoom:15});
       else map.current.setView(SARCHI,12);
@@ -122,7 +140,10 @@ export default function BusinessMap(){
       <aside className="discovery-list">
         <h2><MapPin size={19}/> {loading?'Cargando ubicaciones…':visible.length+' lugares en el mapa'}</h2>
         {visible.map(({business:b})=><button type="button" className={'discovery-place'+(b.id===selected?' active':'')} key={b.id} onClick={()=>{setSelected(b.id);const found=positioned.find(x=>x.business.id===b.id);if(found)map.current?.setView(found.coords,16);}}>
-          <span className="discovery-initial">{b.name.charAt(0)}</span><span><strong>{b.name}</strong><small>{b.category.name} · {b.district}</small></span><Navigation size={17}/></button>)}
+          <span className="discovery-initial" style={{background:pinColor(b.category),color:'#fff'}}>
+            {businessImageUrl(b.imageUrl)&&<img src={businessImageUrl(b.imageUrl)!} alt="" loading="lazy" onError={e=>{e.currentTarget.style.display='none';}}/>}
+            <span>{b.name.charAt(0)}</span>
+          </span><span><strong>{b.name}</strong><small>{b.category.name} · {b.district}</small></span><Navigation size={17}/></button>)}
         {!loading&&!visible.length&&<p className="discovery-empty">No hay negocios con ubicación precisa para estos filtros.</p>}
       </aside>
     </div>
