@@ -252,19 +252,4 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .directory-refresh-status button{border:1px solid #6068a5;background:#343c73;color:#fff;border-radius:9px;padding:7px 12px;font-size:12px;cursor:pointer}
 
 
-/* Photo pins and category colors for the Sarchí map. */
-.discovery-map .directory-custom-icon{background:none;border:0}
-.directory-pin{width:46px;height:46px;border:3px solid #fff;border-radius:50%;background:var(--pin-color,#777ad7);color:white;box-shadow:0 5px 16px #0008;display:grid;place-items:center;overflow:hidden;position:relative;transition:transform .16s}
-.directory-pin img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}
-.directory-pin-fallback{width:100%;height:100%;place-items:center;font-size:20px;font-weight:800;color:#fff}
-.directory-pin-count{display:grid;place-items:center;width:100%;height:100%;font-size:18px;font-weight:800}
-.directory-pin-group{border-color:#d8d9ff;box-shadow:0 5px 16px #0009,0 0 0 3px #6a6fb855}
-.discovery-map .directory-custom-icon:hover .directory-pin{transform:scale(1.12)}
-.discovery-place .discovery-initial{overflow:hidden;display:grid;place-items:center;color:#fff;flex-shrink:0}
-.discovery-place .discovery-initial img{width:100%;height:100%;object-fit:cover}
-.discovery-map-wrap{position:relative}
-.directory-map-group-panel{position:absolute;z-index:900;bottom:15px;left:12px;right:12px;max-height:235px;overflow-y:auto;background:#161b2af5;border:1px solid #636b91;border-radius:16px;padding:10px;color:#fff;box-shadow:0 12px 30px #0009}
-.directory-map-group-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 5px 8px}
-.directory-map-group-head button{color:#fff;border:0;background:#383f61;border-radius:8px;width:28px;height:28px;font-size:22px;cursor:pointer}
-.directory-map-group-panel>button{display:flex;align-items:center;gap:10px;background:transparent;color:#fff;width:100%;text-align:left;border:0;border-top:1px solid #363e59;padding:7px 5px;font-size:13px;cursor:pointer}
-.directory-map-group-panel>button img,.directory-map-group-panel>button>span:first-child{width:34px;height:34px;flex-shrink:0;border-radius:10px;object-fit:cover;display:grid;place-items:center;color:#fff;font-weight:700}
+.discovery-map .directory-classic-pin-icon{background:transparent;border:0}
