@@ -14,43 +14,23 @@ type Leaflet = {
 };
 declare global {interface Window {L?:Leaflet}}
 const SARCHI:[number,number]=[10.090, -84.347];
-type LocatedBusiness = {business:Business;coords:[number,number]};
-type BusinessGroup = {key:string;coords:[number,number];places:LocatedBusiness[]};
-const safeText=(value:string)=>value.replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]||char));
-function colorFor(category:Category):string {
-  const value=(category.slug+' '+category.name).toLocaleLowerCase('es');
-  if(/comida|restaur|caf[eé]|panader|pizza|gastronom/.test(value)) return '#ea8a2e';
-  if(/belleza|est[eé]tica|sal[oó]n|uñas|barber|spa/.test(value)) return '#df569a';
-  if(/servicio|profesion|salud|cl[ií]nica/.test(value)) return '#24a580';
-  if(/tienda|comercio|venta|ropa|accesorio/.test(value)) return '#4b91eb';
-  if(/turismo|hotel|hospedaje/.test(value)) return '#a56be3';
-  return '#777ad7';
+const PIN_COLORS:Record<string,string>={food:'#e98737',beauty:'#d95d9b',services:'#27a783',shops:'#478bd6',tourism:'#9062c9',other:'#397bd4'};
+function pinColor(category:Category):string {
+  const v=(category.slug+' '+category.name).toLowerCase();
+  if(/comida|restaur|caf[eé]|panader|pizza|gastronom/.test(v))return PIN_COLORS.food;
+  if(/belleza|est[eé]tica|sal[oó]n|uñas|barber|spa/.test(v))return PIN_COLORS.beauty;
+  if(/servicio|profesion|salud|cl[ií]nica/.test(v))return PIN_COLORS.services;
+  if(/tienda|comercio|ropa|accesorio/.test(v))return PIN_COLORS.shops;
+  if(/turismo|hotel|hospedaje/.test(v))return PIN_COLORS.tourism;
+  return PIN_COLORS.other;
 }
-function safeImageUrl(value:string|null):string|null {
-  if(!value)return null;
-  try {
-    const url=new URL(value);
-    return url.protocol==='https:' ? url.href : null;
-  }catch{return null;}
+function classicPinIcon(L:Leaflet,color:string):unknown {
+  return L.divIcon({className:'directory-classic-pin-icon',iconSize:[27,42],iconAnchor:[13,41],html:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 42" width="27" height="42" aria-hidden="true">'+
+    '<path d="M13.5 1C6.6 1 1 6.6 1 13.5c0 10 12.5 26.5 12.5 26.5S26 23.5 26 13.5C26 6.6 20.4 1 13.5 1Z" fill="'+color+'" stroke="#ffffff" stroke-width="1.8"/>'+
+    '<circle cx="13.5" cy="13.5" r="5" fill="#ffffff" stroke="#26425a" stroke-opacity=".22"/></svg>'});
 }
-function markerHtml(places:LocatedBusiness[]):string {
-  if(places.length>1) return '<span class="directory-pin-count">'+places.length+'</span>';
-  const business=places[0].business;
-  const image=safeImageUrl(business.imageUrl);
-  return image
-    ? '<img src="'+safeText(image)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'grid\'" /><span class="directory-pin-fallback" style="display:none">'+safeText(business.name.slice(0,1).toUpperCase())+'</span>'
-    : '<span class="directory-pin-fallback">'+safeText(business.name.slice(0,1).toUpperCase())+'</span>';
-}
-function groupPlaces(items:LocatedBusiness[]):BusinessGroup[] {
-  const groups=new Map<string,BusinessGroup>();
-  items.forEach(item=>{
-    const key=item.coords.map(n=>n.toFixed(6)).join(',');
-    const current=groups.get(key);
-    if(current)current.places.push(item);
-    else groups.set(key,{key,coords:item.coords,places:[item]});
-  });
-  return [...groups.values()];
-}
+
 let leafletLoad:Promise<Leaflet>|undefined;
 function loadLeaflet():Promise<Leaflet> {
   if (window.L) return Promise.resolve(window.L);
@@ -84,7 +64,6 @@ export default function BusinessMap(){
   const [district,setDistrict]=useState('');
   const [category,setCategory]=useState('');
   const [selected,setSelected]=useState<number|null>(null);
-  const [activeGroup,setActiveGroup]=useState<string|null>(null);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
   const [mapError,setMapError]=useState('');
@@ -104,8 +83,6 @@ export default function BusinessMap(){
   },[]);
   const positioned=useMemo(()=>businesses.map(b=>({business:b,coords:resolvedCoordinates[b.id] || coordinatesFromMapsUrl(b.mapsUrl)})).filter((x):x is {business:Business;coords:[number,number]}=>x.coords!==null),[businesses,resolvedCoordinates]);
   const visible=useMemo(()=>positioned.filter(x=>(!search||[x.business.name,x.business.description||''].join(' ').toLowerCase().includes(search.toLowerCase()))&&(!district||x.business.district===district)&&(!category||String(x.business.category.id)===category)),[positioned,search,district,category]);
-  const groups=useMemo(()=>groupPlaces(visible),[visible]);
-  const groupChoices=groups.find(x=>x.key===activeGroup);
   useEffect(()=>{
     let canceled=false;
     if(!node.current)return;
@@ -117,34 +94,22 @@ export default function BusinessMap(){
         map.current.setView(SARCHI,12);
       }
       markers.current.forEach(x=>x.remove());
-      markers.current=groups.map(group=>{
-        const plural=group.places.length>1;
-        const color=plural ? '#6366ae' : colorFor(group.places[0].business.category);
-        const icon=L.divIcon({
-          className:'directory-custom-icon',
-          html:'<div class="directory-pin'+(plural?' directory-pin-group':'')+'" style="--pin-color:'+color+'">'+markerHtml(group.places)+'</div>',
-          iconSize:[48,48],iconAnchor:[24,24]
-        });
-        return L.marker(group.coords,{icon}).addTo(map.current!).on('click',()=>{
-          setActiveGroup(plural?group.key:null);
-          setSelected(plural?null:group.places[0].business.id);
-        });
-      });
+      markers.current=visible.map(x=>L.marker(x.coords,{icon:classicPinIcon(L,pinColor(x.business.category))}).addTo(map.current!).on('click',()=>setSelected(x.business.id)));
       if(visible.length===1)map.current.setView(visible[0].coords,16);
       else if(visible.length>1)map.current.fitBounds(visible.map(x=>x.coords),{padding:[35,35],maxZoom:15});
       else map.current.setView(SARCHI,12);
     }).catch(e=>{if(!canceled)setMapError((e as Error).message)});
     return ()=>{canceled=true};
-  },[visible,groups]);
+  },[visible]);
   useEffect(()=>()=>{markers.current.forEach(m=>m.remove());map.current?.remove();map.current=null;},[]);
   const chosen=visible.find(x=>x.business.id===selected)?.business;
   return <main className="shell discovery-page">
     <Link to="/" className="back-link"><ArrowLeft size={18}/> Volver al directorio</Link>
     <div className="discovery-hero"><span className="eyebrow">EXPLORÁ SARCHÍ</span><h1>Un cantón lleno de <span>lugares por descubrir.</span></h1><p>Encontrá comercios cercanos, descubrí emprendimientos y llegá directo con el mapa de Directorio Sarchí.</p></div>
     <div className="discovery-stats"><strong>{positioned.length} ubicaciones</strong><span>{businesses.length-positioned.length} negocios aún sin coordenadas</span></div>
-    <div className="discovery-filters"><label className="discovery-search"><Search size={18}/><input value={search} onChange={e=>{setSearch(e.target.value);setSelected(null);setActiveGroup(null)}} placeholder="Buscar lugares…" aria-label="Buscar negocios en el mapa"/></label>
-      <select aria-label="Distrito" value={district} onChange={e=>{setDistrict(e.target.value);setSelected(null);setActiveGroup(null)}}><option value="">Todos los distritos</option>{['Sarchí Norte','Sarchí Sur','Toro Amarillo','San Pedro','Rodríguez'].map(d=><option key={d}>{d}</option>)}</select>
-      <select aria-label="Categoría" value={category} onChange={e=>{setCategory(e.target.value);setSelected(null);setActiveGroup(null)}}><option value="">Todas las categorías</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
+    <div className="discovery-filters"><label className="discovery-search"><Search size={18}/><input value={search} onChange={e=>{setSearch(e.target.value);setSelected(null)}} placeholder="Buscar lugares…" aria-label="Buscar negocios en el mapa"/></label>
+      <select aria-label="Distrito" value={district} onChange={e=>{setDistrict(e.target.value);setSelected(null)}}><option value="">Todos los distritos</option>{['Sarchí Norte','Sarchí Sur','Toro Amarillo','San Pedro','Rodríguez'].map(d=><option key={d}>{d}</option>)}</select>
+      <select aria-label="Categoría" value={category} onChange={e=>{setCategory(e.target.value);setSelected(null)}}><option value="">Todas las categorías</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
     </div>
     {error && <p className="form-error" role="alert">{error}</p>}
     {coordinatesWarning && <p className="map-notice" role="status">{coordinatesWarning}</p>}
@@ -152,20 +117,16 @@ export default function BusinessMap(){
       <section className="discovery-map-wrap" aria-label="Mapa interactivo de Sarchí">
         <div ref={node} className="discovery-map"/>
         {mapError&&<p className="map-notice">{mapError}</p>}
-        {groupChoices&&groupChoices.places.length>1&&<div className="directory-map-group-panel">
-          <div className="directory-map-group-head"><strong>{groupChoices.places.length} negocios en este lugar</strong><button type="button" onClick={()=>setActiveGroup(null)} aria-label="Cerrar lista">×</button></div>
-          {groupChoices.places.map(({business:b})=><button type="button" key={b.id} onClick={()=>{setSelected(b.id);setActiveGroup(null);}}>{b.imageUrl&&safeImageUrl(b.imageUrl)?<img src={safeImageUrl(b.imageUrl)!} alt=""/>:<span style={{background:colorFor(b.category)}}>{b.name.slice(0,1)}</span>}<span>{b.name}</span></button>)}
-        </div>}
         {!loading&&!error&&positioned.length===0&&<p className="map-notice">El mapa está listo. Aparecerán pines cuando los negocios registren su ubicación con el botón GPS.</p>}
       </section>
       <aside className="discovery-list">
         <h2><MapPin size={19}/> {loading?'Cargando ubicaciones…':visible.length+' lugares en el mapa'}</h2>
-        {visible.map(({business:b})=><button type="button" className={'discovery-place'+(b.id===selected?' active':'')} key={b.id} onClick={()=>{setSelected(b.id);setActiveGroup(null);const found=positioned.find(x=>x.business.id===b.id);if(found)map.current?.setView(found.coords,16);}}>
-          <span className="discovery-initial" style={{background:colorFor(b.category)}}>{b.imageUrl&&safeImageUrl(b.imageUrl)?<img src={safeImageUrl(b.imageUrl)!} alt=""/>:b.name.charAt(0)}</span><span><strong>{b.name}</strong><small>{b.category.name} · {b.district}</small></span><Navigation size={17}/></button>)}
+        {visible.map(({business:b})=><button type="button" className={'discovery-place'+(b.id===selected?' active':'')} key={b.id} onClick={()=>{setSelected(b.id);const found=positioned.find(x=>x.business.id===b.id);if(found)map.current?.setView(found.coords,16);}}>
+          <span className="discovery-initial">{b.name.charAt(0)}</span><span><strong>{b.name}</strong><small>{b.category.name} · {b.district}</small></span><Navigation size={17}/></button>)}
         {!loading&&!visible.length&&<p className="discovery-empty">No hay negocios con ubicación precisa para estos filtros.</p>}
       </aside>
     </div>
     {chosen&&<div className="discovery-selected"><div><span className="eyebrow">NEGOCIO SELECCIONADO</span><h2>{chosen.name}</h2><p>{chosen.category.name} · {chosen.district}</p></div><div className="discovery-actions"><Link to={'/negocio/'+encodeURIComponent(chosen.slug)}><Store size={17}/> Ver negocio</Link>{chosen.mapsUrl&&<a href={chosen.mapsUrl} target="_blank" rel="noopener noreferrer"><Navigation size={17}/> Cómo llegar</a>}{chosen.phone && /^\d{8}$/.test(chosen.phone.replace(/\D/g,'')) && !chosen.phone.replace(/\D/g,'').startsWith('2454') && <a href={'https://wa.me/506'+chosen.phone.replace(/\D/g,'')} target="_blank" rel="noopener noreferrer"><MessageCircle size={17}/> WhatsApp</a>}</div></div>}
-    <p className="discovery-footnote">Los colores distinguen categorías; tocá los pines con números para ver los negocios que comparten lugar. Solo se muestran pines con coordenadas verificables. Los enlaces cortos de Google Maps se intentan resolver automáticamente; las direcciones escritas no se ubican sin coordenadas.</p>
+    <p className="discovery-footnote">Solo se muestran pines con coordenadas verificables. Los enlaces cortos de Google Maps se intentan resolver automáticamente; las direcciones escritas no se ubican sin coordenadas.</p>
   </main>;
 }
