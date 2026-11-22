@@ -253,3 +253,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 
 
 .discovery-map .directory-classic-pin-icon{background:transparent;border:0}
+
+
+/* Compact business thumbnails in the list; category color remains as fallback. */
+.discovery-place .discovery-initial{position:relative;overflow:hidden;color:#fff}
+.discovery-place .discovery-initial img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;z-index:1}
+.discovery-place .discovery-initial>span{position:relative;z-index:0}
