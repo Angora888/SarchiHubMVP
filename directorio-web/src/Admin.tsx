@@ -10,6 +10,24 @@ type EditForm = {name:string;categoryId:number;district:string;description:strin
 const eightDigits=(value:string|null|undefined)=>{const digits=(value||'').replace(/\D/g,'');return digits.length===11&&digits.startsWith('506')?digits.slice(3):digits;};
 const toForm=(item:Item):EditForm=>({name:item.name,categoryId:item.categoryId,district:item.district,description:item.description||'',address:item.address||'',phone:eightDigits(item.phone),whatsApp:'',contactEmail:item.contactEmail||'',website:item.website||'',mapsUrl:item.mapsUrl||''});
 const base = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/,'');
+const SESSION_KEY = 'directorio_sarchi_admin_session';
+type SavedSession = {token:string;expiresAt:string};
+function readSession():string|null {
+  try {
+    const raw=localStorage.getItem(SESSION_KEY);
+    if(!raw)return null;
+    const value=JSON.parse(raw) as Partial<SavedSession>;
+    if(typeof value.token==='string' && typeof value.expiresAt==='string' && Date.parse(value.expiresAt)>Date.now()+5000)return value.token;
+    localStorage.removeItem(SESSION_KEY);
+  } catch { try {localStorage.removeItem(SESSION_KEY);}catch{} }
+  return null;
+}
+function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch{}}
+function storeSession(token:string,expiresAt:string){
+  if(!token || !Number.isFinite(Date.parse(expiresAt)) || Date.parse(expiresAt)<=Date.now())throw new Error('La API devolvió una sesión inválida.');
+  try{localStorage.setItem(SESSION_KEY,JSON.stringify({token,expiresAt}));}catch{/* Private browsing may block persistence. */}
+}
+
 async function api<T>(path:string, method:string, token:string|null, body?:unknown):Promise<T>{
   if (!base) throw new Error('Falta configurar la URL de la API.');
   const response=await fetch(base+path,{method,cache:'no-store',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined});
@@ -31,7 +49,7 @@ export default function Admin(){
   const [editing,setEditing]=useState<number|null>(null);
   const [editForm,setEditForm]=useState<EditForm|null>(null);
   const [categories,setCategories]=useState<{id:number;name:string}[]>([]);
-  const [token,setToken]=useState<string|null>(null);
+  const [token,setToken]=useState<string|null>(readSession);
   const [email,setEmail]=useState('');
   const [password,setPassword]=useState('');
   const [items,setItems]=useState<Item[]>([]);
@@ -47,7 +65,7 @@ export default function Admin(){
     const controller=new AbortController();
     api<Result>('/api/directory/admin/businesses?status='+status+'&page='+page,'GET',token)
     .then(result=>{if(!controller.signal.aborted){setItems(result.items);setTotal(result.total);}})
-    .catch(e=>{if(!controller.signal.aborted){setError((e as Error).message);if((e as Error).message.includes('sesión')) setToken(null);}});
+    .catch(e=>{if(!controller.signal.aborted){setError((e as Error).message);if((e as Error).message.includes('Credenciales incorrectas') || (e as Error).message.includes('acceso administrativo')) {clearSession();setToken(null);}}});
     return ()=>controller.abort();
   },[token,status,page,refresh]);
   useEffect(()=>{if(!token)return;api<{id:number;name:string}[]>('/api/directory/categories','GET',token).then(setCategories).catch(()=>{});},[token]);
@@ -70,7 +88,7 @@ export default function Admin(){
   }
   async function login(e:FormEvent){
     e.preventDefault();setError('');setBusy(true);
-    try{const result=await api<{token:string}>('/api/directory/admin/login','POST',null,{email,password});setToken(result.token);setPassword('');}
+    try{const result=await api<{token:string;expiresAt:string}>('/api/directory/admin/login','POST',null,{email,password});storeSession(result.token,result.expiresAt);setToken(result.token);setPassword('');}
     catch(e){setError((e as Error).message);}
     finally{setBusy(false);}
   }
@@ -98,7 +116,7 @@ export default function Admin(){
       <label>Contraseña<input type="password" required autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
       {error&&<p className="form-error" role="alert">{error}</p>}<button type="submit" disabled={busy}>{busy?'Ingresando...':'Iniciar sesión'}</button>
     </form></div>:
-    <><div className="admin-head"><div><span className="eyebrow">PANEL PRIVADO</span><h1>Revisión de negocios</h1><p>Controlá qué comercios aparecen en Directorio Sarchí.</p></div><button className="admin-logout" onClick={()=>{setToken(null);setItems([]);setNotice('');}}><LogOut size={17}/> Cerrar sesión</button></div>
+    <><div className="admin-head"><div><span className="eyebrow">PANEL PRIVADO</span><h1>Revisión de negocios</h1><p>Controlá qué comercios aparecen en Directorio Sarchí.</p></div><button className="admin-logout" onClick={()=>{clearSession();setToken(null);setItems([]);setNotice('');}}><LogOut size={17}/> Cerrar sesión</button></div>
     <div className="admin-toolbar"><select aria-label="Filtrar por estado" value={status} onChange={e=>{setStatus(e.target.value);setPage(1);}}><option value="Pending">Pendientes</option><option value="Published">Publicados · Ordenar</option><option value="Rejected">Rechazados</option><option value="Suspended">Suspendidos</option></select><span>{total} negocios</span><button onClick={()=>setRefresh(n=>n+1)}>Actualizar</button></div>
     {error&&<p className="form-error" role="alert">{error}</p>}{notice&&<p className="admin-notice" role="status">{notice}</p>}
     <div className="admin-list">{items.length===0?<div className="empty-state"><ShieldCheck size={32}/><h2>Sin negocios en esta categoría</h2></div>:
