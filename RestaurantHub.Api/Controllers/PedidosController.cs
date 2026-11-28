@@ -26,6 +26,7 @@ public class PedidosController : ControllerBase
         => CrearPedidoInterno(dto, null);
 
     [HttpPost("mesa-qr")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("public-orders")]
     [AllowAnonymous]
     public Task<IActionResult> CrearPedidoMesaQr(CrearPedidoMesaQrDto dto)
     {
@@ -437,6 +438,7 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPost("publico")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("public-orders")]
     [AllowAnonymous]
     public async Task<IActionResult> CrearPedidoPublico(
        CrearPedidoPublicoDto dto)
