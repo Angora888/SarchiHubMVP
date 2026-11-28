@@ -54,6 +54,23 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    // Per-process protection. Never trust arbitrary X-Forwarded-For headers.
+    var publicOrderLimit = Math.Clamp(builder.Configuration.GetValue("RateLimits:PublicOrdersPerMinute", 60), 1, 10000);
+    options.AddPolicy("public-orders", context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter("public-orders:" + ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = publicOrderLimit, Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0, AutoReplenishment = true
+        });
+    });
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            context.HttpContext.Response.Headers["Retry-After"] = Math.Ceiling(retryAfter.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        await context.HttpContext.Response.WriteAsJsonAsync(new { message = "Demasiadas solicitudes. Intente nuevamente en unos momentos." }, cancellationToken);
+    };
     options.AddPolicy("directory-admin-login", context =>
     {
         var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -115,6 +132,7 @@ if (app.Environment.IsDevelopment())
 // HTTPS is terminated by the hosting reverse proxy. Configure forwarded headers
 // and HTTPS redirection together when the proxy is trusted.
 
+app.UseRouting();
 app.UseCors("ReactApp");
 app.UseRateLimiter();
 
